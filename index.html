@@ -1301,6 +1301,10 @@
       // SC2 默认「更快（Faster）」游戏时间与实际显示时间存在约 1.4 倍系数（仅用于单位事件的游戏秒）
       const GAME_TIME_FACTOR = 1.4;
 
+      // SC2 Faster 速度下，游戏内时钟走 1 秒，实际只经过约 0.98 真实秒
+      // 测量依据：10 分钟游戏时间 = 35291 帧 / 60fps = 588.18 真实秒，即 588.18/600 ≈ 0.9803
+      const SC2_FASTER_REAL_FACTOR = 0.9803;
+
       // 直接使用真实秒数（例如 replay.game_length.seconds）
       function formatRealTime(seconds) {
         const safe = Math.max(0, Math.round(seconds));
@@ -1845,7 +1849,10 @@ json.dumps(result)
         }
 
         let processedItems = items.map((it) => ({
-          time: it.start_time / GAME_TIME_FACTOR,
+          // 先将游戏内帧秒转为游戏显示秒（÷ GAME_TIME_FACTOR），
+          // 再乘以 SC2_FASTER_REAL_FACTOR，换算成真实经过的秒数，
+          // 这样 TTS 计时器（使用 Date.now() 的真实时间）能与游戏内时钟同步
+          time: (it.start_time / GAME_TIME_FACTOR) * SC2_FASTER_REAL_FACTOR,
           text: getDisplayUnitText(it),
         }));
 
@@ -1906,11 +1913,14 @@ json.dumps(result)
       }
 
       function updateVoiceUI(currentTime) {
-        const dispSeconds = Math.round(currentTime);
-        const m = Math.floor(dispSeconds / 60)
+        // currentTime 是真实经过的秒数（来自 Date.now()），
+        // 除以 SC2_FASTER_REAL_FACTOR 换算回游戏内时钟秒数，
+        // 使 timer 显示值与游戏界面左上角的时钟保持一致
+        const gameClockSeconds = Math.round(currentTime / SC2_FASTER_REAL_FACTOR);
+        const m = Math.floor(gameClockSeconds / 60)
           .toString()
           .padStart(2, "0");
-        const s = Math.floor(dispSeconds % 60)
+        const s = Math.floor(gameClockSeconds % 60)
           .toString()
           .padStart(2, "0");
         document.getElementById("voice-timer").innerText = `${m}:${s}`;
