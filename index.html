@@ -947,9 +947,9 @@
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.29.3/full/pyodide.js"></script>
     <script type="text/javascript">
-      const PYODIDE_VERSION = "0.26.4";
+      const PYODIDE_VERSION = "0.29.3";
 
       const dropZone = document.getElementById("dropZone");
       const fileInput = document.getElementById("fileInput");
@@ -1916,7 +1916,9 @@ json.dumps(result)
         // currentTime 是真实经过的秒数（来自 Date.now()），
         // 除以 SC2_FASTER_REAL_FACTOR 换算回游戏内时钟秒数，
         // 使 timer 显示值与游戏界面左上角的时钟保持一致
-        const gameClockSeconds = Math.round(currentTime / SC2_FASTER_REAL_FACTOR);
+        const gameClockSeconds = Math.round(
+          currentTime / SC2_FASTER_REAL_FACTOR,
+        );
         const m = Math.floor(gameClockSeconds / 60)
           .toString()
           .padStart(2, "0");
