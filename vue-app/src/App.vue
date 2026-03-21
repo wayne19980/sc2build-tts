@@ -22,7 +22,22 @@
       <div v-if="errorMsg" class="error visible">{{ errorMsg }}</div>
 
       <div v-if="replayData" class="result visible">
-        <GameSummary :data="replayData" :file-size="lastFileSize" />
+        <div class="result-header">
+          <GameSummary :data="replayData" :file-size="lastFileSize" />
+          <div class="global-voice-settings">
+            <div class="setting-item">
+              <span>语速: {{ voiceRate.toFixed(1) }}</span>
+              <input type="range" min="0.5" max="2" step="0.1" v-model.number="voiceRate" />
+            </div>
+            <div class="setting-item">
+              <button class="layout-toggle-btn"
+                @click="voiceLayout = voiceLayout === 'horizontal' ? 'vertical' : 'horizontal'">
+                布局: {{ voiceLayout === 'horizontal' ? '横向' : '纵向' }}
+              </button>
+              <button class="change-replay-btn" @click="resetReplay">更换录像</button>
+            </div>
+          </div>
+        </div>
 
         <div class="time-mode-toggle">
           <label>
@@ -41,40 +56,26 @@
 
         <ChatPanel :messages="replayData.chat" />
 
-        <BuildOrderList
-          :data="replayData"
-          :show-original="showOriginal"
-          :show-workers="showWorkers"
-          :merge-same-actions="mergeSameActions"
-          @open-voice="onOpenVoice"
-        />
+        <BuildOrderList :data="replayData" :show-original="showOriginal" :show-workers="showWorkers"
+          :merge-same-actions="mergeSameActions" @open-voice="onOpenVoice" />
       </div>
     </template>
 
-    <VoiceControlPanel
-      :visible="voiceVisible"
-      :player-name="voicePlayerName"
-      :steps="voiceSteps"
-      :current-index="voiceCurrentIndex"
-      :is-running="voiceIsRunning"
-      :game-clock-seconds="voiceGameClockSeconds()"
-      :step-progress="voiceStepProgress()"
-      :timeline-progress="voiceTimelineProgress()"
-      v-model:rate="voiceRate"
-      v-model:lang="voiceLang"
-      @close="voiceVisible = false"
-      @toggle-play="voiceTogglePlay"
-      @reset="voiceReset"
-      @timeline-click="voiceTimelineClick"
-    />
+    <VoiceControlPanel :visible="voiceVisible" :layout="voiceLayout" :timer-str="voiceTimerStr"
+      :is-playing="voiceIsRunning" :voice-status="voiceStatusText" :current-step-text="currentVoiceStepText"
+      :step-progress="voiceStepProgress() / 100" :timeline-progress="voiceTimelineProgress() / 100"
+      :can-pip="isPiPSupported" :is-pip="!!pipWindow" @pop-out="onPopOut" @close="voiceVisible = false"
+      @toggle-play="voiceTogglePlay" @reset="voiceReset" @timeline-click="voiceTimelineClick" ref="voicePanelRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { usePyodide } from './composables/usePyodide'
 import { useVoiceReader } from './composables/useVoiceReader'
+import { useDocumentPiP } from './composables/useDocumentPiP'
 import { getDisplayUnitText } from './composables/useTranslation'
+import { formatGameTime } from './utils'
 import type { ReplayData, PlayerData } from './types'
 
 import ReplayUploader from './components/ReplayUploader.vue'
@@ -122,8 +123,38 @@ const {
   jumpStep: voiceJumpStep,
 } = useVoiceReader()
 
+const {
+  isSupported: isPiPSupported,
+  pipWindow,
+  requestPiP,
+} = useDocumentPiP()
+
+const voicePanelRef = ref<any>(null)
 const voicePlayerName = ref('')
+const voiceLayout = ref<'horizontal' | 'vertical'>('horizontal')
 const currentVoicePlayer = ref<PlayerData | null>(null)
+
+const voiceTimerStr = computed(() => {
+  const s = voiceGameClockSeconds()
+  const m = Math.floor(s / 60)
+  const ss = Math.floor(s % 60)
+  return `${m.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
+})
+
+const voiceStatusText = computed(() => {
+  if (!voiceIsRunning.value && voiceGameClockSeconds() === 0) return '准备就绪'
+  if (!voiceIsRunning.value) return '已暂停'
+  return '正在播放'
+})
+
+const currentVoiceStepText = computed(() => {
+  if (voiceCurrentIndex.value < 0 || voiceCurrentIndex.value >= voiceSteps.value.length) return ''
+  return voiceSteps.value[voiceCurrentIndex.value].text
+})
+
+watch(showOriginal, (newVal) => {
+  voiceLang.value = newVal ? 'en-US' : 'zh-CN'
+}, { immediate: true })
 
 onMounted(() => {
   initPyodide()
@@ -138,11 +169,32 @@ async function onFileSelected(file: File) {
   }
 }
 
+function resetReplay() {
+  replayData.value = null
+  voiceReset()
+  voiceVisible.value = false
+}
+
 function onOpenVoice(player: PlayerData) {
   currentVoicePlayer.value = player
   voicePlayerName.value = player.name
   refreshVoiceSteps()
   voiceVisible.value = true
+}
+
+async function onPopOut() {
+  if (voicePanelRef.value) {
+    const el = voicePanelRef.value.$el
+    await requestPiP(el, {
+      width: voiceLayout.value === 'horizontal' ? 480 : 340,
+      height: voiceLayout.value === 'horizontal' ? 120 : 600,
+      fallbackData: {
+        timer: voiceTimerStr.value,
+        status: voiceStatusText.value,
+        stepText: currentVoiceStepText.value
+      }
+    })
+  }
 }
 
 function refreshVoiceSteps() {
@@ -311,7 +363,9 @@ h1 {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
@@ -321,6 +375,65 @@ h1 {
   padding: 1rem;
   color: var(--accent-red);
   margin-bottom: 1rem;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.global-voice-settings {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.setting-item input[type="range"] {
+  width: 80px;
+}
+
+.layout-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.layout-toggle-btn:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+
+.change-replay-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-top: 0.5rem;
+}
+
+.change-replay-btn:hover {
+  background: var(--bg-hover);
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 .time-mode-toggle {
