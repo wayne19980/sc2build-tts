@@ -7,7 +7,7 @@
           v-if="!isPip"
           class="voice-reader-pip"
           :class="{ disabled: !canPiP }"
-          :title="canPiP ? '画中画悬浮窗' : '浏览器不支持此功能 (点击尝试强制启动)'"
+          :title="canPiP ? '画中画悬浮窗' : '浏览器不支持 (点击强制尝试)'"
           @click="$emit('pop-out')"
         >
           🗗 {{ !canPiP ? '(不支持)' : '' }}
@@ -20,8 +20,44 @@
     <div class="content-body" :class="layout">
       <!-- Steps Display -->
       <div class="steps-info">
-        <div class="step-main">{{ currentStepText || '等待开始...' }}</div>
-        <div class="step-sub" v-if="voiceStatus">{{ voiceStatus }}</div>
+        
+        <!-- Vertical Layout Steps -->
+        <div v-if="layout === 'vertical'" class="steps-list vertical-list">
+          <div v-for="(s, idx) in prevSteps" :key="'p'+idx" class="step-other prev-step">
+            <span class="step-time">{{ s.time }}</span> {{ s.text }}
+          </div>
+          <div class="step-main" v-if="currentStep">
+            <span class="step-time current-time">{{ currentStep.time }}</span> 
+            <span class="step-text">{{ currentStep.text }}</span>
+          </div>
+          <div class="step-main" v-else>等待开始...</div>
+          <div v-for="(s, idx) in nextSteps" :key="'n'+idx" class="step-other next-step">
+            <span class="step-time">{{ s.time }}</span> {{ s.text }}
+          </div>
+        </div>
+
+        <!-- Horizontal Layout Steps -->
+        <div v-else class="steps-list horizontal-list">
+          <div class="step-main" v-if="currentStep">
+            <span class="step-time current-time">{{ currentStep.time }}</span> 
+            <span class="step-text">{{ currentStep.text }}</span>
+          </div>
+          <div class="step-main" v-else>等待开始...</div>
+          
+          <div class="other-steps-row" v-if="prevSteps.length || nextSteps.length">
+            <div class="prev-col">
+              <div v-for="(s, idx) in prevSteps" :key="'ph'+idx" class="step-other prev-step">
+                {{ s.time }} {{ s.text }}
+              </div>
+            </div>
+            <div class="next-col">
+              <div v-for="(s, idx) in nextSteps" :key="'nh'+idx" class="step-other next-step">
+                {{ s.time }} {{ s.text }}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Controls and Timer -->
@@ -59,13 +95,20 @@
 </template>
 
 <script setup lang="ts">
+
+interface VoiceStepInfo {
+  time: string
+  text: string
+}
+
 defineProps<{
   visible: boolean
   layout: 'horizontal' | 'vertical'
   timerStr: string
   isPlaying: boolean
-  voiceStatus: string
-  currentStepText: string
+  prevSteps: VoiceStepInfo[]
+  currentStep: VoiceStepInfo | null
+  nextSteps: VoiceStepInfo[]
   stepProgress: number
   timelineProgress: number
   canPiP?: boolean
@@ -96,16 +139,17 @@ defineEmits<{
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .voice-reader-panel.vertical {
-  width: 280px;
+  width: 320px;
   padding: 10px 10px 20px 10px;
 }
 
 .voice-reader-panel.horizontal {
-  width: 480px;
-  height: 90px;
+  width: 540px;
+  min-height: 110px;
   padding: 5px 10px 18px 10px;
 }
 
@@ -151,6 +195,8 @@ defineEmits<{
 .content-body {
   display: flex;
   gap: 12px;
+  flex: 1;
+  overflow: hidden;
 }
 
 .content-body.vertical {
@@ -167,20 +213,69 @@ defineEmits<{
 .steps-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .step-main {
   font-weight: bold;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 4px 0;
+  border-left: 3px solid var(--accent-green);
+  padding-left: 8px;
 }
 
-.step-sub {
-  font-size: 0.75rem;
+.step-time {
+  font-family: 'JetBrains Mono', monospace;
   color: #8b949e;
+  margin-right: 6px;
+  font-size: 0.85em;
+}
+
+.current-time {
+  color: var(--accent-orange);
+}
+
+.step-other {
+  font-size: 0.8rem;
+  color: #8b949e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 11px;
+}
+
+.prev-step {
+  opacity: 0.6;
+}
+
+.next-step {
+  opacity: 0.8;
+}
+
+.other-steps-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.prev-col, .next-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .controls-timer-row {
@@ -191,11 +286,13 @@ defineEmits<{
 
 .horizontal .controls-timer-row {
   flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 8px;
 }
 
 #voice-timer {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: bold;
   color: var(--green);
 }
@@ -209,14 +306,18 @@ defineEmits<{
   background: #238636;
   border: none;
   color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
+}
+
+.icon-btn:hover {
+  filter: brightness(1.2);
 }
 
 .reset-btn {
@@ -272,6 +373,6 @@ defineEmits<{
   font-size: 0.65rem;
   color: #8b949e;
   text-align: center;
-  margin-top: 5px;
+  margin-top: 10px;
 }
 </style>

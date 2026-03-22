@@ -62,10 +62,11 @@
     </template>
 
     <VoiceControlPanel :visible="voiceVisible" :layout="voiceLayout" :timer-str="voiceTimerStr"
-      :is-playing="voiceIsRunning" :voice-status="voiceStatusText" :current-step-text="currentVoiceStepText"
-      :step-progress="voiceStepProgress() / 100" :timeline-progress="voiceTimelineProgress() / 100"
-      :can-pip="isPiPSupported" :is-pip="!!pipWindow" @pop-out="onPopOut" @close="voiceVisible = false"
-      @toggle-play="voiceTogglePlay" @reset="voiceReset" @timeline-click="voiceTimelineClick" ref="voicePanelRef" />
+      :is-playing="voiceIsRunning" :prev-steps="prevVoiceSteps" :current-step="currentVoiceStepObj"
+      :next-steps="nextVoiceSteps" :step-progress="voiceStepProgress() / 100"
+      :timeline-progress="voiceTimelineProgress() / 100" :can-pip="isPiPSupported" :is-pip="!!pipWindow"
+      @pop-out="onPopOut" @close="voiceVisible = false" @toggle-play="voiceTogglePlay" @reset="voiceReset"
+      @timeline-click="voiceTimelineClick" ref="voicePanelRef" />
   </div>
 </template>
 
@@ -75,7 +76,7 @@ import { usePyodide } from './composables/usePyodide'
 import { useVoiceReader } from './composables/useVoiceReader'
 import { useDocumentPiP } from './composables/useDocumentPiP'
 import { getDisplayUnitText } from './composables/useTranslation'
-// import { formatGameTime } from './utils'
+import { formatGameTime } from './utils'
 import type { ReplayData, PlayerData } from './types'
 
 import ReplayUploader from './components/ReplayUploader.vue'
@@ -141,15 +142,30 @@ const voiceTimerStr = computed(() => {
   return `${m.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
 })
 
-const voiceStatusText = computed(() => {
-  if (!voiceIsRunning.value && voiceGameClockSeconds() === 0) return '准备就绪'
-  if (!voiceIsRunning.value) return '已暂停'
-  return '正在播放'
+const currentVoiceStepObj = computed(() => {
+  const i = voiceCurrentIndex.value
+  if (i < 0 || i >= voiceSteps.value.length) return null
+  const s = voiceSteps.value[i]
+  return { time: formatGameTime(s.time), text: s.text }
 })
 
-const currentVoiceStepText = computed(() => {
-  if (voiceCurrentIndex.value < 0 || voiceCurrentIndex.value >= voiceSteps.value.length) return ''
-  return voiceSteps.value[voiceCurrentIndex.value].text
+const prevVoiceSteps = computed(() => {
+  const i = voiceCurrentIndex.value
+  if (i <= 0) return []
+  const start = Math.max(0, i - 2)
+  return voiceSteps.value.slice(start, i).map(s => ({
+    time: formatGameTime(s.time),
+    text: s.text
+  }))
+})
+
+const nextVoiceSteps = computed(() => {
+  const i = voiceCurrentIndex.value
+  if (i < 0) return voiceSteps.value.slice(0, 2).map(s => ({ time: formatGameTime(s.time), text: s.text }))
+  return voiceSteps.value.slice(i + 1, i + 3).map(s => ({
+    time: formatGameTime(s.time),
+    text: s.text
+  }))
 })
 
 watch(showOriginal, (newVal) => {
@@ -186,12 +202,16 @@ async function onPopOut() {
   if (voicePanelRef.value) {
     const el = voicePanelRef.value.$el
     await requestPiP(el, {
-      width: voiceLayout.value === 'horizontal' ? 480 : 340,
+      width: voiceLayout.value === 'horizontal' ? 540 : 320,
       height: voiceLayout.value === 'horizontal' ? 120 : 600,
       fallbackData: {
-        timer: voiceTimerStr.value,
-        status: voiceStatusText.value,
-        stepText: currentVoiceStepText.value
+        get timer() { return voiceTimerStr.value },
+        get currentStep() { return currentVoiceStepObj.value },
+        get prevSteps() { return prevVoiceSteps.value },
+        get nextSteps() { return nextVoiceSteps.value },
+        get stepProgress() { return voiceStepProgress() / 100 },
+        get timelineProgress() { return voiceTimelineProgress() / 100 },
+        get layout() { return voiceLayout.value }
       }
     })
   }
