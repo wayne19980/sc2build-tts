@@ -3,14 +3,9 @@
     <!-- Header buttons -->
     <div class="voice-reader-header">
       <div class="header-btns">
-        <button
-          v-if="!isPip"
-          class="voice-reader-pip"
-          :class="{ disabled: !canPiP }"
-          :title="canPiP ? '画中画悬浮窗' : '浏览器不支持 (点击强制尝试)'"
-          @click="$emit('pop-out')"
-        >
-          🗗 {{ !canPiP ? '(不支持)' : '' }}
+        <button v-if="!isPip" class="voice-reader-pip" :class="{ disabled: !canPiP }"
+          :title="canPiP ? '画中画悬浮窗' : '画中画悬浮窗'" @click="$emit('pop-out')">
+          🗗PIP
         </button>
         <button class="voice-reader-close" @click="$emit('close')">&times;</button>
       </div>
@@ -20,18 +15,18 @@
     <div class="content-body" :class="layout">
       <!-- Steps Display -->
       <div class="steps-info">
-        
+
         <!-- Vertical Layout Steps -->
         <div v-if="layout === 'vertical'" class="steps-list vertical-list">
-          <div v-for="(s, idx) in prevSteps" :key="'p'+idx" class="step-other prev-step">
+          <div v-for="(s, idx) in prevSteps" :key="'p' + idx" class="step-other prev-step">
             <span class="step-time">{{ s.time }}</span> {{ s.text }}
           </div>
           <div class="step-main" v-if="currentStep">
-            <span class="step-time current-time">{{ currentStep.time }}</span> 
+            <span class="step-time current-time">{{ currentStep.time }}</span>
             <span class="step-text">{{ currentStep.text }}</span>
           </div>
           <div class="step-main" v-else>等待开始...</div>
-          <div v-for="(s, idx) in nextSteps" :key="'n'+idx" class="step-other next-step">
+          <div v-for="(s, idx) in nextSteps" :key="'n' + idx" class="step-other next-step">
             <span class="step-time">{{ s.time }}</span> {{ s.text }}
           </div>
         </div>
@@ -39,19 +34,19 @@
         <!-- Horizontal Layout Steps -->
         <div v-else class="steps-list horizontal-list">
           <div class="step-main" v-if="currentStep">
-            <span class="step-time current-time">{{ currentStep.time }}</span> 
+            <span class="step-time current-time">{{ currentStep.time }}</span>
             <span class="step-text">{{ currentStep.text }}</span>
           </div>
           <div class="step-main" v-else>等待开始...</div>
-          
+
           <div class="other-steps-row" v-if="prevSteps.length || nextSteps.length">
             <div class="prev-col">
-              <div v-for="(s, idx) in prevSteps" :key="'ph'+idx" class="step-other prev-step">
+              <div v-for="(s, idx) in prevSteps" :key="'ph' + idx" class="step-other prev-step">
                 {{ s.time }} {{ s.text }}
               </div>
             </div>
             <div class="next-col">
-              <div v-for="(s, idx) in nextSteps" :key="'nh'+idx" class="step-other next-step">
+              <div v-for="(s, idx) in nextSteps" :key="'nh' + idx" class="step-other next-step">
                 {{ s.time }} {{ s.text }}
               </div>
             </div>
@@ -81,7 +76,7 @@
       <div class="segment green"></div>
       <div class="segment red"></div>
       <div class="segment purple"></div>
-      
+
       <!-- Overlays for current step and full timeline -->
       <div class="progress-overlay step" :style="{ width: stepProgress * 100 + '%' }"></div>
       <div class="progress-overlay full" :style="{ width: timelineProgress * 100 + '%' }"></div>
@@ -174,7 +169,8 @@ defineEmits<{
   gap: 8px;
 }
 
-.voice-reader-pip, .voice-reader-close {
+.voice-reader-pip,
+.voice-reader-close {
   background: none;
   border: none;
   color: #8b949e;
@@ -184,7 +180,8 @@ defineEmits<{
   line-height: 1;
 }
 
-.voice-reader-pip:hover, .voice-reader-close:hover {
+.voice-reader-pip:hover,
+.voice-reader-close:hover {
   color: var(--accent-blue);
 }
 
@@ -270,7 +267,8 @@ defineEmits<{
   margin-top: 4px;
 }
 
-.prev-col, .next-col {
+.prev-col,
+.next-col {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -340,10 +338,21 @@ defineEmits<{
   width: 25%;
 }
 
-.segment.yellow { background: rgba(210, 153, 34, 0.4); }
-.segment.green { background: rgba(63, 185, 80, 0.4); }
-.segment.red { background: rgba(248, 81, 73, 0.4); }
-.segment.purple { background: rgba(163, 113, 247, 0.4); }
+.segment.yellow {
+  background: rgba(210, 153, 34, 0.4);
+}
+
+.segment.green {
+  background: rgba(63, 185, 80, 0.4);
+}
+
+.segment.red {
+  background: rgba(248, 81, 73, 0.4);
+}
+
+.segment.purple {
+  background: rgba(163, 113, 247, 0.4);
+}
 
 .progress-overlay {
   position: absolute;
@@ -354,12 +363,13 @@ defineEmits<{
 }
 
 .progress-overlay.step {
-  background: linear-gradient(90deg, 
-    #d29922 0%, #d29922 25%, 
-    #3fb950 25%, #3fb950 50%, 
-    #f85149 50%, #f85149 75%, 
-    #a371f7 75%, #a371f7 100%);
-  background-size: 100vw 100%; /* Fix gradient to segments */
+  background: linear-gradient(90deg,
+      #d29922 0%, #d29922 25%,
+      #3fb950 25%, #3fb950 50%,
+      #f85149 50%, #f85149 75%,
+      #a371f7 75%, #a371f7 100%);
+  background-size: 100vw 100%;
+  /* Fix gradient to segments */
   opacity: 0.8;
   z-index: 2;
 }
