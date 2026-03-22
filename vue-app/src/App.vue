@@ -75,7 +75,7 @@ import { usePyodide } from './composables/usePyodide'
 import { useVoiceReader } from './composables/useVoiceReader'
 import { useDocumentPiP } from './composables/useDocumentPiP'
 import { getDisplayUnitText } from './composables/useTranslation'
-import { formatGameTime } from './utils'
+// import { formatGameTime } from './utils'
 import type { ReplayData, PlayerData } from './types'
 
 import ReplayUploader from './components/ReplayUploader.vue'
