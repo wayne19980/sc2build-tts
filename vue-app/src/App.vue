@@ -76,7 +76,7 @@ import { usePyodide } from './composables/usePyodide'
 import { useVoiceReader } from './composables/useVoiceReader'
 import { useDocumentPiP } from './composables/useDocumentPiP'
 import { getDisplayUnitText } from './composables/useTranslation'
-import { formatGameTime } from './utils'
+import { formatRealTime, SC2_FASTER_REAL_FACTOR } from './utils'
 import type { ReplayData, PlayerData } from './types'
 
 import ReplayUploader from './components/ReplayUploader.vue'
@@ -135,18 +135,16 @@ const voicePlayerName = ref('')
 const voiceLayout = ref<'horizontal' | 'vertical'>('horizontal')
 const currentVoicePlayer = ref<PlayerData | null>(null)
 
-const voiceTimerStr = computed(() => {
-  const s = voiceGameClockSeconds()
-  const m = Math.floor(s / 60)
-  const ss = Math.floor(s % 60)
-  return `${m.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
-})
+const voiceTimerStr = computed(() => formatRealTime(voiceGameClockSeconds()))
 
 const currentVoiceStepObj = computed(() => {
   const i = voiceCurrentIndex.value
   if (i < 0 || i >= voiceSteps.value.length) return null
   const s = voiceSteps.value[i]
-  return { time: formatGameTime(s.time), text: s.text }
+  return {
+    time: formatRealTime(s.time / SC2_FASTER_REAL_FACTOR),
+    text: s.text
+  }
 })
 
 const prevVoiceSteps = computed(() => {
@@ -154,16 +152,19 @@ const prevVoiceSteps = computed(() => {
   if (i <= 0) return []
   const start = Math.max(0, i - 2)
   return voiceSteps.value.slice(start, i).map(s => ({
-    time: formatGameTime(s.time),
+    time: formatRealTime(s.time / SC2_FASTER_REAL_FACTOR),
     text: s.text
   }))
 })
 
 const nextVoiceSteps = computed(() => {
   const i = voiceCurrentIndex.value
-  if (i < 0) return voiceSteps.value.slice(0, 2).map(s => ({ time: formatGameTime(s.time), text: s.text }))
+  if (i < 0) return voiceSteps.value.slice(0, 2).map(s => ({
+    time: formatRealTime(s.time / SC2_FASTER_REAL_FACTOR),
+    text: s.text
+  }))
   return voiceSteps.value.slice(i + 1, i + 3).map(s => ({
-    time: formatGameTime(s.time),
+    time: formatRealTime(s.time / SC2_FASTER_REAL_FACTOR),
     text: s.text
   }))
 })
