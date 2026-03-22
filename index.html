@@ -813,7 +813,26 @@
         background: #30363d;
         color: #e6edf3;
       }
+      #pipBtn {
+        background: none;
+        border: none;
+        color: #8b949e;
+        cursor: pointer;
+        font-size: 1.25rem;
+        padding: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        filter: grayscale(1);
+      }
+      #pipBtn:hover {
+        color: var(--purple);
+        filter: grayscale(0);
+        transform: scale(1.1);
+      }
       .voice-settings {
+
         border-top: 1px solid #30363d;
         padding-top: 12px;
         font-size: 0.75rem;
@@ -899,7 +918,10 @@
       <div class="voice-reader-panel" id="voiceReader">
         <div class="voice-reader-header">
           <h3 id="voice-player-name">Build Order Reader</h3>
-          <button class="voice-reader-close" id="voiceClose">&times;</button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="pipBtn" title="画中画模式">🖼️</button>
+            <button class="voice-reader-close" id="voiceClose">&times;</button>
+          </div>
         </div>
         <div id="voice-timer">00:00</div>
         <div class="voice-queue">
@@ -1800,6 +1822,10 @@ json.dumps(result)
       const voiceRateInput = document.getElementById("voiceRate");
       const voiceLangSelect = document.getElementById("voiceLang");
       const voicePlayerName = document.getElementById("voice-player-name");
+      const pipBtn = document.getElementById("pipBtn");
+      
+      let pipWindow = null;
+
 
       const vQ_2 = document.getElementById("v-q-2");
       const vQ_1 = document.getElementById("v-q-1");
@@ -2023,6 +2049,146 @@ json.dumps(result)
 
       voicePlayBtn.onclick = toggleVoicePlay;
       voiceResetBtn.onclick = resetVoice;
+
+      async function requestPiP() {
+        if ("documentPictureInPicture" in window) {
+          try {
+            if (pipWindow) {
+              pipWindow.close();
+              return;
+            }
+
+            pipWindow = await window.documentPictureInPicture.requestWindow({
+              width: 340,
+              height: 400,
+            });
+
+            // Set background color for PiP window body
+            pipWindow.document.body.style.background = "#0d1117";
+            pipWindow.document.body.style.padding = "0";
+            pipWindow.document.body.style.margin = "0";
+            pipWindow.document.body.style.overflow = "hidden";
+
+            // Copy styles
+            Array.from(document.styleSheets).forEach((sheet) => {
+              try {
+                const rules = Array.from(sheet.cssRules)
+                  .map((r) => r.cssText)
+                  .join("");
+                const style = document.createElement("style");
+                style.textContent = rules;
+                pipWindow.document.head.appendChild(style);
+              } catch (e) {
+                const link = document.createElement("link");
+                if (sheet.href) {
+                  link.rel = "stylesheet";
+                  link.href = sheet.href;
+                  pipWindow.document.head.appendChild(link);
+                }
+              }
+            });
+
+            // Move panels
+            const originalParent = voiceReader.parentElement;
+            const originalSibling = voiceReader.nextElementSibling;
+            pipWindow.document.body.appendChild(voiceReader);
+
+            // Hide PiP button in the window to avoid nesting
+            pipBtn.style.display = "none";
+
+            // Style for PiP
+            voiceReader.style.position = "static";
+            voiceReader.style.width = "100%";
+            voiceReader.style.height = "100%";
+            voiceReader.style.boxShadow = "none";
+            voiceReader.style.border = "none";
+            voiceReader.style.background = "transparent";
+
+            pipWindow.addEventListener(
+              "pagehide",
+              () => {
+                if (originalParent) {
+                  if (originalSibling)
+                    originalParent.insertBefore(voiceReader, originalSibling);
+                  else originalParent.appendChild(voiceReader);
+                }
+                // Restore styles
+                voiceReader.style.position = "fixed";
+                voiceReader.style.bottom = "20px";
+                voiceReader.style.right = "20px";
+                voiceReader.style.width = "340px";
+                voiceReader.style.boxShadow = "0 10px 40px rgba(0, 0, 0, 0.6)";
+                voiceReader.style.border = "1px solid #30363d";
+                voiceReader.style.background = "rgba(22, 27, 34, 0.98)";
+                pipBtn.style.display = "inline-flex";
+                pipWindow = null;
+              },
+              { once: true },
+            );
+          } catch (err) {
+            console.error("Document PiP failed", err);
+            requestVideoPiP();
+          }
+        } else {
+          requestVideoPiP();
+        }
+      }
+
+      async function requestVideoPiP() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 340;
+        canvas.height = 180;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const video = document.createElement("video");
+        video.muted = true;
+        video.srcObject = canvas.captureStream();
+        await video.play();
+
+        document.body.appendChild(video);
+        video.style.position = "fixed";
+        video.style.top = "-1000px";
+
+        const draw = () => {
+          if (!video.srcObject) return;
+
+          ctx.fillStyle = "#0d1117";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // Timer
+          ctx.fillStyle = "#3fb950";
+          ctx.font = 'bold 36px "JetBrains Mono", monospace';
+          ctx.textAlign = "center";
+          ctx.fillText(voiceTimer.innerText, canvas.width / 2, 60);
+
+          // Step
+          ctx.fillStyle = "#e6edf3";
+          ctx.font = 'bold 24px "Noto Sans SC", sans-serif';
+          ctx.fillText(vQ0.innerText, canvas.width / 2, 110);
+
+          // Next
+          ctx.fillStyle = "#8b949e";
+          ctx.font = '16px "Noto Sans SC", sans-serif';
+          ctx.fillText("Next: " + (vQ1.innerText || "---"), canvas.width / 2, 150);
+
+          if (video.readyState >= 2) {
+            requestAnimationFrame(draw);
+          }
+        };
+        draw();
+
+        try {
+          await video.requestPictureInPicture();
+          video.onleavepictureinpicture = () => video.remove();
+        } catch (err) {
+          console.error("Video PiP failed", err);
+          alert("浏览器不支持画中画模式");
+        }
+      }
+
+      pipBtn.onclick = requestPiP;
+
 
       voiceTimeline.onclick = function (e) {
         if (!voiceSteps.length) return;
