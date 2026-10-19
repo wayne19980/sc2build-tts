@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "sc2build-tts",
-  "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "version": "0.4.0",
+  "identifier": "com.sc2buildlab.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,14 +12,17 @@
   "app": {
     "windows": [
       {
-        "title": "SC2 Build Order TTS",
+        "title": "SC2 Build Lab",
         "label": "main",
-        "width": 800,
-        "height": 600,
+        "width": 1440,
+        "height": 900,
+        "minWidth": 800,
+        "minHeight": 600,
         "resizable": true,
         "fullscreen": false,
-        "alwaysOnTop": true,
-        "transparent": true
+        "alwaysOnTop": false,
+        "transparent": false,
+        "decorations": true
       }
     ],
     "security": {
@@ -35,6 +38,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/sc2analyzer-api"
     ]
   }
 }

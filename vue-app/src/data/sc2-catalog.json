@@ -1,0 +1,1840 @@
+{
+  "Nexus": {
+    "key": "Nexus",
+    "abbr": "Pbn",
+    "name": "Nexus",
+    "nameZh": "星灵枢纽",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "Assimilator": {
+    "key": "Assimilator",
+    "abbr": "Pba",
+    "name": "Assimilator",
+    "nameZh": "吸纳仓",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "Pylon": {
+    "key": "Pylon",
+    "abbr": "Pbe",
+    "name": "Pylon",
+    "nameZh": "水晶塔",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "Gateway": {
+    "key": "Gateway",
+    "abbr": "Pbg",
+    "name": "Gateway",
+    "nameZh": "传送门",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "WarpGate": {
+    "key": "WarpGate",
+    "abbr": "Pbgg",
+    "name": "Warp Gate",
+    "nameZh": "变形折跃门",
+    "kind": "building",
+    "race": "P",
+    "aliases": [
+      "WarpGate"
+    ]
+  },
+  "Forge": {
+    "key": "Forge",
+    "abbr": "Pbf",
+    "name": "Forge",
+    "nameZh": "锻炉",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "CyberneticsCore": {
+    "key": "CyberneticsCore",
+    "abbr": "Pby",
+    "name": "Cybernetics Core",
+    "nameZh": "控制芯核",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "PhotonCannon": {
+    "key": "PhotonCannon",
+    "abbr": "Pbc",
+    "name": "Photon Cannon",
+    "nameZh": "光子炮台",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "ShieldBattery": {
+    "key": "ShieldBattery",
+    "abbr": "Pbb",
+    "name": "Shield Battery",
+    "nameZh": "护盾充能器",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "Stargate": {
+    "key": "Stargate",
+    "abbr": "Pvs",
+    "name": "Stargate",
+    "nameZh": "星门",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "RoboticsFacility": {
+    "key": "RoboticsFacility",
+    "abbr": "Pvr",
+    "name": "Robotics Facility",
+    "nameZh": "机械台",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "TwilightCouncil": {
+    "key": "TwilightCouncil",
+    "abbr": "Pvc",
+    "name": "Twilight Council",
+    "nameZh": "光影议会",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "RoboticsBay": {
+    "key": "RoboticsBay",
+    "abbr": "Pvb",
+    "name": "Robotics Bay",
+    "nameZh": "机械研究所",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "FleetBeacon": {
+    "key": "FleetBeacon",
+    "abbr": "Pvf",
+    "name": "Fleet Beacon",
+    "nameZh": "舰队航标",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "TemplarArchive": {
+    "key": "TemplarArchive",
+    "abbr": "Pvt",
+    "name": "Templar Archives",
+    "nameZh": "圣堂武士文献馆",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "DarkShrine": {
+    "key": "DarkShrine",
+    "abbr": "Pvd",
+    "name": "Dark Shrine",
+    "nameZh": "黑暗圣坛",
+    "kind": "building",
+    "race": "P",
+    "aliases": []
+  },
+  "Probe": {
+    "key": "Probe",
+    "abbr": "Pbne",
+    "name": "Probe",
+    "nameZh": "探机",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Zealot": {
+    "key": "Zealot",
+    "abbr": "Pbgz",
+    "name": "Zealot",
+    "nameZh": "狂热者",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Stalker": {
+    "key": "Stalker",
+    "abbr": "Pbgs",
+    "name": "Stalker",
+    "nameZh": "追猎者",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Sentry": {
+    "key": "Sentry",
+    "abbr": "Pbge",
+    "name": "Sentry",
+    "nameZh": "机械哨兵",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Adept": {
+    "key": "Adept",
+    "abbr": "Pbgh",
+    "name": "Adept",
+    "nameZh": "使徒",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "HighTemplar": {
+    "key": "HighTemplar",
+    "abbr": "Pbgt",
+    "name": "High Templar",
+    "nameZh": "高阶圣堂武士",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "DarkTemplar": {
+    "key": "DarkTemplar",
+    "abbr": "Pbgd",
+    "name": "Dark Templar",
+    "nameZh": "黑暗圣堂武士",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Archon": {
+    "key": "Archon",
+    "abbr": "Pbgtt",
+    "name": "Archon",
+    "nameZh": "执政官",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Observer": {
+    "key": "Observer",
+    "abbr": "Pvrb",
+    "name": "Observer",
+    "nameZh": "侦测器",
+    "kind": "unit",
+    "race": "P",
+    "aliases": [
+      "ObserverSiegeMode"
+    ]
+  },
+  "Immortal": {
+    "key": "Immortal",
+    "abbr": "Pvri",
+    "name": "Immortal",
+    "nameZh": "不朽者",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Colossus": {
+    "key": "Colossus",
+    "abbr": "Pvrc",
+    "name": "Colossus",
+    "nameZh": "巨像",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Disruptor": {
+    "key": "Disruptor",
+    "abbr": "Pvrd",
+    "name": "Disruptor",
+    "nameZh": "干扰者",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "WarpPrism": {
+    "key": "WarpPrism",
+    "abbr": "Pvra",
+    "name": "Warp Prism",
+    "nameZh": "折跃棱镜",
+    "kind": "unit",
+    "race": "P",
+    "aliases": [
+      "WarpPrismPhasing"
+    ]
+  },
+  "Phoenix": {
+    "key": "Phoenix",
+    "abbr": "Pvsx",
+    "name": "Phoenix",
+    "nameZh": "凤凰战机",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "VoidRay": {
+    "key": "VoidRay",
+    "abbr": "Pvsv",
+    "name": "Void Ray",
+    "nameZh": "虚空辉光舰",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Oracle": {
+    "key": "Oracle",
+    "abbr": "Pvse",
+    "name": "Oracle",
+    "nameZh": "先知",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Tempest": {
+    "key": "Tempest",
+    "abbr": "Pvst",
+    "name": "Tempest",
+    "nameZh": "风暴战舰",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Carrier": {
+    "key": "Carrier",
+    "abbr": "Pvsc",
+    "name": "Carrier",
+    "nameZh": "航母",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "Mothership": {
+    "key": "Mothership",
+    "abbr": "Pbnm",
+    "name": "Mothership",
+    "nameZh": "母舰",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
+  "CommandCenter": {
+    "key": "CommandCenter",
+    "abbr": "Tbc",
+    "name": "Command Center",
+    "nameZh": "指挥中心",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "OrbitalCommand": {
+    "key": "OrbitalCommand",
+    "abbr": "Tbcb",
+    "name": "Orbital Command",
+    "nameZh": "轨道控制基地",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "PlanetaryFortress": {
+    "key": "PlanetaryFortress",
+    "abbr": "Tbcp",
+    "name": "Planetary Fortress",
+    "nameZh": "行星要塞",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "SupplyDepot": {
+    "key": "SupplyDepot",
+    "abbr": "Tbs",
+    "name": "Supply Depot",
+    "nameZh": "补给站",
+    "kind": "building",
+    "race": "T",
+    "aliases": [
+      "SupplyDepotLowered"
+    ]
+  },
+  "Refinery": {
+    "key": "Refinery",
+    "abbr": "Tbr",
+    "name": "Refinery",
+    "nameZh": "精炼厂",
+    "kind": "building",
+    "race": "T",
+    "aliases": [
+      "RefineryRich"
+    ]
+  },
+  "Barracks": {
+    "key": "Barracks",
+    "abbr": "Tbb",
+    "name": "Barracks",
+    "nameZh": "兵营",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "EngineeringBay": {
+    "key": "EngineeringBay",
+    "abbr": "Tbe",
+    "name": "Engineering Bay",
+    "nameZh": "工程站",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "Bunker": {
+    "key": "Bunker",
+    "abbr": "Tbu",
+    "name": "Bunker",
+    "nameZh": "地堡",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "SensorTower": {
+    "key": "SensorTower",
+    "abbr": "Tbn",
+    "name": "Sensor Tower",
+    "nameZh": "感应塔",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "MissileTurret": {
+    "key": "MissileTurret",
+    "abbr": "Tbt",
+    "name": "Missile Turret",
+    "nameZh": "导弹塔",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "Factory": {
+    "key": "Factory",
+    "abbr": "Tvf",
+    "name": "Factory",
+    "nameZh": "重工厂",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "GhostAcademy": {
+    "key": "GhostAcademy",
+    "abbr": "Tvg",
+    "name": "Ghost Academy",
+    "nameZh": "幽灵军校",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "Starport": {
+    "key": "Starport",
+    "abbr": "Tvs",
+    "name": "Starport",
+    "nameZh": "星港",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "Armory": {
+    "key": "Armory",
+    "abbr": "Tva",
+    "name": "Armory",
+    "nameZh": "军械库",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "FusionCore": {
+    "key": "FusionCore",
+    "abbr": "Tvc",
+    "name": "Fusion Core",
+    "nameZh": "聚变芯体",
+    "kind": "building",
+    "race": "T",
+    "aliases": []
+  },
+  "TechLab": {
+    "key": "TechLab",
+    "abbr": "Tx",
+    "name": "Tech Lab",
+    "nameZh": "科技实验室",
+    "kind": "building",
+    "race": "T",
+    "aliases": [
+      "BarracksTechLab",
+      "FactoryTechLab",
+      "StarportTechLab"
+    ]
+  },
+  "Reactor": {
+    "key": "Reactor",
+    "abbr": "Tc",
+    "name": "Reactor",
+    "nameZh": "反应堆挂件",
+    "kind": "building",
+    "race": "T",
+    "aliases": [
+      "BarracksReactor",
+      "FactoryReactor",
+      "StarportReactor"
+    ]
+  },
+  "SCV": {
+    "key": "SCV",
+    "abbr": "Tbcs",
+    "name": "SCV",
+    "nameZh": "SCV",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "MULE": {
+    "key": "MULE",
+    "abbr": "Tbcbe",
+    "name": "MULE",
+    "nameZh": "矿骡",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Marine": {
+    "key": "Marine",
+    "abbr": "Tbba",
+    "name": "Marine",
+    "nameZh": "陆战队员",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Marauder": {
+    "key": "Marauder",
+    "abbr": "Tbbd",
+    "name": "Marauder",
+    "nameZh": "劫掠者",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Reaper": {
+    "key": "Reaper",
+    "abbr": "Tbbr",
+    "name": "Reaper",
+    "nameZh": "收割者",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Ghost": {
+    "key": "Ghost",
+    "abbr": "Tbbg",
+    "name": "Ghost",
+    "nameZh": "幽灵",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Hellion": {
+    "key": "Hellion",
+    "abbr": "Tvfe",
+    "name": "Hellion",
+    "nameZh": "恶火",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Hellbat": {
+    "key": "Hellbat",
+    "abbr": "Tvfr",
+    "name": "Hellbat",
+    "nameZh": "恶蝠",
+    "kind": "unit",
+    "race": "T",
+    "aliases": [
+      "BattleHellion"
+    ]
+  },
+  "WidowMine": {
+    "key": "WidowMine",
+    "abbr": "Tvfd",
+    "name": "Widow Mine",
+    "nameZh": "寡妇雷",
+    "kind": "unit",
+    "race": "T",
+    "aliases": [
+      "WidowMineBurrowed"
+    ]
+  },
+  "Cyclone": {
+    "key": "Cyclone",
+    "abbr": "Tvfn",
+    "name": "Cyclone",
+    "nameZh": "飓风",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "SiegeTank": {
+    "key": "SiegeTank",
+    "abbr": "Tvfs",
+    "name": "Siege Tank",
+    "nameZh": "攻城坦克",
+    "kind": "unit",
+    "race": "T",
+    "aliases": [
+      "SiegeTankSieged"
+    ]
+  },
+  "Thor": {
+    "key": "Thor",
+    "abbr": "Tvft",
+    "name": "Thor",
+    "nameZh": "雷神",
+    "kind": "unit",
+    "race": "T",
+    "aliases": [
+      "ThorAP"
+    ]
+  },
+  "Viking": {
+    "key": "Viking",
+    "abbr": "Tvsv",
+    "name": "Viking",
+    "nameZh": "维京战机",
+    "kind": "unit",
+    "race": "T",
+    "aliases": [
+      "VikingFighter",
+      "VikingAssault"
+    ]
+  },
+  "Medivac": {
+    "key": "Medivac",
+    "abbr": "Tvsd",
+    "name": "Medivac",
+    "nameZh": "医疗运输机",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Liberator": {
+    "key": "Liberator",
+    "abbr": "Tvsn",
+    "name": "Liberator",
+    "nameZh": "解放者",
+    "kind": "unit",
+    "race": "T",
+    "aliases": [
+      "LiberatorAG"
+    ]
+  },
+  "Raven": {
+    "key": "Raven",
+    "abbr": "Tvsr",
+    "name": "Raven",
+    "nameZh": "铁鸦",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Banshee": {
+    "key": "Banshee",
+    "abbr": "Tvse",
+    "name": "Banshee",
+    "nameZh": "女妖",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Battlecruiser": {
+    "key": "Battlecruiser",
+    "abbr": "Tvsb",
+    "name": "Battlecruiser",
+    "nameZh": "战列巡洋舰",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
+  "Hatchery": {
+    "key": "Hatchery",
+    "abbr": "Zbh",
+    "name": "Hatchery",
+    "nameZh": "孵化场",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "Lair": {
+    "key": "Lair",
+    "abbr": "Zbhl",
+    "name": "Lair",
+    "nameZh": "虫穴",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "Hive": {
+    "key": "Hive",
+    "abbr": "Zbhlh",
+    "name": "Hive",
+    "nameZh": "主巢",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "Extractor": {
+    "key": "Extractor",
+    "abbr": "Zbe",
+    "name": "Extractor",
+    "nameZh": "萃取房",
+    "kind": "building",
+    "race": "Z",
+    "aliases": [
+      "ExtractorRich"
+    ]
+  },
+  "SpawningPool": {
+    "key": "SpawningPool",
+    "abbr": "Zbs",
+    "name": "Spawning Pool",
+    "nameZh": "分裂池",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "EvolutionChamber": {
+    "key": "EvolutionChamber",
+    "abbr": "Zbv",
+    "name": "Evolution Chamber",
+    "nameZh": "进化腔",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "RoachWarren": {
+    "key": "RoachWarren",
+    "abbr": "Zbr",
+    "name": "Roach Warren",
+    "nameZh": "蟑螂温室",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "BanelingNest": {
+    "key": "BanelingNest",
+    "abbr": "Zbb",
+    "name": "Baneling Nest",
+    "nameZh": "爆虫巢穴",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "SpineCrawler": {
+    "key": "SpineCrawler",
+    "abbr": "Zbc",
+    "name": "Spine Crawler",
+    "nameZh": "脊针爬虫",
+    "kind": "building",
+    "race": "Z",
+    "aliases": [
+      "SpineCrawlerUprooted"
+    ]
+  },
+  "SporeCrawler": {
+    "key": "SporeCrawler",
+    "abbr": "Zba",
+    "name": "Spore Crawler",
+    "nameZh": "孢子爬虫",
+    "kind": "building",
+    "race": "Z",
+    "aliases": [
+      "SporeCrawlerUprooted"
+    ]
+  },
+  "HydraliskDen": {
+    "key": "HydraliskDen",
+    "abbr": "Zvh",
+    "name": "Hydralisk Den",
+    "nameZh": "刺蛇巢",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "LurkerDen": {
+    "key": "LurkerDen",
+    "abbr": "Zvd",
+    "name": "Lurker Den",
+    "nameZh": "潜伏者巢穴",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "InfestationPit": {
+    "key": "InfestationPit",
+    "abbr": "Zvi",
+    "name": "Infestation Pit",
+    "nameZh": "感染深渊",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "Spire": {
+    "key": "Spire",
+    "abbr": "Zvs",
+    "name": "Spire",
+    "nameZh": "尖塔",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "GreaterSpire": {
+    "key": "GreaterSpire",
+    "abbr": "Zvsg",
+    "name": "Greater Spire",
+    "nameZh": "巨型尖塔",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "NydusNetwork": {
+    "key": "NydusNetwork",
+    "abbr": "Zvn",
+    "name": "Nydus Network",
+    "nameZh": "虫道网络",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "UltraliskCavern": {
+    "key": "UltraliskCavern",
+    "abbr": "Zvu",
+    "name": "Ultralisk Cavern",
+    "nameZh": "雷兽窟",
+    "kind": "building",
+    "race": "Z",
+    "aliases": []
+  },
+  "Drone": {
+    "key": "Drone",
+    "abbr": "Zsd",
+    "name": "Drone",
+    "nameZh": "工蜂",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "DroneBurrowed"
+    ]
+  },
+  "Overlord": {
+    "key": "Overlord",
+    "abbr": "Zsv",
+    "name": "Overlord",
+    "nameZh": "王虫",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": []
+  },
+  "Queen": {
+    "key": "Queen",
+    "abbr": "Zbhq",
+    "name": "Queen",
+    "nameZh": "虫后",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "QueenBurrowed"
+    ]
+  },
+  "Zergling": {
+    "key": "Zergling",
+    "abbr": "Zsz",
+    "name": "Zergling",
+    "nameZh": "跳虫",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "ZerglingBurrowed"
+    ]
+  },
+  "Baneling": {
+    "key": "Baneling",
+    "abbr": "Zsze",
+    "name": "Baneling",
+    "nameZh": "爆虫",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "BanelingBurrowed"
+    ]
+  },
+  "Roach": {
+    "key": "Roach",
+    "abbr": "Zsr",
+    "name": "Roach",
+    "nameZh": "蟑螂",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "RoachBurrowed"
+    ]
+  },
+  "Ravager": {
+    "key": "Ravager",
+    "abbr": "Zsrv",
+    "name": "Ravager",
+    "nameZh": "破坏者",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "RavagerBurrowed"
+    ]
+  },
+  "Hydralisk": {
+    "key": "Hydralisk",
+    "abbr": "Zsh",
+    "name": "Hydralisk",
+    "nameZh": "刺蛇",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "HydraliskBurrowed"
+    ]
+  },
+  "Lurker": {
+    "key": "Lurker",
+    "abbr": "Zshe",
+    "name": "Lurker",
+    "nameZh": "潜伏者",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "LurkerBurrowed"
+    ]
+  },
+  "Infestor": {
+    "key": "Infestor",
+    "abbr": "Zsf",
+    "name": "Infestor",
+    "nameZh": "感染者",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "InfestorBurrowed"
+    ]
+  },
+  "SwarmHost": {
+    "key": "SwarmHost",
+    "abbr": "Zsa",
+    "name": "Swarm Host",
+    "nameZh": "虫群宿主",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "SwarmHostBurrowed"
+    ]
+  },
+  "Ultralisk": {
+    "key": "Ultralisk",
+    "abbr": "Zsu",
+    "name": "Ultralisk",
+    "nameZh": "雷兽",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "UltraliskBurrowed"
+    ]
+  },
+  "Mutalisk": {
+    "key": "Mutalisk",
+    "abbr": "Zst",
+    "name": "Mutalisk",
+    "nameZh": "异龙",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": []
+  },
+  "Corruptor": {
+    "key": "Corruptor",
+    "abbr": "Zsc",
+    "name": "Corruptor",
+    "nameZh": "腐化者",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": []
+  },
+  "BroodLord": {
+    "key": "BroodLord",
+    "abbr": "Zscb",
+    "name": "Brood Lord",
+    "nameZh": "巢虫领主",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": []
+  },
+  "Viper": {
+    "key": "Viper",
+    "abbr": "Zse",
+    "name": "Viper",
+    "nameZh": "飞蛇",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": []
+  },
+  "Overseer": {
+    "key": "Overseer",
+    "abbr": "Zsvv",
+    "name": "Overseer",
+    "nameZh": "眼虫",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": [
+      "OverseerSiegeMode"
+    ]
+  },
+  "NydusWorm": {
+    "key": "NydusWorm",
+    "abbr": "Zvnn",
+    "name": "Nydus Worm",
+    "nameZh": "坑道虫",
+    "kind": "unit",
+    "race": "Z",
+    "aliases": []
+  },
+  "WarpGateResearch": {
+    "key": "WarpGateResearch",
+    "abbr": "Pbyg",
+    "name": "Warp Gate",
+    "nameZh": "研究折跃门",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "Charge": {
+    "key": "Charge",
+    "abbr": "Pvcc",
+    "name": "Charge",
+    "nameZh": "冲锋",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "BlinkTech": {
+    "key": "BlinkTech",
+    "abbr": "Pvcb",
+    "name": "Blink",
+    "nameZh": "闪现",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ResonatingGlaives": {
+    "key": "ResonatingGlaives",
+    "abbr": "Pvca",
+    "name": "Resonating Glaives",
+    "nameZh": "共鸣之刃",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "PsiStormTech": {
+    "key": "PsiStormTech",
+    "abbr": "Pvtt",
+    "name": "Psionic Storm",
+    "nameZh": "灵能风暴",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ShadowStride": {
+    "key": "ShadowStride",
+    "abbr": "Pvdb",
+    "name": "Shadow Stride",
+    "nameZh": "暗影步",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "GraviticDrive": {
+    "key": "GraviticDrive",
+    "abbr": "Pvbg",
+    "name": "Gravitic Drive",
+    "nameZh": "重力驱动器",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "GraviticBoosters": {
+    "key": "GraviticBoosters",
+    "abbr": "Pvbb",
+    "name": "Gravitic Boosters",
+    "nameZh": "重力加速器",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ExtendedThermalLance": {
+    "key": "ExtendedThermalLance",
+    "abbr": "Pvbe",
+    "name": "Extended Thermal Lance",
+    "nameZh": "加长热能射线枪",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "AnionPulseCrystals": {
+    "key": "AnionPulseCrystals",
+    "abbr": "Pvfr",
+    "name": "Anion Pulse-Crystals",
+    "nameZh": "阴离子脉冲水晶",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "FluxVanes": {
+    "key": "FluxVanes",
+    "abbr": "Pvff",
+    "name": "Flux Vanes",
+    "nameZh": "熔流旋叶",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "TectonicDestabilizers": {
+    "key": "TectonicDestabilizers",
+    "abbr": "Pvft",
+    "name": "Tectonic Destabilizers",
+    "nameZh": "构造失稳器",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "Stimpack": {
+    "key": "Stimpack",
+    "abbr": "Tbbxt",
+    "name": "Stimpack",
+    "nameZh": "强化剂",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "ShieldWall": {
+    "key": "ShieldWall",
+    "abbr": "Tbbxc",
+    "name": "Combat Shield",
+    "nameZh": "防暴盾牌",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "PunisherGrenades": {
+    "key": "PunisherGrenades",
+    "abbr": "Tbbxg",
+    "name": "Concussive Shells",
+    "nameZh": "震撼弹",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": [
+      "ConcussiveShells"
+    ]
+  },
+  "NeosteelArmor": {
+    "key": "NeosteelArmor",
+    "abbr": "Tbeb",
+    "name": "Neosteel Armor",
+    "nameZh": "精钢护甲",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "HiSecAutoTracking": {
+    "key": "HiSecAutoTracking",
+    "abbr": "Tbeh",
+    "name": "Hi-Sec Auto Tracking",
+    "nameZh": "瞬时自动追踪",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "PersonalCloaking": {
+    "key": "PersonalCloaking",
+    "abbr": "Tvgc",
+    "name": "Personal Cloaking",
+    "nameZh": "隐形迷彩",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "CaduceusReactor": {
+    "key": "CaduceusReactor",
+    "abbr": "Tvca",
+    "name": "Caduceus Reactor",
+    "nameZh": "卡度休斯反应堆",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "AdvancedBallistics": {
+    "key": "AdvancedBallistics",
+    "abbr": "Tvcn",
+    "name": "Advanced Ballistics",
+    "nameZh": "强化弹道",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "YamatoCannon": {
+    "key": "YamatoCannon",
+    "abbr": "Tvcr",
+    "name": "Yamato Cannon",
+    "nameZh": "大和炮",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "DrillClaws": {
+    "key": "DrillClaws",
+    "abbr": "Tvfxc",
+    "name": "Drilling Claws",
+    "nameZh": "钻地之爪",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "InfernalPreigniter": {
+    "key": "InfernalPreigniter",
+    "abbr": "Tvfxi",
+    "name": "Infernal Pre-Igniter",
+    "nameZh": "地狱火预燃器",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "MagFieldAccelerator": {
+    "key": "MagFieldAccelerator",
+    "abbr": "Tvfxr",
+    "name": "Mag-Field Accelerator",
+    "nameZh": "电磁立场加速器",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "SmartServos": {
+    "key": "SmartServos",
+    "abbr": "Tvfxs",
+    "name": "Smart Servos",
+    "nameZh": "智能伺服器",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "HyperflightRotors": {
+    "key": "HyperflightRotors",
+    "abbr": "Tvsxb",
+    "name": "Hyperflight Rotors",
+    "nameZh": "高速旋翼",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "CloakingField": {
+    "key": "CloakingField",
+    "abbr": "Tvsxc",
+    "name": "Banshee Cloaking Field",
+    "nameZh": "隐形立场",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": [
+      "BansheeCloak"
+    ]
+  },
+  "InterferenceMatrix": {
+    "key": "InterferenceMatrix",
+    "abbr": "Tvsxe",
+    "name": "Interference Matrix",
+    "nameZh": "干扰矩阵",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "MetabolicBoost": {
+    "key": "MetabolicBoost",
+    "abbr": "Zbsm",
+    "name": "Metabolic Boost",
+    "nameZh": "代谢加速",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "AdrenalGlands": {
+    "key": "AdrenalGlands",
+    "abbr": "Zbsa",
+    "name": "Adrenal Glands",
+    "nameZh": "肾上腺体",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "CentrifugalHooks": {
+    "key": "CentrifugalHooks",
+    "abbr": "Zbbc",
+    "name": "Centrifugal Hooks",
+    "nameZh": "环心镰钩",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "Burrow": {
+    "key": "Burrow",
+    "abbr": "Zbhb",
+    "name": "Burrow",
+    "nameZh": "潜地",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "PneumatizedCarapace": {
+    "key": "PneumatizedCarapace",
+    "abbr": "Zbhp",
+    "name": "Pneumatized Carapace",
+    "nameZh": "充气甲壳",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "GlialReconstitution": {
+    "key": "GlialReconstitution",
+    "abbr": "Zbrg",
+    "name": "Glial Reconstitution",
+    "nameZh": "神经胶原重组",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "TunnelingClaws": {
+    "key": "TunnelingClaws",
+    "abbr": "Zbrt",
+    "name": "Tunneling Claws",
+    "nameZh": "掘地之爪",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "GroovedSpines": {
+    "key": "GroovedSpines",
+    "abbr": "Zvhg",
+    "name": "Grooved Spines",
+    "nameZh": "深槽脊刺",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "MuscularAugments": {
+    "key": "MuscularAugments",
+    "abbr": "Zvhf",
+    "name": "Muscular Augments",
+    "nameZh": "纳米肌肉膨胀",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "NeuralParasite": {
+    "key": "NeuralParasite",
+    "abbr": "Zvie",
+    "name": "Neural Parasite",
+    "nameZh": "精神寄生",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "MicrobialShroud": {
+    "key": "MicrobialShroud",
+    "abbr": "Zvic",
+    "name": "Microbial Shroud",
+    "nameZh": "微生物环绕云",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ChitinousPlating": {
+    "key": "ChitinousPlating",
+    "abbr": "Zvua",
+    "name": "Chitinous Plating",
+    "nameZh": "进化骨板",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "AnabolicSynthesis": {
+    "key": "AnabolicSynthesis",
+    "abbr": "Zvuc",
+    "name": "Anabolic Synthesis",
+    "nameZh": "合成代谢",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "AdaptiveTalons": {
+    "key": "AdaptiveTalons",
+    "abbr": "Zvdd",
+    "name": "Adaptive Talons",
+    "nameZh": "适应之爪",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "SeismicSpines": {
+    "key": "SeismicSpines",
+    "abbr": "Zvds",
+    "name": "Seismic Spines",
+    "nameZh": "震地脊刺",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "VentralSacs": {
+    "key": "VentralSacs",
+    "abbr": "Zsvt",
+    "name": "Ventral Sacs",
+    "nameZh": "变异腹囊",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ProtossGroundWeaponsLevel1": {
+    "key": "ProtossGroundWeaponsLevel1",
+    "abbr": "Pbfg",
+    "name": "Ground Weapons 1",
+    "nameZh": "地面武器 1",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossGroundWeaponsLevel2": {
+    "key": "ProtossGroundWeaponsLevel2",
+    "abbr": "Pbfg",
+    "name": "Ground Weapons 2",
+    "nameZh": "地面武器 2",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossGroundWeaponsLevel3": {
+    "key": "ProtossGroundWeaponsLevel3",
+    "abbr": "Pbfg",
+    "name": "Ground Weapons 3",
+    "nameZh": "地面武器 3",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossGroundArmorsLevel1": {
+    "key": "ProtossGroundArmorsLevel1",
+    "abbr": "Pbfa",
+    "name": "Ground Armor 1",
+    "nameZh": "地面护甲 1",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossGroundArmorsLevel2": {
+    "key": "ProtossGroundArmorsLevel2",
+    "abbr": "Pbfa",
+    "name": "Ground Armor 2",
+    "nameZh": "地面护甲 2",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossGroundArmorsLevel3": {
+    "key": "ProtossGroundArmorsLevel3",
+    "abbr": "Pbfa",
+    "name": "Ground Armor 3",
+    "nameZh": "地面护甲 3",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossPlasmaShieldsLevel1": {
+    "key": "ProtossPlasmaShieldsLevel1",
+    "abbr": "Pbfs",
+    "name": "Plasma Shields 1",
+    "nameZh": "护盾 1",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossPlasmaShieldsLevel2": {
+    "key": "ProtossPlasmaShieldsLevel2",
+    "abbr": "Pbfs",
+    "name": "Plasma Shields 2",
+    "nameZh": "护盾 2",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossPlasmaShieldsLevel3": {
+    "key": "ProtossPlasmaShieldsLevel3",
+    "abbr": "Pbfs",
+    "name": "Plasma Shields 3",
+    "nameZh": "护盾 3",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossAirWeaponsLevel1": {
+    "key": "ProtossAirWeaponsLevel1",
+    "abbr": "Pbya",
+    "name": "Air Weapons 1",
+    "nameZh": "空中武器 1",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossAirWeaponsLevel2": {
+    "key": "ProtossAirWeaponsLevel2",
+    "abbr": "Pbya",
+    "name": "Air Weapons 2",
+    "nameZh": "空中武器 2",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossAirWeaponsLevel3": {
+    "key": "ProtossAirWeaponsLevel3",
+    "abbr": "Pbya",
+    "name": "Air Weapons 3",
+    "nameZh": "空中武器 3",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossAirArmorsLevel1": {
+    "key": "ProtossAirArmorsLevel1",
+    "abbr": "Pbye",
+    "name": "Air Armor 1",
+    "nameZh": "空中护甲 1",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossAirArmorsLevel2": {
+    "key": "ProtossAirArmorsLevel2",
+    "abbr": "Pbye",
+    "name": "Air Armor 2",
+    "nameZh": "空中护甲 2",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "ProtossAirArmorsLevel3": {
+    "key": "ProtossAirArmorsLevel3",
+    "abbr": "Pbye",
+    "name": "Air Armor 3",
+    "nameZh": "空中护甲 3",
+    "kind": "upgrade",
+    "race": "P",
+    "aliases": []
+  },
+  "TerranInfantryWeaponsLevel1": {
+    "key": "TerranInfantryWeaponsLevel1",
+    "abbr": "Tbee",
+    "name": "Infantry Weapons 1",
+    "nameZh": "步兵武器 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranInfantryWeaponsLevel2": {
+    "key": "TerranInfantryWeaponsLevel2",
+    "abbr": "Tbee",
+    "name": "Infantry Weapons 2",
+    "nameZh": "步兵武器 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranInfantryWeaponsLevel3": {
+    "key": "TerranInfantryWeaponsLevel3",
+    "abbr": "Tbee",
+    "name": "Infantry Weapons 3",
+    "nameZh": "步兵武器 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranInfantryArmorsLevel1": {
+    "key": "TerranInfantryArmorsLevel1",
+    "abbr": "Tbea",
+    "name": "Infantry Armor 1",
+    "nameZh": "步兵护甲 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranInfantryArmorsLevel2": {
+    "key": "TerranInfantryArmorsLevel2",
+    "abbr": "Tbea",
+    "name": "Infantry Armor 2",
+    "nameZh": "步兵护甲 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranInfantryArmorsLevel3": {
+    "key": "TerranInfantryArmorsLevel3",
+    "abbr": "Tbea",
+    "name": "Infantry Armor 3",
+    "nameZh": "步兵护甲 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranVehicleWeaponsLevel1": {
+    "key": "TerranVehicleWeaponsLevel1",
+    "abbr": "Tvae",
+    "name": "Vehicle Weapons 1",
+    "nameZh": "载具武器 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranVehicleWeaponsLevel2": {
+    "key": "TerranVehicleWeaponsLevel2",
+    "abbr": "Tvae",
+    "name": "Vehicle Weapons 2",
+    "nameZh": "载具武器 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranVehicleWeaponsLevel3": {
+    "key": "TerranVehicleWeaponsLevel3",
+    "abbr": "Tvae",
+    "name": "Vehicle Weapons 3",
+    "nameZh": "载具武器 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranVehicleArmorsLevel1": {
+    "key": "TerranVehicleArmorsLevel1",
+    "abbr": "Tvav",
+    "name": "Vehicle Armor 1",
+    "nameZh": "载具护甲 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranVehicleArmorsLevel2": {
+    "key": "TerranVehicleArmorsLevel2",
+    "abbr": "Tvav",
+    "name": "Vehicle Armor 2",
+    "nameZh": "载具护甲 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranVehicleArmorsLevel3": {
+    "key": "TerranVehicleArmorsLevel3",
+    "abbr": "Tvav",
+    "name": "Vehicle Armor 3",
+    "nameZh": "载具护甲 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranShipWeaponsLevel1": {
+    "key": "TerranShipWeaponsLevel1",
+    "abbr": "Tvas",
+    "name": "Ship Weapons 1",
+    "nameZh": "舰船武器 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranShipWeaponsLevel2": {
+    "key": "TerranShipWeaponsLevel2",
+    "abbr": "Tvas",
+    "name": "Ship Weapons 2",
+    "nameZh": "舰船武器 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranShipWeaponsLevel3": {
+    "key": "TerranShipWeaponsLevel3",
+    "abbr": "Tvas",
+    "name": "Ship Weapons 3",
+    "nameZh": "舰船武器 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranShipArmorsLevel1": {
+    "key": "TerranShipArmorsLevel1",
+    "abbr": "Tvas",
+    "name": "Ship Armor 1",
+    "nameZh": "舰船护甲 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranShipArmorsLevel2": {
+    "key": "TerranShipArmorsLevel2",
+    "abbr": "Tvas",
+    "name": "Ship Armor 2",
+    "nameZh": "舰船护甲 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "TerranShipArmorsLevel3": {
+    "key": "TerranShipArmorsLevel3",
+    "abbr": "Tvas",
+    "name": "Ship Armor 3",
+    "nameZh": "舰船护甲 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "ZergMeleeWeaponsLevel1": {
+    "key": "ZergMeleeWeaponsLevel1",
+    "abbr": "Zbvm",
+    "name": "Melee Attacks 1",
+    "nameZh": "近战攻击 1",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergMeleeWeaponsLevel2": {
+    "key": "ZergMeleeWeaponsLevel2",
+    "abbr": "Zbvm",
+    "name": "Melee Attacks 2",
+    "nameZh": "近战攻击 2",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergMeleeWeaponsLevel3": {
+    "key": "ZergMeleeWeaponsLevel3",
+    "abbr": "Zbvm",
+    "name": "Melee Attacks 3",
+    "nameZh": "近战攻击 3",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergMissileWeaponsLevel1": {
+    "key": "ZergMissileWeaponsLevel1",
+    "abbr": "Zbva",
+    "name": "Missile Attacks 1",
+    "nameZh": "远程攻击 1",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergMissileWeaponsLevel2": {
+    "key": "ZergMissileWeaponsLevel2",
+    "abbr": "Zbva",
+    "name": "Missile Attacks 2",
+    "nameZh": "远程攻击 2",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergMissileWeaponsLevel3": {
+    "key": "ZergMissileWeaponsLevel3",
+    "abbr": "Zbva",
+    "name": "Missile Attacks 3",
+    "nameZh": "远程攻击 3",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergGroundArmorsLevel1": {
+    "key": "ZergGroundArmorsLevel1",
+    "abbr": "Zbvc",
+    "name": "Ground Carapace 1",
+    "nameZh": "地面甲壳 1",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergGroundArmorsLevel2": {
+    "key": "ZergGroundArmorsLevel2",
+    "abbr": "Zbvc",
+    "name": "Ground Carapace 2",
+    "nameZh": "地面甲壳 2",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergGroundArmorsLevel3": {
+    "key": "ZergGroundArmorsLevel3",
+    "abbr": "Zbvc",
+    "name": "Ground Carapace 3",
+    "nameZh": "地面甲壳 3",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergFlyerWeaponsLevel1": {
+    "key": "ZergFlyerWeaponsLevel1",
+    "abbr": "Zvsa",
+    "name": "Flyer Attacks 1",
+    "nameZh": "空中攻击 1",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergFlyerWeaponsLevel2": {
+    "key": "ZergFlyerWeaponsLevel2",
+    "abbr": "Zvsa",
+    "name": "Flyer Attacks 2",
+    "nameZh": "空中攻击 2",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergFlyerWeaponsLevel3": {
+    "key": "ZergFlyerWeaponsLevel3",
+    "abbr": "Zvsa",
+    "name": "Flyer Attacks 3",
+    "nameZh": "空中攻击 3",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergFlyerArmorsLevel1": {
+    "key": "ZergFlyerArmorsLevel1",
+    "abbr": "Zvsc",
+    "name": "Flyer Carapace 1",
+    "nameZh": "空中甲壳 1",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergFlyerArmorsLevel2": {
+    "key": "ZergFlyerArmorsLevel2",
+    "abbr": "Zvsc",
+    "name": "Flyer Carapace 2",
+    "nameZh": "空中甲壳 2",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "ZergFlyerArmorsLevel3": {
+    "key": "ZergFlyerArmorsLevel3",
+    "abbr": "Zvsc",
+    "name": "Flyer Carapace 3",
+    "nameZh": "空中甲壳 3",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  }
+}

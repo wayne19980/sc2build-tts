@@ -1,0 +1,742 @@
+{
+  "P": {
+    "name": "Protoss",
+    "nameZh": "星灵",
+    "buildings": [
+      {
+        "key": "Nexus",
+        "x": 0,
+        "y": 0,
+        "requires": []
+      },
+      {
+        "key": "Assimilator",
+        "x": 1,
+        "y": 0,
+        "requires": [
+          "Nexus"
+        ]
+      },
+      {
+        "key": "Pylon",
+        "x": 2,
+        "y": 0,
+        "requires": [
+          "Nexus"
+        ]
+      },
+      {
+        "key": "Gateway",
+        "x": 0,
+        "y": 1,
+        "requires": [
+          "Nexus"
+        ]
+      },
+      {
+        "key": "Forge",
+        "x": 1,
+        "y": 1,
+        "requires": [
+          "Nexus"
+        ]
+      },
+      {
+        "key": "CyberneticsCore",
+        "x": 0,
+        "y": 2,
+        "requires": [
+          "Gateway"
+        ]
+      },
+      {
+        "key": "PhotonCannon",
+        "x": 1,
+        "y": 2,
+        "requires": [
+          "Forge"
+        ]
+      },
+      {
+        "key": "Stargate",
+        "x": 0,
+        "y": 3,
+        "requires": [
+          "CyberneticsCore"
+        ]
+      },
+      {
+        "key": "RoboticsFacility",
+        "x": 1,
+        "y": 3,
+        "requires": [
+          "CyberneticsCore"
+        ]
+      },
+      {
+        "key": "TwilightCouncil",
+        "x": 2,
+        "y": 3,
+        "requires": [
+          "CyberneticsCore"
+        ]
+      },
+      {
+        "key": "ShieldBattery",
+        "x": 3,
+        "y": 3,
+        "requires": [
+          "CyberneticsCore"
+        ]
+      },
+      {
+        "key": "FleetBeacon",
+        "x": 0,
+        "y": 4,
+        "requires": [
+          "Stargate"
+        ]
+      },
+      {
+        "key": "RoboticsBay",
+        "x": 1,
+        "y": 4,
+        "requires": [
+          "RoboticsFacility"
+        ]
+      },
+      {
+        "key": "TemplarArchive",
+        "x": 2,
+        "y": 4,
+        "requires": [
+          "TwilightCouncil"
+        ]
+      },
+      {
+        "key": "DarkShrine",
+        "x": 3,
+        "y": 4,
+        "requires": [
+          "TwilightCouncil"
+        ]
+      }
+    ],
+    "unitGroups": [
+      {
+        "group": "Gateway",
+        "units": [
+          {
+            "key": "Zealot",
+            "requiresAny": []
+          },
+          {
+            "key": "Stalker",
+            "requiresAny": [
+              "CyberneticsCore"
+            ]
+          },
+          {
+            "key": "Sentry",
+            "requiresAny": [
+              "CyberneticsCore"
+            ]
+          },
+          {
+            "key": "Adept",
+            "requiresAny": [
+              "CyberneticsCore"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "Stargate",
+        "units": [
+          {
+            "key": "Phoenix",
+            "requiresAny": []
+          },
+          {
+            "key": "Oracle",
+            "requiresAny": []
+          },
+          {
+            "key": "VoidRay",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "RoboticsFacility",
+        "units": [
+          {
+            "key": "Observer",
+            "requiresAny": []
+          },
+          {
+            "key": "WarpPrism",
+            "requiresAny": []
+          },
+          {
+            "key": "Immortal",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "FleetBeacon",
+        "units": [
+          {
+            "key": "Tempest",
+            "requiresAny": []
+          },
+          {
+            "key": "Carrier",
+            "requiresAny": []
+          },
+          {
+            "key": "Mothership",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "RoboticsBay",
+        "units": [
+          {
+            "key": "Colossus",
+            "requiresAny": []
+          },
+          {
+            "key": "Disruptor",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "TemplarArchive",
+        "units": [
+          {
+            "key": "HighTemplar",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "DarkShrine",
+        "units": [
+          {
+            "key": "DarkTemplar",
+            "requiresAny": []
+          }
+        ]
+      }
+    ],
+    "otherUnits": [
+      {
+        "key": "Archon",
+        "requiresAny": [
+          "TemplarArchive",
+          "DarkShrine"
+        ]
+      }
+    ]
+  },
+  "T": {
+    "name": "Terran",
+    "nameZh": "人类",
+    "buildings": [
+      {
+        "key": "SupplyDepot",
+        "x": 0,
+        "y": 0,
+        "requires": []
+      },
+      {
+        "key": "CommandCenter",
+        "x": 1,
+        "y": 0,
+        "requires": []
+      },
+      {
+        "key": "Refinery",
+        "x": 2,
+        "y": 0,
+        "requires": [
+          "CommandCenter"
+        ]
+      },
+      {
+        "key": "Barracks",
+        "x": 0,
+        "y": 1,
+        "requires": [
+          "SupplyDepot"
+        ]
+      },
+      {
+        "key": "EngineeringBay",
+        "x": 1,
+        "y": 1,
+        "requires": [
+          "CommandCenter"
+        ]
+      },
+      {
+        "key": "OrbitalCommand",
+        "x": 2,
+        "y": 1,
+        "requires": [
+          "CommandCenter"
+        ]
+      },
+      {
+        "key": "Factory",
+        "x": 0,
+        "y": 2,
+        "requires": [
+          "Barracks"
+        ]
+      },
+      {
+        "key": "GhostAcademy",
+        "x": 1,
+        "y": 2,
+        "requires": [
+          "Barracks"
+        ]
+      },
+      {
+        "key": "Bunker",
+        "x": 2,
+        "y": 2,
+        "requires": [
+          "Barracks"
+        ]
+      },
+      {
+        "key": "SensorTower",
+        "x": 3,
+        "y": 2,
+        "requires": [
+          "EngineeringBay"
+        ]
+      },
+      {
+        "key": "MissileTurret",
+        "x": 3,
+        "y": 3,
+        "requires": [
+          "EngineeringBay"
+        ]
+      },
+      {
+        "key": "Starport",
+        "x": 0,
+        "y": 3,
+        "requires": [
+          "Factory"
+        ]
+      },
+      {
+        "key": "Armory",
+        "x": 1,
+        "y": 3,
+        "requires": [
+          "Factory"
+        ]
+      },
+      {
+        "key": "PlanetaryFortress",
+        "x": 2,
+        "y": 3,
+        "requires": [
+          "CommandCenter"
+        ]
+      },
+      {
+        "key": "FusionCore",
+        "x": 0,
+        "y": 4,
+        "requires": [
+          "Starport"
+        ]
+      }
+    ],
+    "unitGroups": [
+      {
+        "group": "Barracks",
+        "units": [
+          {
+            "key": "Marine",
+            "requiresAny": []
+          },
+          {
+            "key": "Marauder",
+            "requiresAny": []
+          },
+          {
+            "key": "Reaper",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "GhostAcademy",
+        "units": [
+          {
+            "key": "Ghost",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "Factory",
+        "units": [
+          {
+            "key": "Hellion",
+            "requiresAny": []
+          },
+          {
+            "key": "WidowMine",
+            "requiresAny": []
+          },
+          {
+            "key": "Cyclone",
+            "requiresAny": []
+          },
+          {
+            "key": "SiegeTank",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "Armory",
+        "units": [
+          {
+            "key": "Hellbat",
+            "requiresAny": []
+          },
+          {
+            "key": "Thor",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "Starport",
+        "units": [
+          {
+            "key": "Viking",
+            "requiresAny": []
+          },
+          {
+            "key": "Medivac",
+            "requiresAny": []
+          },
+          {
+            "key": "Liberator",
+            "requiresAny": []
+          },
+          {
+            "key": "Raven",
+            "requiresAny": []
+          },
+          {
+            "key": "Banshee",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "FusionCore",
+        "units": [
+          {
+            "key": "Battlecruiser",
+            "requiresAny": []
+          }
+        ]
+      }
+    ],
+    "otherUnits": []
+  },
+  "Z": {
+    "name": "Zerg",
+    "nameZh": "异虫",
+    "buildings": [
+      {
+        "key": "Hatchery",
+        "x": 0,
+        "y": 0,
+        "requires": []
+      },
+      {
+        "key": "Extractor",
+        "x": 1,
+        "y": 0,
+        "requires": [
+          "Hatchery"
+        ]
+      },
+      {
+        "key": "SpawningPool",
+        "x": 0,
+        "y": 1,
+        "requires": [
+          "Hatchery"
+        ]
+      },
+      {
+        "key": "EvolutionChamber",
+        "x": 1,
+        "y": 1,
+        "requires": [
+          "Hatchery"
+        ]
+      },
+      {
+        "key": "Lair",
+        "x": 0,
+        "y": 2,
+        "requires": [
+          "SpawningPool"
+        ]
+      },
+      {
+        "key": "RoachWarren",
+        "x": 1,
+        "y": 2,
+        "requires": [
+          "SpawningPool"
+        ]
+      },
+      {
+        "key": "BanelingNest",
+        "x": 2,
+        "y": 2,
+        "requires": [
+          "SpawningPool"
+        ]
+      },
+      {
+        "key": "SpineCrawler",
+        "x": 3,
+        "y": 2,
+        "requires": [
+          "SpawningPool"
+        ]
+      },
+      {
+        "key": "SporeCrawler",
+        "x": 4,
+        "y": 2,
+        "requires": [
+          "SpawningPool"
+        ]
+      },
+      {
+        "key": "HydraliskDen",
+        "x": 0,
+        "y": 3,
+        "requires": [
+          "Lair"
+        ]
+      },
+      {
+        "key": "InfestationPit",
+        "x": 1,
+        "y": 3,
+        "requires": [
+          "Lair"
+        ]
+      },
+      {
+        "key": "Spire",
+        "x": 2,
+        "y": 3,
+        "requires": [
+          "Lair"
+        ]
+      },
+      {
+        "key": "NydusNetwork",
+        "x": 3,
+        "y": 3,
+        "requires": [
+          "Lair"
+        ]
+      },
+      {
+        "key": "LurkerDen",
+        "x": 0,
+        "y": 4,
+        "requires": [
+          "HydraliskDen"
+        ]
+      },
+      {
+        "key": "Hive",
+        "x": 1,
+        "y": 4,
+        "requires": [
+          "InfestationPit"
+        ]
+      },
+      {
+        "key": "GreaterSpire",
+        "x": 2,
+        "y": 4,
+        "requires": [
+          "Spire",
+          "Hive"
+        ]
+      },
+      {
+        "key": "UltraliskCavern",
+        "x": 3,
+        "y": 4,
+        "requires": [
+          "Hive"
+        ]
+      }
+    ],
+    "unitGroups": [
+      {
+        "group": "Hatchery",
+        "units": [
+          {
+            "key": "Overlord",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "SpawningPool",
+        "units": [
+          {
+            "key": "Zergling",
+            "requiresAny": []
+          },
+          {
+            "key": "Queen",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "RoachWarren",
+        "units": [
+          {
+            "key": "Roach",
+            "requiresAny": []
+          },
+          {
+            "key": "Ravager",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "BanelingNest",
+        "units": [
+          {
+            "key": "Baneling",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "Lair",
+        "units": [
+          {
+            "key": "Overseer",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "HydraliskDen",
+        "units": [
+          {
+            "key": "Hydralisk",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "LurkerDen",
+        "units": [
+          {
+            "key": "Lurker",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "InfestationPit",
+        "units": [
+          {
+            "key": "Infestor",
+            "requiresAny": []
+          },
+          {
+            "key": "SwarmHost",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "Hive",
+        "units": [
+          {
+            "key": "Viper",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "Spire",
+        "units": [
+          {
+            "key": "Mutalisk",
+            "requiresAny": []
+          },
+          {
+            "key": "Corruptor",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "GreaterSpire",
+        "units": [
+          {
+            "key": "BroodLord",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "UltraliskCavern",
+        "units": [
+          {
+            "key": "Ultralisk",
+            "requiresAny": []
+          }
+        ]
+      },
+      {
+        "group": "NydusNetwork",
+        "units": [
+          {
+            "key": "NydusWorm",
+            "requiresAny": []
+          }
+        ]
+      }
+    ],
+    "otherUnits": []
+  }
+}
