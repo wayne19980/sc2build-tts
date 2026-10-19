@@ -1,8 +1,8 @@
 SQLAlchemy>=2.0
 psycopg[binary]>=3.2
 python-dotenv>=1.0
-sc2reader>=1.14
-spawningtool>=2.10
+sc2reader>=1.9
+spawningtool>=3.0
 pytest>=8
 fastapi>=0.115
 uvicorn[standard]>=0.34
