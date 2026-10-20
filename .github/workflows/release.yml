@@ -87,7 +87,7 @@ jobs:
             pnpm tauri:build
           } else {
             $env:TAURI_SIGNING_PRIVATE_KEY = $env:TAURI_SIGNING_PRIVATE_KEY.Trim()
-            $updaterConfig = (Resolve-Path "src-tauri/tauri.updater.conf.json").Path
+            $updaterConfig = (Resolve-Path "src-tauri/tauri.updater.conf.toml").Path
             pnpm tauri:build -- --config "$updaterConfig"
           }
 
