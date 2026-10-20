@@ -1,4 +1,4 @@
-## 2026-10-20 (v0.6.0)
+## 2026-10-20 (v0.6.0 / v0.6.1)
 
 - Release builds now use embedded PostgreSQL via `pgserver`; no external PG or .env needed.
 - Debug builds still use the external PostgreSQL from repo `.env`.
@@ -8,6 +8,8 @@
 - Update endpoints use gh-proxy with GitHub fallback.
 - Added startup update check, manual check button, progress and restart flow.
 - Signing public key added to config; private key is kept outside the repo.
+- Updater config is a separate `tauri.updater.conf.json`; normal builds work without signing.
+- v0.6.1 fixes the release workflow config path and keeps unsigned builds available.
 
 ## 2026-10-20 (v0.5.2)
 

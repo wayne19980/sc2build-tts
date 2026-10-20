@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "sc2build-tts",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "identifier": "com.sc2buildlab.app",
   "build": {
     "frontendDist": "../dist",
@@ -41,8 +41,7 @@
     ],
     "externalBin": [
       "binaries/sc2analyzer-api"
-    ],
-    "createUpdaterArtifacts": true
+    ]
   },
   "plugins": {
     "updater": {
