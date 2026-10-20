@@ -51,11 +51,17 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<(), String> {
             .env("SC2_API_PORT", "8765")
             .env("SC2_PARENT_PID", std::process::id().to_string())
     } else {
-        log::info!("starting bundled backend sidecar");
+        log::info!("starting bundled backend sidecar with embedded PostgreSQL");
+        let data_dir = app
+            .path()
+            .app_data_dir()
+            .map_err(|error| error.to_string())?;
+        std::fs::create_dir_all(&data_dir).map_err(|error| error.to_string())?;
         shell
             .sidecar("sc2analyzer-api")
             .map_err(|error| error.to_string())?
-            .env("SC2_ENV_FILE", env_file)
+            .env("SC2_EMBEDDED_PG", "1")
+            .env("SC2_DATA_DIR", data_dir.to_string_lossy().to_string())
             .env("SC2_API_HOST", "127.0.0.1")
             .env("SC2_API_PORT", "8765")
             .env("SC2_PARENT_PID", std::process::id().to_string())
@@ -95,6 +101,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             app.manage(BackendProcess(Mutex::new(None)));
 
@@ -120,13 +128,6 @@ pub fn run() {
                 if let tauri::WindowEvent::CloseRequested { .. } = event {
                     if let Some(overlay) = window.app_handle().get_webview_window("overlay") {
                         let _ = overlay.close();
-                    }
-                    if let Some(state) = window.app_handle().try_state::<BackendProcess>() {
-                        if let Ok(mut guard) = state.0.lock() {
-                            if let Some(child) = guard.take() {
-                                let _ = child.kill();
-                            }
-                        }
                     }
                 }
             }

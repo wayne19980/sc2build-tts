@@ -1,3 +1,14 @@
+## 2026-10-20 (v0.6.0)
+
+- Release builds now use embedded PostgreSQL via `pgserver`; no external PG or .env needed.
+- Debug builds still use the external PostgreSQL from repo `.env`.
+- Embedded PG data lives in the Tauri app data directory; sidecar starts/stops it.
+- Parent-process watchdog stops pgserver when the app exits or is force-killed.
+- Added Tauri updater with signed update artifacts and `latest.json`.
+- Update endpoints use gh-proxy with GitHub fallback.
+- Added startup update check, manual check button, progress and restart flow.
+- Signing public key added to config; private key is kept outside the repo.
+
 ## 2026-10-20 (v0.5.2)
 
 - Attack/armor/shield levels 1/2/3 now show in the upgrade strip with level-specific icons.

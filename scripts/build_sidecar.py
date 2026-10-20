@@ -61,6 +61,8 @@ def main() -> None:
             "fastapi",
             "--collect-all",
             "uvicorn",
+            "--collect-all",
+            "pgserver",
             "--hidden-import",
             "psycopg",
             "--add-data",

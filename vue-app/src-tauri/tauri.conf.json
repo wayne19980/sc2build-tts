@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "sc2build-tts",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "identifier": "com.sc2buildlab.app",
   "build": {
     "frontendDist": "../dist",
@@ -41,6 +41,20 @@
     ],
     "externalBin": [
       "binaries/sc2analyzer-api"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZCNDc2RkYyQjY5NTQyQzQKUldURVFwVzI4bTlIKy9OK2haazlnN2tuL2hyNWNNWlEwL2Q1RmhPeXQ5VC9kaVNjSElEVG5meUYK",
+      "endpoints": [
+        "https://gh-proxy.com/https://github.com/wayne19980/sc2build-tts/releases/latest/download/latest.json",
+        "https://ghproxy.net/https://github.com/wayne19980/sc2build-tts/releases/latest/download/latest.json",
+        "https://github.com/wayne19980/sc2build-tts/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

@@ -162,7 +162,12 @@ def _watch_parent(pid: int) -> None:
     while True:
         time.sleep(2)
         if not _pid_alive(pid):
-            os._exit(0)
+            try:
+                from .embedded_pg import cleanup_database
+
+                cleanup_database()
+            finally:
+                os._exit(0)
 
 
 @asynccontextmanager

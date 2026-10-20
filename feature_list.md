@@ -17,6 +17,9 @@
 ## Desktop
 
 - [x] Tauri native folder picker
+- [x] Embedded PostgreSQL (`pgserver`) for zero-config release installs
+- [x] Auto-update checks with signed Tauri updater artifacts
+- [x] gh-proxy update endpoints with GitHub fallback
 - [x] Python API packaged as a Tauri sidecar
 - [x] Backend auto-start in Tauri dev / release
 - [x] Backend cleanup on main-window close

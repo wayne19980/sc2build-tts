@@ -7,3 +7,4 @@ pytest>=8
 fastapi>=0.115
 uvicorn[standard]>=0.34
 pyinstaller>=6.22
+pgserver>=0.1.4

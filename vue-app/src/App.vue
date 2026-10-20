@@ -8,6 +8,9 @@
       </div>
       <div class="topbar-right">
         <span class="tagline">本地赛事流程与科技树分析</span>
+        <button v-if="isDesktop" class="update-check" :disabled="checking" @click="checkForUpdates(true)">
+          {{ checking ? '检查中…' : '检查更新' }}
+        </button>
         <button class="lang-toggle" @click="toggleLanguage">{{ english ? 'EN' : '中' }}</button>
       </div>
     </header>
@@ -15,16 +18,27 @@
     <div class="app-body">
       <AnalysisView />
     </div>
+    <UpdateBanner />
   </div>
 </template>
 
 <script setup lang="ts">
 import packageInfo from '../package.json'
 import AnalysisView from './components/analysis/AnalysisView.vue'
+import { onMounted } from 'vue'
 import { useLanguage } from './composables/useLanguage'
+import { useUpdater } from './composables/useUpdater'
+import { isTauriRuntime } from './composables/useTauri'
+import UpdateBanner from './components/UpdateBanner.vue'
 
 const version = packageInfo.version
+const isDesktop = isTauriRuntime()
 const { english, toggleLanguage } = useLanguage()
+const { checking, checkForUpdates, autoCheck } = useUpdater()
+
+onMounted(() => {
+  void autoCheck()
+})
 </script>
 
 <style>
@@ -117,6 +131,26 @@ body {
   color: #5f7d9f;
   font-size: 10px;
   letter-spacing: 0.08em;
+}
+
+.update-check {
+  padding: 3px 8px;
+  border: 1px solid #1d3352;
+  border-radius: 5px;
+  background: transparent;
+  color: #8ca6c8;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.update-check:hover {
+  border-color: #3d7fc4;
+  color: #e8f4ff;
+}
+
+.update-check:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .lang-toggle {

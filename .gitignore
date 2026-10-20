@@ -149,3 +149,6 @@ vue-app/src-tauri/binaries/*.exe
 
 # Playwright CLI artifacts
 .playwright-cli/
+
+# Generated updater manifest
+latest.json

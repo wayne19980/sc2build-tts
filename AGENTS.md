@@ -93,7 +93,14 @@ and is generated (not committed).
   It shows a build ticker and a mini tech tree of all future unlocks; timestamps
   within 60 seconds are highlighted.
 - The backend is spawned from Rust (`tauri-plugin-shell`): `.venv` Python in
-  debug, bundled sidecar in release. It is killed when the main window closes.
+  debug uses external PostgreSQL from `.env`; release uses the bundled sidecar
+  with embedded PostgreSQL via `pgserver`, no `.env` required.
+- The sidecar watchdog stops the embedded PostgreSQL when the app exits.
+- Auto-update uses the Tauri updater. The public key is in `tauri.conf.json`;
+  the private key is kept outside the repo at `~/.tauri/sc2build-tts.key`.
+  Add its contents as the `TAURI_SIGNING_PRIVATE_KEY` GitHub secret.
+- Update endpoints point to gh-proxy and then GitHub. Release CI generates
+  `latest.json` only when the signing key secret is configured.
 
 ## Database
 
