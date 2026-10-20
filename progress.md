@@ -1,4 +1,4 @@
-## 2026-10-20 (v0.6.0 / v0.6.1 / v0.6.5)
+## 2026-10-20 (v0.6.0 / v0.6.1 / v0.6.6)
 
 - Release builds now use embedded PostgreSQL via `pgserver`; no external PG or .env needed.
 - Debug builds still use the external PostgreSQL from repo `.env`.
@@ -10,7 +10,7 @@
 - Signing public key added to config; private key is kept outside the repo.
 - Updater config is a separate `tauri.updater.conf.toml`; normal builds work without signing.
 - v0.6.1 fixes the release workflow config path and keeps unsigned builds available.
-- v0.6.5 improves updater manifest diagnostics and handles installer filename differences.
+- v0.6.6 runs Tauri directly (`pnpm exec tauri build --config`) so the override is not forwarded to Cargo.
 
 ## 2026-10-20 (v0.5.2)
 
