@@ -149,6 +149,11 @@ export async function registerOverlayShortcut(
 ): Promise<() => Promise<void>> {
   if (!isTauriRuntime()) return async () => {}
   const { register, unregister } = await import('@tauri-apps/plugin-global-shortcut')
+  try {
+    await unregister(OVERLAY_SHORTCUT)
+  } catch {
+    // no existing registration
+  }
   await register(OVERLAY_SHORTCUT, (event) => {
     if (event.state === 'Pressed') callback()
   })

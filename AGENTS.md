@@ -87,6 +87,8 @@ and is generated (not committed).
 - `Ctrl+Shift+O` toggles the overlay globally; the main window also has an
   overlay button, opacity slider and position presets. Enabling the overlay also
   starts the voice reader; disabling it stops the voice reader.
+- The UI has a global Chinese/English switch; it also drives voice language and
+  overlay/build/unit display names.
 - The overlay is a compact 760x220 transparent window, not full-screen.
   It shows a build ticker and a mini tech tree of all future unlocks; timestamps
   within 60 seconds are highlighted.

@@ -100,6 +100,7 @@
 <script setup lang="ts">
 import type { FolderReplay, FolderReplayPlayer } from '../../types-analysis'
 import { formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { useLanguage } from '../../composables/useLanguage'
 
 defineProps<{
   replays: FolderReplay[]
@@ -110,6 +111,8 @@ defineProps<{
 defineEmits<{
   (event: 'open', replay: FolderReplay): void
 }>()
+
+const { displayName } = useLanguage()
 
 const phases = [
   { key: 'early' as const, short: '前' },
@@ -131,7 +134,7 @@ function unitPreview(player: FolderReplayPlayer) {
     return {
       key: unit.unit,
       count: unit.count,
-      name: item?.nameZh || unit.unit,
+      name: displayName(item, unit.unit),
       icon: item ? iconUrl(item.abbr) : '',
     }
   })
@@ -143,7 +146,7 @@ function techIcon(tech: string): string {
 }
 
 function techName(tech: string): string {
-  return resolveItem(tech)?.nameZh || tech
+  return displayName(resolveItem(tech), tech)
 }
 </script>
 
@@ -385,19 +388,16 @@ function techName(tech: string): string {
 
 .chip-count {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  border-radius: 7px;
-  background: #d7e6ff;
-  color: #07101d;
-  font-size: 9px;
+  right: 2px;
+  bottom: 2px;
+  color: #fff;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 14px;
-  text-align: center;
-  box-shadow: 0 0 0 1px #07101d;
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 0 4px #000,
+    0 1px 2px #000;
 }
 
 .tech-groups {

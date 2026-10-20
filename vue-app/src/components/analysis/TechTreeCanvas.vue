@@ -43,6 +43,13 @@
           <div class="icon-shell building-icon" :class="{ 'unlock-flash': node.flash }" :title="tooltip(node.item)">
             <img :src="iconUrl(node.item.abbr)" :alt="node.item.name" draggable="false" />
             <span v-if="node.count > 0" class="count-badge building-badge">{{ node.count }}</span>
+            <div
+              v-if="node.constructing > 0"
+              class="build-progress"
+              :class="{ indeterminate: node.indeterminate }"
+            >
+              <div class="build-progress-fill" :style="{ width: `${node.progress * 100}%` }" />
+            </div>
             <div v-if="node.morphs.length" class="morph-badges">
               <span
                 v-for="morph in node.morphs"
@@ -98,6 +105,7 @@ import { computed } from 'vue'
 import type { EventItem, Race, TechTiming, UnitLifecycle } from '../../types-analysis'
 import { iconUrl, resolveItem, techTrees, type CatalogItem } from '../../data/catalog'
 import { CELL_W, CELL_W_COMPACT, MARGIN, ROW_H } from '../../data/layout'
+import { useLanguage } from '../../composables/useLanguage'
 
 const props = defineProps<{
   race: Race
@@ -129,6 +137,9 @@ interface BuildingNode {
   units: UnitNode[]
   morphs: { key: string; item: CatalogItem; count: number }[]
   flash: boolean
+  constructing: number
+  progress: number
+  indeterminate: boolean
 }
 
 interface UnitNode {
@@ -139,6 +150,7 @@ interface UnitNode {
   flash: boolean
 }
 
+const { displayName } = useLanguage()
 const tree = computed(() => techTrees[props.race])
 const cellWidth = computed(() => (props.compact ? CELL_W_COMPACT : CELL_W))
 
@@ -256,6 +268,45 @@ const unitItems = computed(() => {
   return grouped
 })
 
+const constructionProgress = computed(() => {
+  const tasks = new Map<number, { name: string; start: number; done?: number }>()
+  for (const event of props.buildings) {
+    if (event.player_id !== props.playerId) continue
+    const unitId = Number(event.payload?.unit_id)
+    if (!Number.isFinite(unitId)) continue
+    if (event.kind === 'build_start') {
+      tasks.set(unitId, { name: event.name, start: event.t_sec })
+    } else if (event.kind === 'build_done' || event.kind === 'unit_born') {
+      const task = tasks.get(unitId)
+      if (task && task.done === undefined) task.done = event.t_sec
+    }
+  }
+
+  const result: Record<
+    string,
+    { count: number; progress: number; indeterminate: boolean }
+  > = {}
+  for (const task of tasks.values()) {
+    if (task.start > props.time) continue
+    if (task.done !== undefined && task.done <= props.time) continue
+    const item = resolveItem(task.name)
+    if (!item || item.kind !== 'building') continue
+    const entry = result[item.key] || { count: 0, progress: 0, indeterminate: false }
+    const progress =
+      task.done !== undefined && task.done > task.start
+        ? Math.min(1, Math.max(0, (props.time - task.start) / (task.done - task.start)))
+        : 0
+    entry.count += 1
+    entry.progress += progress
+    if (task.done === undefined) entry.indeterminate = true
+    result[item.key] = entry
+  }
+  for (const entry of Object.values(result)) {
+    if (entry.count) entry.progress /= entry.count
+  }
+  return result
+})
+
 const buildingNodes = computed<BuildingNode[]>(() => {
   const treeKeys = new Set(tree.value.buildings.map((building) => building.key))
   return tree.value.buildings.map((building) => {
@@ -272,6 +323,9 @@ const buildingNodes = computed<BuildingNode[]>(() => {
       item: resolveItem(building.key)!,
       state,
       count: stats?.done || 0,
+      constructing: constructionProgress.value[building.key]?.count || 0,
+      progress: constructionProgress.value[building.key]?.progress || 0,
+      indeterminate: constructionProgress.value[building.key]?.indeterminate || false,
       flash:
         stats?.firstDoneT !== undefined &&
         props.time >= stats.firstDoneT &&
@@ -380,7 +434,7 @@ function edgePath(parent: { left: number; top: number }, child: { left: number; 
 
 function tooltip(item: CatalogItem, count?: number): string {
   const countText = count === undefined ? '' : ` · ${count}`
-  return `${item.name} / ${item.nameZh}${countText}`
+  return `${displayName(item)}${countText}`
 }
 </script>
 
@@ -491,23 +545,42 @@ function tooltip(item: CatalogItem, count?: number): string {
 
 .count-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  border-radius: 8px;
-  background: #d7e6ff;
-  color: #07101d;
-  font-size: 10px;
+  right: 2px;
+  bottom: 2px;
+  color: #fff;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 15px;
-  text-align: center;
-  box-shadow: 0 0 0 1px #07101d;
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 0 4px #000,
+    0 1px 2px #000;
 }
 
 .building-badge {
-  background: #ffd479;
+  color: #fff;
+}
+
+.build-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 0 0 7px 7px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.build-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f9e44, #69db7c);
+  transition: width 0.2s linear;
+}
+
+.build-progress.indeterminate .build-progress-fill {
+  width: 35% !important;
+  animation: build-progress-pulse 1.2s ease-in-out infinite;
 }
 
 .morph-badges {
@@ -537,18 +610,15 @@ function tooltip(item: CatalogItem, count?: number): string {
 
 .morph-count {
   position: absolute;
-  right: -4px;
-  bottom: -5px;
-  min-width: 12px;
-  height: 12px;
-  padding: 0 2px;
-  border-radius: 6px;
-  background: #4b9bf0;
-  color: #06101d;
-  font-size: 8px;
+  right: 1px;
+  bottom: 1px;
+  color: #fff;
+  font-size: 9px;
   font-weight: 700;
-  line-height: 12px;
-  text-align: center;
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 1px 2px #000;
 }
 
 .other-node {
@@ -574,6 +644,16 @@ function tooltip(item: CatalogItem, count?: number): string {
 
 .unlock-flash {
   animation: unlock-flash 1.2s ease-out;
+}
+
+@keyframes build-progress-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes unlock-flash {

@@ -5,7 +5,7 @@
       :style="{
         width: `${size.width}px`,
         height: `${size.height}px`,
-        transform: `scale(${scale})`,
+        zoom: scale,
       }"
     >
       <TechTreeCanvas
@@ -50,7 +50,7 @@ const scale = computed(() => {
   const availableHeight = Math.max(120, hostSize.value.height - 12)
   if (!hostSize.value.width || !hostSize.value.height) return 1
   const fit = Math.min(availableWidth / size.value.width, availableHeight / size.value.height)
-  return Math.min(1.6, Math.max(0.2, fit))
+  return Math.min(1.6, fit)
 })
 
 onMounted(() => {
@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;

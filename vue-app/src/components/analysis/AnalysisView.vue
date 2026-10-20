@@ -195,7 +195,13 @@
           :groups="constructionGroups"
         />
 
-        <UpgradeStrip v-if="race" :race="race" :time="time" :tech="playerTech" />
+        <UpgradeStrip
+          v-if="race"
+          :race="race"
+          :time="time"
+          :tech="playerTech"
+          :orders="playerOrders"
+        />
 
         <footer class="timeline-bar">
           <button class="play-button" @click="togglePlay">
@@ -289,6 +295,7 @@ import {
 import { useVoiceReader } from '../../composables/useVoiceReader'
 import { useDocumentPiP } from '../../composables/useDocumentPiP'
 import { SC2_FASTER_REAL_FACTOR } from '../../utils'
+import { useLanguage } from '../../composables/useLanguage'
 import ConstructionStrip from './ConstructionStrip.vue'
 import ReplayLibrary from './ReplayLibrary.vue'
 import VoiceControlPanel from '../VoiceControlPanel.vue'
@@ -304,6 +311,7 @@ const activeGameId = ref<number | null>(null)
 const activeGame = ref<GameDetail | null>(null)
 const activePlayerId = ref<number | null>(null)
 const splitView = ref(false)
+const { english, displayName } = useLanguage()
 
 const buildings = ref<EventItem[]>([])
 const units = ref<UnitLifecycle[]>([])
@@ -338,6 +346,7 @@ const {
   currentIndex: voiceCurrentIndex,
   isRunning: voiceIsRunning,
   rate: voiceRate,
+  lang: voiceLang,
   visible: voiceVisible,
   gameClockSeconds: voiceGameClockSeconds,
   stepProgress: voiceStepProgress,
@@ -351,6 +360,15 @@ const {
 const { isSupported: isPiPSupported, pipWindow, requestPiP } = useDocumentPiP()
 const voicePanelRef = ref<any>(null)
 const voiceLayout = ref<'horizontal' | 'vertical'>('horizontal')
+
+watch(
+  english,
+  (value) => {
+    voiceLang.value = value ? 'en-US' : 'zh-CN'
+    if (voiceVisible.value) refreshVoiceSteps()
+  },
+  { immediate: true },
+)
 
 const voiceTimerStr = computed(() => formatClock(voiceGameClockSeconds()))
 const currentVoiceStepObj = computed(() => {
@@ -414,6 +432,11 @@ const playerUnits = computed(() =>
 const playerTech = computed(() =>
   tech.value.filter((timing) => timing.player_id === activePlayerId.value),
 )
+const playerOrders = computed(() =>
+  timeline.value.filter(
+    (event) => event.player_id === activePlayerId.value && event.kind === 'order',
+  ),
+)
 
 const constructionGroups = computed(() => {
   const playerId = activePlayerId.value
@@ -451,7 +474,7 @@ const constructionGroups = computed(() => {
     const key = item?.key || task.name
     const group = groups.get(key) || {
       key,
-      name: item?.nameZh || task.name,
+      name: displayName(item, task.name),
       icon: item ? itemIconUrl(item) : "",
       count: 0,
       tasks: [],
@@ -465,7 +488,15 @@ const constructionGroups = computed(() => {
     groups.set(key, group)
   }
 
-  return Array.from(groups.values())
+  return Array.from(groups.values()).map((group) => ({
+    key: group.key,
+    name: group.name,
+    icon: group.icon,
+    count: group.count,
+    progress:
+      group.tasks.reduce((sum, task) => sum + task.progress, 0) / group.count,
+    indeterminate: group.tasks.some((task) => task.indeterminate),
+  }))
 })
 
 onMounted(() => {
@@ -493,6 +524,7 @@ onMounted(() => {
     })
       .then((unregister) => {
         overlayShortcutUnregister = unregister
+        overlayError.value = ''
       })
       .catch((exc) => {
         overlayError.value = exc instanceof Error ? exc.message : String(exc)
@@ -515,6 +547,10 @@ onBeforeUnmount(() => {
 
 watch([time, countMode, activeGameId, activePlayerId], () => {
   if (overlayEnabled.value) scheduleOverlaySync()
+})
+
+watch(english, () => {
+  if (overlayEnabled.value) scheduleOverlaySync(true)
 })
 
 watch(overlayOpacity, (value) => {
@@ -746,6 +782,7 @@ function buildOverlayState(): OverlayState {
     duration: duration.value,
     countMode: countMode.value,
     opacity: overlayOpacity.value,
+    english: english.value,
   }
 }
 
@@ -821,7 +858,7 @@ function refreshVoiceSteps() {
   for (const event of orders) {
     const item = resolveItem(event.name)
     const key = item?.key || event.name
-    const name = item?.nameZh || event.name
+    const name = displayName(item, event.name)
     const previous = latest.get(key)
     if (previous && event.t_sec - previous.lastTime <= mergeWindow) {
       previous.count += 1
@@ -836,7 +873,12 @@ function refreshVoiceSteps() {
   const items = groups.map((group) => ({
     time: group.time,
     text: group.count > 1 ? `${group.name} ×${group.count}` : group.name,
-    speech: group.count > 1 ? `${group.name} ${group.count}个` : group.name,
+    speech:
+      group.count > 1
+        ? english.value
+          ? `${group.count} ${group.name}`
+          : `${group.name} ${group.count}个`
+        : group.name,
   }))
   loadDisplaySteps(items)
 }

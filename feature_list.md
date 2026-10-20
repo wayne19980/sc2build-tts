@@ -43,7 +43,9 @@
 - [x] Level-specific attack/armor/shield icons in the upgrade strip
 - [x] Voice steps merge repeated actions within a 4-second window
 - [x] Overlay toggle also starts voice broadcast
-- [x] Construction queue strip with counts and progress bars
+- [x] Icon-only construction strip with bottom progress bars and white counts
+- [x] Construction progress bars on tech-tree buildings and upgrade icons
+- [x] Chinese/English name switch (UI, voice, overlay)
 
 ## Overlay
 

@@ -6,7 +6,10 @@
         <span>Build Lab</span>
         <span class="version">v{{ version }}</span>
       </div>
-      <span class="tagline">本地赛事流程与科技树分析</span>
+      <div class="topbar-right">
+        <span class="tagline">本地赛事流程与科技树分析</span>
+        <button class="lang-toggle" @click="toggleLanguage">{{ english ? 'EN' : '中' }}</button>
+      </div>
     </header>
 
     <div class="app-body">
@@ -18,8 +21,10 @@
 <script setup lang="ts">
 import packageInfo from '../package.json'
 import AnalysisView from './components/analysis/AnalysisView.vue'
+import { useLanguage } from './composables/useLanguage'
 
 const version = packageInfo.version
+const { english, toggleLanguage } = useLanguage()
 </script>
 
 <style>
@@ -102,10 +107,32 @@ body {
   letter-spacing: 0.04em;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .tagline {
   color: #5f7d9f;
   font-size: 10px;
   letter-spacing: 0.08em;
+}
+
+.lang-toggle {
+  padding: 3px 8px;
+  border: 1px solid #1d3352;
+  border-radius: 5px;
+  background: #080f1c;
+  color: #9fb8d8;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  border-color: #3d7fc4;
+  color: #e8f4ff;
 }
 
 .app-body {

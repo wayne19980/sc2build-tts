@@ -4,25 +4,18 @@
       <span class="strip-title">正在建造</span>
       <span v-if="playerName" class="strip-player">{{ playerName }}</span>
     </div>
-    <div class="task-groups">
-      <div v-for="group in groups" :key="group.key" class="task-group">
+    <div class="construction-items">
+      <div
+        v-for="group in groups"
+        :key="group.key"
+        class="construction-item"
+        :title="group.name"
+      >
         <img v-if="group.icon" :src="group.icon" :alt="group.name" draggable="false" />
-        <div class="task-body">
-          <div class="task-head">
-            <span class="task-name">{{ group.name }}</span>
-            <span class="task-count">×{{ group.count }}</span>
-          </div>
-          <div class="task-bars">
-            <div
-              v-for="(task, index) in group.tasks"
-              :key="index"
-              class="task-bar"
-              :class="{ indeterminate: task.indeterminate }"
-            >
-              <div class="task-fill" :style="{ width: `${task.progress * 100}%` }" />
-            </div>
-          </div>
+        <div class="construction-bar" :class="{ indeterminate: group.indeterminate }">
+          <div class="construction-fill" :style="{ width: `${group.progress * 100}%` }" />
         </div>
+        <span v-if="group.count > 1" class="construction-count">{{ group.count }}</span>
       </div>
       <div v-if="groups.length === 0" class="task-empty">无</div>
     </div>
@@ -30,17 +23,13 @@
 </template>
 
 <script setup lang="ts">
-interface ConstructionTaskView {
-  progress: number
-  indeterminate: boolean
-}
-
 interface ConstructionGroupView {
   key: string
   name: string
   icon: string
   count: number
-  tasks: ConstructionTaskView[]
+  progress: number
+  indeterminate: boolean
 }
 
 defineProps<{
@@ -55,7 +44,7 @@ defineProps<{
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 46px;
+  min-height: 48px;
   padding: 5px 12px;
   border-top: 1px solid #16263d;
   background: rgba(6, 11, 20, 0.88);
@@ -79,7 +68,7 @@ defineProps<{
   letter-spacing: 0;
 }
 
-.task-groups {
+.construction-items {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -89,73 +78,57 @@ defineProps<{
   scrollbar-color: #31527a transparent;
 }
 
-.task-group {
+.construction-item {
+  position: relative;
   flex: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
+  width: 42px;
+  height: 42px;
   border: 1px solid #1d3352;
-  border-radius: 7px;
+  border-radius: 6px;
   background: #0b1424;
-}
-
-.task-group > img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  border-radius: 4px;
-}
-
-.task-body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 72px;
-}
-
-.task-head {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.task-name {
-  color: #cfe3fa;
-  font-size: 10px;
-}
-
-.task-count {
-  color: #d9b45b;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.task-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.task-bar {
-  width: 68px;
-  height: 4px;
-  border-radius: 2px;
-  background: #14263e;
   overflow: hidden;
 }
 
-.task-fill {
+.construction-item img {
+  width: 100%;
   height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #2f7fe0, #63b3ff);
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.construction-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+.construction-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f9e44, #69db7c);
   transition: width 0.2s linear;
 }
 
-.task-bar.indeterminate .task-fill {
+.construction-bar.indeterminate .construction-fill {
   width: 35% !important;
-  animation: build-pulse 1.2s ease-in-out infinite;
+  animation: construction-pulse 1.2s ease-in-out infinite;
+}
+
+.construction-count {
+  position: absolute;
+  right: 2px;
+  bottom: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 0 4px #000,
+    0 1px 2px #000;
 }
 
 .task-empty {
@@ -164,7 +137,7 @@ defineProps<{
   font-style: italic;
 }
 
-@keyframes build-pulse {
+@keyframes construction-pulse {
   0%,
   100% {
     opacity: 0.45;

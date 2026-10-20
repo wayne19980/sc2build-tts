@@ -123,6 +123,7 @@ export interface OverlayState {
   duration: number
   countMode: 'cumulative' | 'alive'
   opacity: number
+  english: boolean
 }
 
 export interface ReplayUnitCount {

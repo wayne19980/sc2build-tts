@@ -15,7 +15,7 @@
           <span v-if="index > 0" class="arrow">»</span>
           <div class="build-item" :class="{ past: row.past, next: row.next }">
             <img :src="iconUrl(row.item.abbr)" :alt="row.item.name" draggable="false" />
-            <span class="build-name">{{ row.item.nameZh }}</span>
+            <span class="build-name">{{ displayName(row.item) }}</span>
             <span class="build-time">{{ formatClock(row.event.t_sec) }}</span>
           </div>
         </template>
@@ -30,7 +30,7 @@
         <div class="mini-chain">
           <template v-for="(entry, index) in previewUnlocks" :key="`${entry.item.key}-${entry.event.t_sec}`">
             <span v-if="index > 0" class="mini-arrow">›</span>
-            <div class="mini-item" :title="`${entry.item.nameZh} ${formatClock(entry.event.t_sec)}`">
+            <div class="mini-item" :title="`${displayName(entry.item)} ${formatClock(entry.event.t_sec)}`">
               <img :src="itemIconUrl(entry.item)" :alt="entry.item.name" draggable="false" />
               <span class="mini-time" :class="{ soon: isSoon(entry.event.t_sec) }">
                 {{ formatClock(entry.event.t_sec) }}
@@ -57,7 +57,9 @@ import { api } from '../../api'
 import { formatClock, iconUrl, itemIconUrl, resolveItem, type CatalogItem } from '../../data/catalog'
 import type { EventItem, OverlayState } from '../../types-analysis'
 import { emitOverlayReady, isTauriRuntime, listenOverlayEvent } from '../../composables/useTauri'
+import { useLanguage } from '../../composables/useLanguage'
 
+const { english, displayName } = useLanguage()
 const state = ref<OverlayState | null>(null)
 const events = ref<EventItem[]>([])
 const error = ref('')
@@ -153,6 +155,7 @@ onMounted(async () => {
   }
   unlisten = await listenOverlayEvent<OverlayState>('sc2-overlay-state', (payload) => {
     state.value = payload
+    english.value = payload.english
     void loadData()
   })
   await emitOverlayReady()

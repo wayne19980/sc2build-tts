@@ -1,3 +1,15 @@
+## 2026-10-20 (v0.5.2)
+
+- Attack/armor/shield levels 1/2/3 now show in the upgrade strip with level-specific icons.
+- Construction strip is icon-only: bottom progress bar, plain white count (shown when >1).
+- Tech-tree buildings and upgrade icons show progress bars while constructing.
+- All count badges are now plain white bottom-right numbers.
+- Global Chinese/English switch drives UI, voice language, overlay and unit/build names.
+- Overlay toggle now also opens and starts the voice reader; disabling overlay stops it.
+- Voice reader merges repeated orders within a 4-second window (e.g. "Marine x5").
+- Fixed duplicate global-shortcut registration on HMR reload.
+- Version 0.5.2 prepared for release.
+
 # Progress
 
 ## 2026-10-19
