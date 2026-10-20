@@ -17,6 +17,7 @@
       :buildings="playerBuildings"
       :units="playerUnits"
       :tech="playerTech"
+      :speed="speed"
       compact
     />
   </section>
@@ -35,6 +36,7 @@ const props = defineProps<{
   buildings: EventItem[]
   units: UnitLifecycle[]
   tech: TechTiming[]
+  speed: number
 }>()
 
 const race = computed(() => raceFromName(props.player.race))

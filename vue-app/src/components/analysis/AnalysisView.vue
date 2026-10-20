@@ -176,6 +176,7 @@
               :buildings="buildings"
               :units="units"
               :tech="tech"
+              :speed="speed"
             />
           </template>
           <ScaledTree
@@ -452,6 +453,8 @@ const constructionGroups = computed(() => {
     } else if (event.kind === "build_done" || event.kind === "unit_born") {
       const task = tasks.get(unitId)
       if (task && task.done === undefined) task.done = event.t_sec
+    } else if (event.kind === "unit_died" && event.t_sec <= time.value) {
+      tasks.delete(unitId)
     }
   }
 

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
 from sqlalchemy import delete, insert, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from .db import SessionLocal
 from .models import Event, Folder, Game, GamePlayer, StatsTimeline, Unit
-from .parser import ParsedReplay, parse_replay
+from .parser import ParsedReplay, parse_replay, sha256_file
 
 ProgressCallback = Callable[[dict[str, Any]], None]
 
@@ -55,9 +59,9 @@ def delete_game(session: Session, game_id: int) -> None:
     session.execute(delete(Game).where(Game.id == game_id))
 
 
-def _insert_parsed_replay(session: Session, folder: Folder, parsed: ParsedReplay) -> Game:
+def _insert_parsed_replay(session: Session, folder_id: int, parsed: ParsedReplay) -> Game:
     game = Game(
-        folder_id=folder.id,
+        folder_id=folder_id,
         file_path=parsed.file_path,
         file_name=parsed.file_name,
         file_hash=parsed.file_hash,
@@ -166,6 +170,45 @@ def _insert_parsed_replay(session: Session, folder: Folder, parsed: ParsedReplay
     return game
 
 
+def _import_worker(path: str, folder_id: int, file_hash: str) -> tuple[str, str, int | None, str | None]:
+    """Parse and store one replay in a worker process."""
+    session = SessionLocal()
+    try:
+        existing = session.scalar(select(Game.id).where(Game.file_hash == file_hash))
+        if existing is not None:
+            return path, "skipped", existing, None
+        parsed = parse_replay(path, file_hash=file_hash)
+        game = _insert_parsed_replay(session, folder_id, parsed)
+        session.commit()
+        return path, "imported", game.id, None
+    except IntegrityError:
+        session.rollback()
+        existing = session.scalar(select(Game.id).where(Game.file_hash == file_hash))
+        if existing is not None:
+            return path, "skipped", existing, None
+        return path, "error", None, "duplicate replay hash conflict"
+    except Exception as exc:  # noqa: BLE001 - report the file and continue
+        session.rollback()
+        return path, "error", None, str(exc)
+    finally:
+        session.close()
+
+
+def _worker_count() -> int:
+    configured = os.environ.get("SC2_IMPORT_WORKERS", "").strip()
+    if configured.isdigit():
+        return max(1, int(configured))
+    return max(2, min(8, (os.cpu_count() or 4) // 2))
+
+
+def _existing_hashes(session: Session, hashes: list[str]) -> set[str]:
+    found: set[str] = set()
+    for start in range(0, len(hashes), 500):
+        chunk = hashes[start : start + 500]
+        found.update(session.scalars(select(Game.file_hash).where(Game.file_hash.in_(chunk))))
+    return found
+
+
 def import_folder(
     session: Session,
     folder_path: str | Path,
@@ -180,66 +223,66 @@ def import_folder(
 
     files = _replay_files(folder)
     result = ImportResult(folder_id=folder_row.id, folder_path=folder_row.path)
+    processed = 0
     _emit(progress, phase="scan", total=len(files))
 
-    for index, replay_file in enumerate(files, start=1):
+    def record(path: str, status: str, game_id: int | None, message: str | None) -> None:
+        nonlocal processed
+        processed += 1
+        if status == "imported":
+            result.imported.append(path)
+            if game_id is not None:
+                result.game_ids.append(game_id)
+        elif status == "skipped":
+            result.skipped.append(path)
+        else:
+            result.errors.append(ImportError(file=path, message=message or "unknown error"))
         _emit(
             progress,
-            phase="parsing",
-            index=index,
+            phase=f"file_{status}",
+            index=processed,
             total=len(files),
-            file=str(replay_file),
+            file=path,
+            message=message or "",
         )
-        try:
-            parsed = parse_replay(replay_file)
-        except Exception as exc:  # noqa: BLE001 - report the file and continue
-            session.rollback()
-            result.errors.append(ImportError(file=str(replay_file), message=str(exc)))
-            _emit(
-                progress,
-                phase="file_error",
-                index=index,
-                total=len(files),
-                file=str(replay_file),
-                message=str(exc),
-            )
-            continue
 
-        existing = session.scalar(select(Game).where(Game.file_hash == parsed.file_hash))
-        if existing is not None:
-            result.skipped.append(str(replay_file))
-            _emit(
-                progress,
-                phase="file_skipped",
-                index=index,
-                total=len(files),
-                file=str(replay_file),
-            )
-            continue
-
+    hashed: list[tuple[Path, str]] = []
+    for replay_file in files:
         try:
-            game = _insert_parsed_replay(session, folder_row, parsed)
-            session.commit()
-            result.imported.append(str(replay_file))
-            result.game_ids.append(game.id)
-            _emit(
-                progress,
-                phase="file_imported",
-                index=index,
-                total=len(files),
-                file=str(replay_file),
+            hashed.append((replay_file, sha256_file(replay_file)))
+        except Exception as exc:  # noqa: BLE001 - report unreadable files and continue
+            record(str(replay_file), "error", None, str(exc))
+
+    existing = _existing_hashes(session, [file_hash for _, file_hash in hashed])
+    pending: list[tuple[Path, str]] = []
+    scheduled: set[str] = set()
+    for replay_file, file_hash in hashed:
+        if file_hash in existing or file_hash in scheduled:
+            record(str(replay_file), "skipped", None, None)
+            continue
+        scheduled.add(file_hash)
+        pending.append((replay_file, file_hash))
+
+    workers = min(_worker_count(), len(pending)) if pending else 1
+    if workers <= 1:
+        for replay_file, file_hash in pending:
+            path, status, game_id, message = _import_worker(
+                str(replay_file), folder_row.id, file_hash
             )
-        except Exception as exc:  # noqa: BLE001 - keep importing the rest of the folder
-            session.rollback()
-            result.errors.append(ImportError(file=str(replay_file), message=str(exc)))
-            _emit(
-                progress,
-                phase="file_error",
-                index=index,
-                total=len(files),
-                file=str(replay_file),
-                message=str(exc),
-            )
+            record(path, status, game_id, message)
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(_import_worker, str(replay_file), folder_row.id, file_hash): replay_file
+                for replay_file, file_hash in pending
+            }
+            for future in as_completed(futures):
+                replay_file = futures[future]
+                try:
+                    path, status, game_id, message = future.result()
+                except Exception as exc:  # noqa: BLE001 - a crashed worker should not kill the import
+                    path, status, game_id, message = str(replay_file), "error", None, str(exc)
+                record(path, status, game_id, message)
 
     _emit(
         progress,
@@ -257,21 +300,22 @@ def import_replay(session: Session, replay_path: str | Path, folder_path: str | 
     if not replay.is_file():
         raise FileNotFoundError(replay)
 
-    parsed = parse_replay(replay)
-    existing = session.scalar(select(Game).where(Game.file_hash == parsed.file_hash))
+    file_hash = sha256_file(replay)
+    existing = session.scalar(select(Game).where(Game.file_hash == file_hash))
     if existing is not None:
         result = ImportResult(folder_id=existing.folder_id, folder_path=str(replay.parent))
         result.skipped.append(str(replay))
         result.game_ids.append(existing.id)
         return result
 
+    parsed = parse_replay(replay, file_hash=file_hash)
     folder = Path(folder_path).resolve() if folder_path else replay.parent
     folder_row = get_or_create_folder(session, folder)
     session.commit()
 
     result = ImportResult(folder_id=folder_row.id, folder_path=folder_row.path)
     try:
-        game = _insert_parsed_replay(session, folder_row, parsed)
+        game = _insert_parsed_replay(session, folder_row.id, parsed)
         session.commit()
         result.imported.append(str(replay))
         result.game_ids.append(game.id)

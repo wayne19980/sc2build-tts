@@ -772,7 +772,9 @@
     "nameZh": "潜伏者巢穴",
     "kind": "building",
     "race": "Z",
-    "aliases": []
+    "aliases": [
+      "LurkerDenMP"
+    ]
   },
   "InfestationPit": {
     "key": "InfestationPit",
@@ -869,7 +871,8 @@
     "kind": "unit",
     "race": "Z",
     "aliases": [
-      "BanelingBurrowed"
+      "BanelingBurrowed",
+      "BanelingCocoon"
     ]
   },
   "Roach": {
@@ -891,7 +894,8 @@
     "kind": "unit",
     "race": "Z",
     "aliases": [
-      "RavagerBurrowed"
+      "RavagerBurrowed",
+      "RavagerCocoon"
     ]
   },
   "Hydralisk": {
@@ -913,7 +917,10 @@
     "kind": "unit",
     "race": "Z",
     "aliases": [
-      "LurkerBurrowed"
+      "LurkerBurrowed",
+      "LurkerMP",
+      "LurkerMPBurrowed",
+      "LurkerMPEgg"
     ]
   },
   "Infestor": {
@@ -974,7 +981,9 @@
     "nameZh": "巢虫领主",
     "kind": "unit",
     "race": "Z",
-    "aliases": []
+    "aliases": [
+      "BroodLordCocoon"
+    ]
   },
   "Viper": {
     "key": "Viper",
@@ -993,7 +1002,8 @@
     "kind": "unit",
     "race": "Z",
     "aliases": [
-      "OverseerSiegeMode"
+      "OverseerSiegeMode",
+      "OverlordCocoon"
     ]
   },
   "NydusWorm": {

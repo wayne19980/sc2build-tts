@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sc2analyzer.parser import parse_replay
+from sc2analyzer.parser import canonical_unit_name, parse_replay
 
 REPLAY = (
     Path(__file__).resolve().parents[3]
@@ -68,3 +68,14 @@ def test_alive_army_at_five_minutes() -> None:
     ]
     assert len(at_five_minutes) > 0
     assert any(unit.unit_type == "Marine" for unit in at_five_minutes)
+
+
+def test_zerg_variant_names_are_canonicalized() -> None:
+    assert canonical_unit_name("LurkerMP") == "Lurker"
+    assert canonical_unit_name("LurkerMPBurrowed") == "Lurker"
+    assert canonical_unit_name("LurkerMPEgg") == "Lurker"
+    assert canonical_unit_name("LurkerDenMP") == "LurkerDen"
+    assert canonical_unit_name("BroodLordCocoon") == "BroodLord"
+    assert canonical_unit_name("OverlordCocoon") == "Overseer"
+    assert canonical_unit_name("BanelingCocoon") == "Baneling"
+    assert canonical_unit_name("RavagerCocoon") == "Ravager"

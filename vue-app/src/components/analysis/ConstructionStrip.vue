@@ -109,7 +109,6 @@ defineProps<{
 .construction-fill {
   height: 100%;
   background: linear-gradient(90deg, #2f9e44, #69db7c);
-  transition: width 0.2s linear;
 }
 
 .construction-bar.indeterminate .construction-fill {

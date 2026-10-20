@@ -1,3 +1,7 @@
+import multiprocessing
+
+multiprocessing.freeze_support()
+
 from sc2analyzer.embedded_pg import ensure_database
 
 ensure_database()

@@ -160,7 +160,6 @@ function tooltip(item: CatalogItem): string {
 .upgrade-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #2f9e44, #69db7c);
-  transition: width 0.2s linear;
 }
 
 .upgrade-progress.indeterminate .upgrade-progress-fill {

@@ -127,6 +127,9 @@ and is generated (not committed).
   - `unit_born` - actual unit birth (including warp-in and Archon merge completion)
   - `unit_died`, `unit_morph`, `upgrade_done`, `ability`
 - `units` stores one lifecycle row per unit for cumulative production and alive-at-time queries.
+- Folder imports hash files first, skip existing games without parsing, then parse/insert new
+  replays in parallel worker processes. `SC2_IMPORT_WORKERS` overrides the worker count
+  (defaults to half the logical CPUs, capped at 8).
 - Agent analysis reads the `sc2build.v_*` views; AI is intentionally not embedded in the service.
 
 ## Tech tree assets

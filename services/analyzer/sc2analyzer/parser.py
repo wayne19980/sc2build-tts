@@ -47,6 +47,14 @@ UNIT_VARIANTS = {
     "RavagerBurrowed": "Ravager",
     "HydraliskBurrowed": "Hydralisk",
     "LurkerBurrowed": "Lurker",
+    "LurkerMP": "Lurker",
+    "LurkerMPBurrowed": "Lurker",
+    "LurkerMPEgg": "Lurker",
+    "LurkerDenMP": "LurkerDen",
+    "BroodLordCocoon": "BroodLord",
+    "OverlordCocoon": "Overseer",
+    "BanelingCocoon": "Baneling",
+    "RavagerCocoon": "Ravager",
     "InfestorBurrowed": "Infestor",
     "UltraliskBurrowed": "Ultralisk",
     "SwarmHostBurrowed": "SwarmHost",
@@ -209,7 +217,7 @@ def _stat_payload(stats: dict[Any, Any]) -> dict[str, Any]:
     return {str(key): value for key, value in stats.items()}
 
 
-def parse_replay(path: str | Path) -> ParsedReplay:
+def parse_replay(path: str | Path, file_hash: str | None = None) -> ParsedReplay:
     replay_path = Path(path).resolve()
     if not replay_path.is_file():
         raise FileNotFoundError(replay_path)
@@ -615,7 +623,7 @@ def parse_replay(path: str | Path) -> ParsedReplay:
         file_path=str(replay_path),
         file_name=replay_path.name,
         file_size=replay_path.stat().st_size,
-        file_hash=sha256_file(replay_path),
+        file_hash=file_hash or sha256_file(replay_path),
         map_name=st_data.get("map"),
         duration_sec=(float(st_data["frames"]) / fps) if st_data.get("frames") and fps else None,
         game_version=str(st_data.get("build")) if st_data.get("build") is not None else None,

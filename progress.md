@@ -1,4 +1,4 @@
-## 2026-10-20 (v0.6.0 / v0.6.1 / v0.6.6)
+## 2026-10-20 (v0.6.0 / v0.6.1 / v0.6.6 / v0.6.7)
 
 - Release builds now use embedded PostgreSQL via `pgserver`; no external PG or .env needed.
 - Debug builds still use the external PostgreSQL from repo `.env`.
@@ -11,6 +11,11 @@
 - Updater config is a separate `tauri.updater.conf.toml`; normal builds work without signing.
 - v0.6.1 fixes the release workflow config path and keeps unsigned builds available.
 - v0.6.6 runs Tauri directly (`pnpm exec tauri build --config`) so the override is not forwarded to Cargo.
+- v0.6.7 imports folders in parallel worker processes, skips existing hashes before parsing,
+  and removes per-frame width transitions that made progress bars lag while scrubbing.
+- v0.6.7 adds Zerg morph/cocoon aliases, fixes canceled-building progress, keeps destroyed
+  buildings visible, and adds pan/zoom controls to the tech tree.
+- Flash/unlock effects now stay real-time at 2x/4x/8x playback.
 
 ## 2026-10-20 (v0.5.2)
 

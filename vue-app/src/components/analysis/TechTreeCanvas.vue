@@ -116,6 +116,7 @@ const props = defineProps<{
   units: UnitLifecycle[]
   tech: TechTiming[]
   compact?: boolean
+  speed?: number
 }>()
 
 
@@ -153,6 +154,7 @@ interface UnitNode {
 const { displayName } = useLanguage()
 const tree = computed(() => techTrees[props.race])
 const cellWidth = computed(() => (props.compact ? CELL_W_COMPACT : CELL_W))
+const flashWindow = computed(() => 1.2 * Math.max(1, props.speed || 1))
 
 const buildingStats = computed(() => {
   const counters: Record<string, BuildingCounter> = {}
@@ -209,6 +211,7 @@ const buildingStats = computed(() => {
       addDone(item.key, event.t_sec)
     } else if (event.kind === 'unit_died') {
       if (previous?.status === 'done') removeDone(previous.name)
+      else if (previous?.status === 'building') removeConstructing(previous.name)
       if (hasUnitId) live.delete(unitId)
     }
   }
@@ -260,7 +263,7 @@ const unitItems = computed(() => {
         item,
         count: unitCounts.value[item.key] || 0,
         unlocked,
-        flash: unlocked && time >= unlockAt && time - unlockAt < 1.2,
+        flash: unlocked && time >= unlockAt && time - unlockAt < flashWindow.value,
       })
     }
     grouped.set(group.group, units)
@@ -279,6 +282,8 @@ const constructionProgress = computed(() => {
     } else if (event.kind === 'build_done' || event.kind === 'unit_born') {
       const task = tasks.get(unitId)
       if (task && task.done === undefined) task.done = event.t_sec
+    } else if (event.kind === 'unit_died' && event.t_sec <= props.time) {
+      tasks.delete(unitId)
     }
   }
 
@@ -329,7 +334,7 @@ const buildingNodes = computed<BuildingNode[]>(() => {
       flash:
         stats?.firstDoneT !== undefined &&
         props.time >= stats.firstDoneT &&
-        props.time - stats.firstDoneT < 1.2,
+        props.time - stats.firstDoneT < flashWindow.value,
       units: unitItems.value.get(building.key) || [],
       morphs: Object.entries(stats?.morphs || {})
         .map(([key, count]) => {
@@ -360,7 +365,7 @@ const otherNode = computed(() => {
         item,
         count: unitCounts.value[item.key] || 0,
         unlocked: unlockAt !== undefined,
-        flash: unlockAt !== undefined && props.time >= unlockAt && props.time - unlockAt < 1.2,
+        flash: unlockAt !== undefined && props.time >= unlockAt && props.time - unlockAt < flashWindow.value,
       }
     })
     .filter((unit): unit is UnitNode => unit !== null)
@@ -513,8 +518,10 @@ function tooltip(item: CatalogItem, count?: number): string {
 }
 
 .building-node.destroyed .building-icon {
-  opacity: 0.32;
-  filter: grayscale(0.7) sepia(0.3) hue-rotate(-30deg);
+  opacity: 0.62;
+  filter: grayscale(0.35) sepia(0.25) hue-rotate(-25deg) brightness(0.85);
+  border-color: #7a3d3d;
+  box-shadow: inset 0 0 12px rgba(180, 60, 60, 0.16);
 }
 
 .unit-grid {
@@ -575,7 +582,6 @@ function tooltip(item: CatalogItem, count?: number): string {
 .build-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #2f9e44, #69db7c);
-  transition: width 0.2s linear;
 }
 
 .build-progress.indeterminate .build-progress-fill {
