@@ -15,6 +15,7 @@
 
     <template v-else-if="update">
       <div class="update-title">发现新版本 v{{ update.version }}</div>
+      <div v-if="error" class="update-error">{{ error }}</div>
       <div v-if="update.body" class="update-notes">{{ update.body }}</div>
       <div class="update-actions">
         <button class="update-primary" @click="installUpdate">更新并重启</button>

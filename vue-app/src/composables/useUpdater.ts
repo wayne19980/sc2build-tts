@@ -1,7 +1,7 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { isTauriRuntime } from './useTauri'
 
-const update = ref<any>(null)
+const update = shallowRef<any>(null)
 const checking = ref(false)
 const installing = ref(false)
 const progress = ref(0)
