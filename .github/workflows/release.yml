@@ -15,7 +15,6 @@ jobs:
 
     env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -54,6 +53,31 @@ jobs:
         working-directory: vue-app
         run: pnpm install --frozen-lockfile
 
+      - name: Validate updater signing key
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
+        shell: pwsh
+        run: |
+          $key = $env:TAURI_SIGNING_PRIVATE_KEY.Trim()
+          if ($key -match '^(?:[A-Za-z]:\\|/)') {
+            Write-Output "::error::TAURI_SIGNING_PRIVATE_KEY looks like a file path. Paste the full key file contents, not its path."
+            exit 1
+          }
+          if ($key -match 'untrusted comment') {
+            $decoded = $key
+          } else {
+            try {
+              $decoded = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($key))
+            } catch {
+              Write-Output "::error::TAURI_SIGNING_PRIVATE_KEY is not valid base64. Paste the full contents of sc2build-tts.key."
+              exit 1
+            }
+          }
+          if ($decoded -notmatch 'rsign encrypted secret key') {
+            Write-Output "::error::TAURI_SIGNING_PRIVATE_KEY is not a Tauri private key. Make sure you pasted sc2build-tts.key, not the public key."
+            exit 1
+          }
+          Write-Output "Updater signing key looks valid."
+
       - name: Build Tauri app
         working-directory: vue-app
         shell: pwsh
@@ -62,6 +86,7 @@ jobs:
             Write-Output "::warning::TAURI_SIGNING_PRIVATE_KEY is not set; building without updater artifacts"
             pnpm tauri:build
           } else {
+            $env:TAURI_SIGNING_PRIVATE_KEY = $env:TAURI_SIGNING_PRIVATE_KEY.Trim()
             $updaterConfig = (Resolve-Path "src-tauri/tauri.updater.conf.json").Path
             pnpm tauri:build -- --config "$updaterConfig"
           }
