@@ -20,11 +20,19 @@ def main() -> None:
 
     version = json.loads(TAURI_CONF.read_text(encoding="utf-8"))["version"]
     installer = BUNDLE / f"sc2build-tts_{version}_x64-setup.exe"
-    signature = installer.with_suffix(installer.suffix + ".sig")
     if not installer.exists():
-        raise SystemExit(f"installer not found: {installer}")
+        candidates = sorted(BUNDLE.glob("*-setup.exe"))
+        print("NSIS files:", ", ".join(p.name for p in candidates) or "(none)")
+        if len(candidates) == 1:
+            installer = candidates[0]
+        else:
+            raise FileNotFoundError(f"installer not found: {installer}")
+    signature = installer.with_suffix(installer.suffix + ".sig")
     if not signature.exists():
-        raise SystemExit(f"signature not found: {signature}")
+        print("NSIS files:", ", ".join(p.name for p in BUNDLE.glob("*")) or "(none)")
+        raise FileNotFoundError(f"signature not found: {signature}")
+    print(f"using installer: {installer.name}")
+    print(f"using signature: {signature.name}")
 
     base = args.base_url.rstrip("/")
     payload = {
@@ -43,4 +51,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        print(f"::error::{type(exc).__name__}: {exc}")
+        raise
