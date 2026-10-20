@@ -83,9 +83,6 @@ export function formatClock(seconds: number): string {
 
 export function upgradeItems(race: Race): CatalogItem[] {
   return Object.values(catalog).filter(
-    (item) =>
-      item.kind === 'upgrade' &&
-      item.race === race &&
-      !/Level[123]$/.test(item.key),
+    (item) => item.kind === 'upgrade' && item.race === race,
   )
 }

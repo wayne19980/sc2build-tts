@@ -85,7 +85,8 @@ and is generated (not committed).
 - Native directory selection uses `@tauri-apps/plugin-dialog`.
 - Overlay only works over windowed / borderless-fullscreen SC2, not exclusive fullscreen.
 - `Ctrl+Shift+O` toggles the overlay globally; the main window also has an
-  overlay button, opacity slider and position presets.
+  overlay button, opacity slider and position presets. Enabling the overlay also
+  starts the voice reader; disabling it stops the voice reader.
 - The overlay is a compact 760x220 transparent window, not full-screen.
   It shows a build ticker and a mini tech tree of all future unlocks; timestamps
   within 60 seconds are highlighted.

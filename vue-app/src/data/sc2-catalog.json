@@ -1645,36 +1645,6 @@
     "aliases": [],
     "icon": "level/TerranVehicleWeaponsLevel3"
   },
-  "TerranVehicleArmorsLevel1": {
-    "key": "TerranVehicleArmorsLevel1",
-    "abbr": "Tvav",
-    "name": "Vehicle Armor 1",
-    "nameZh": "载具护甲 1",
-    "kind": "upgrade",
-    "race": "T",
-    "aliases": [],
-    "icon": "level/TerranVehicleArmorsLevel1"
-  },
-  "TerranVehicleArmorsLevel2": {
-    "key": "TerranVehicleArmorsLevel2",
-    "abbr": "Tvav",
-    "name": "Vehicle Armor 2",
-    "nameZh": "载具护甲 2",
-    "kind": "upgrade",
-    "race": "T",
-    "aliases": [],
-    "icon": "level/TerranVehicleArmorsLevel2"
-  },
-  "TerranVehicleArmorsLevel3": {
-    "key": "TerranVehicleArmorsLevel3",
-    "abbr": "Tvav",
-    "name": "Vehicle Armor 3",
-    "nameZh": "载具护甲 3",
-    "kind": "upgrade",
-    "race": "T",
-    "aliases": [],
-    "icon": "level/TerranVehicleArmorsLevel3"
-  },
   "TerranShipWeaponsLevel1": {
     "key": "TerranShipWeaponsLevel1",
     "abbr": "Tvas",
@@ -1704,33 +1674,6 @@
     "race": "T",
     "aliases": [],
     "icon": "level/TerranShipWeaponsLevel3"
-  },
-  "TerranShipArmorsLevel1": {
-    "key": "TerranShipArmorsLevel1",
-    "abbr": "Tvas",
-    "name": "Ship Armor 1",
-    "nameZh": "舰船护甲 1",
-    "kind": "upgrade",
-    "race": "T",
-    "aliases": []
-  },
-  "TerranShipArmorsLevel2": {
-    "key": "TerranShipArmorsLevel2",
-    "abbr": "Tvas",
-    "name": "Ship Armor 2",
-    "nameZh": "舰船护甲 2",
-    "kind": "upgrade",
-    "race": "T",
-    "aliases": []
-  },
-  "TerranShipArmorsLevel3": {
-    "key": "TerranShipArmorsLevel3",
-    "abbr": "Tvas",
-    "name": "Ship Armor 3",
-    "nameZh": "舰船护甲 3",
-    "kind": "upgrade",
-    "race": "T",
-    "aliases": []
   },
   "TerranVehicleAndShipArmorsLevel1": {
     "key": "TerranVehicleAndShipArmorsLevel1",

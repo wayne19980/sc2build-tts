@@ -40,7 +40,10 @@
 - [x] Folder deletion
 - [x] Three tech-tree JSON layouts derived from the reference images
 - [x] TactiX icon mapping and asset extraction
-- [x] Level-specific attack/armor/shield icons
+- [x] Level-specific attack/armor/shield icons in the upgrade strip
+- [x] Voice steps merge repeated actions within a 4-second window
+- [x] Overlay toggle also starts voice broadcast
+- [x] Construction queue strip with counts and progress bars
 
 ## Overlay
 

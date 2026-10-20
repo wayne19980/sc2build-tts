@@ -146,3 +146,6 @@ __pycache__/
 
 # Generated Tauri sidecar
 vue-app/src-tauri/binaries/*.exe
+
+# Playwright CLI artifacts
+.playwright-cli/

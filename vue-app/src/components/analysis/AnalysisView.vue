@@ -106,13 +106,6 @@
             >
               {{ splitView ? '单人' : '分屏' }}
             </button>
-            <button
-              class="voice-toggle"
-              :class="{ active: voiceVisible }"
-              @click="openVoice"
-            >
-              语音播报
-            </button>
           </div>
         </header>
 
@@ -145,10 +138,10 @@
               <button
                 class="overlay-button"
                 :class="{ active: overlayEnabled }"
-                title="Overlay 开关 (Ctrl+Shift+O)"
+                title="Overlay 与语音播报开关 (Ctrl+Shift+O)"
                 @click="toggleOverlay"
               >
-                Overlay {{ overlayEnabled ? '关闭' : '开启' }}
+                Overlay/语音 {{ overlayEnabled ? '关闭' : '开启' }}
               </button>
               <input
                 v-model.number="overlayOpacity"
@@ -196,6 +189,11 @@
             :tech="playerTech"
           />
         </div>
+
+        <ConstructionStrip
+          :player-name="selectedPlayer?.name || ''"
+          :groups="constructionGroups"
+        />
 
         <UpgradeStrip v-if="race" :race="race" :time="time" :tech="playerTech" />
 
@@ -274,7 +272,7 @@ import type {
   TechTiming,
   UnitLifecycle,
 } from '../../types-analysis'
-import { formatClock, raceFromName, resolveItem } from '../../data/catalog'
+import { formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -291,6 +289,7 @@ import {
 import { useVoiceReader } from '../../composables/useVoiceReader'
 import { useDocumentPiP } from '../../composables/useDocumentPiP'
 import { SC2_FASTER_REAL_FACTOR } from '../../utils'
+import ConstructionStrip from './ConstructionStrip.vue'
 import ReplayLibrary from './ReplayLibrary.vue'
 import VoiceControlPanel from '../VoiceControlPanel.vue'
 import ScaledTree from './ScaledTree.vue'
@@ -415,6 +414,59 @@ const playerUnits = computed(() =>
 const playerTech = computed(() =>
   tech.value.filter((timing) => timing.player_id === activePlayerId.value),
 )
+
+const constructionGroups = computed(() => {
+  const playerId = activePlayerId.value
+  if (!playerId) return []
+
+  const tasks = new Map<number, { name: string; start: number; done?: number }>()
+  for (const event of buildings.value) {
+    if (event.player_id !== playerId) continue
+    const unitId = Number(event.payload?.unit_id)
+    if (!Number.isFinite(unitId)) continue
+    if (event.kind === "build_start") {
+      tasks.set(unitId, { name: event.name, start: event.t_sec })
+    } else if (event.kind === "build_done" || event.kind === "unit_born") {
+      const task = tasks.get(unitId)
+      if (task && task.done === undefined) task.done = event.t_sec
+    }
+  }
+
+  const now = time.value
+  const groups = new Map<
+    string,
+    {
+      key: string
+      name: string
+      icon: string
+      count: number
+      tasks: { progress: number; indeterminate: boolean }[]
+    }
+  >()
+
+  for (const task of tasks.values()) {
+    if (task.start > now) continue
+    if (task.done !== undefined && task.done <= now) continue
+    const item = resolveItem(task.name)
+    const key = item?.key || task.name
+    const group = groups.get(key) || {
+      key,
+      name: item?.nameZh || task.name,
+      icon: item ? itemIconUrl(item) : "",
+      count: 0,
+      tasks: [],
+    }
+    const progress =
+      task.done !== undefined && task.done > task.start
+        ? Math.min(1, Math.max(0, (now - task.start) / (task.done - task.start)))
+        : 0
+    group.count += 1
+    group.tasks.push({ progress, indeterminate: task.done === undefined })
+    groups.set(key, group)
+  }
+
+  return Array.from(groups.values())
+})
 
 onMounted(() => {
   loadFolders()
@@ -548,6 +600,7 @@ async function selectGame(game: GameSummary) {
     activePlayerId.value = detail.players[0]?.id || null
     splitView.value = false
     closeVoice()
+    if (overlayEnabled.value) enableVoice(true)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : String(exc)
   }
@@ -555,7 +608,11 @@ async function selectGame(game: GameSummary) {
 
 function selectPlayer(playerId: number) {
   activePlayerId.value = playerId
-  if (voiceVisible.value) refreshVoiceSteps()
+  if (overlayEnabled.value) {
+    enableVoice(true)
+  } else if (voiceVisible.value) {
+    refreshVoiceSteps()
+  }
 }
 
 function handleViewport() {
@@ -731,11 +788,13 @@ async function toggleOverlay() {
     if (overlayEnabled.value) {
       await hideOverlayWindow()
       overlayEnabled.value = false
+      closeVoice()
       return
     }
     await openOverlayWindow(overlayAnchor.value)
     overlayEnabled.value = true
     scheduleOverlaySync(true)
+    enableVoice(true)
   } catch (exc) {
     overlayError.value = exc instanceof Error ? exc.message : String(exc)
   }
@@ -744,29 +803,49 @@ async function toggleOverlay() {
 function refreshVoiceSteps() {
   const player = selectedPlayer.value
   if (!player) return
-  const items = timeline.value
+
+  const orders = timeline.value
     .filter((event) => event.player_id === player.id && event.kind === "order" && !event.is_worker)
     .sort((a, b) => a.t_sec - b.t_sec)
-    .map((event) => {
-      const item = resolveItem(event.name)
-      const name = item?.nameZh || event.name
-      return {
-        time: event.t_sec,
-        text: name,
-        speech: name,
-      }
-    })
+
+  const mergeWindow = 4
+  const groups: {
+    key: string
+    name: string
+    time: number
+    lastTime: number
+    count: number
+  }[] = []
+  const latest = new Map<string, (typeof groups)[number]>()
+
+  for (const event of orders) {
+    const item = resolveItem(event.name)
+    const key = item?.key || event.name
+    const name = item?.nameZh || event.name
+    const previous = latest.get(key)
+    if (previous && event.t_sec - previous.lastTime <= mergeWindow) {
+      previous.count += 1
+      previous.lastTime = event.t_sec
+      continue
+    }
+    const group = { key, name, time: event.t_sec, lastTime: event.t_sec, count: 1 }
+    groups.push(group)
+    latest.set(key, group)
+  }
+
+  const items = groups.map((group) => ({
+    time: group.time,
+    text: group.count > 1 ? `${group.name} ×${group.count}` : group.name,
+    speech: group.count > 1 ? `${group.name} ${group.count}个` : group.name,
+  }))
   loadDisplaySteps(items)
 }
 
-function openVoice() {
-  if (voiceVisible.value) {
-    closeVoice()
-    return
-  }
+function enableVoice(autoplay = false) {
   if (!selectedPlayer.value) return
   refreshVoiceSteps()
   voiceVisible.value = true
+  if (autoplay && !voiceIsRunning.value) voiceTogglePlay()
 }
 
 function closeVoice() {
@@ -944,7 +1023,7 @@ function pollImport(jobId: string) {
 .folder-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   padding: 7px 9px;
   font-size: 13px;
 }
@@ -961,14 +1040,20 @@ function pollImport(jobId: string) {
 }
 
 .folder-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .folder-count {
+  flex: none;
+  min-width: 18px;
+  margin-left: auto;
   color: #5f7d9f;
   font-size: 11px;
+  text-align: right;
 }
 
 .folder-delete {
