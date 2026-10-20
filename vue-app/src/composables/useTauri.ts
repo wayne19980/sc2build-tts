@@ -15,6 +15,27 @@ export async function pickDirectory(): Promise<string | null> {
   return typeof selected === 'string' ? selected : null
 }
 
+export async function pickReplayFile(): Promise<string | null> {
+  if (!isTauriRuntime()) return null
+  const { open } = await import('@tauri-apps/plugin-dialog')
+  const selected = await open({
+    multiple: false,
+    directory: false,
+    filters: [{ name: 'SC2 Replay', extensions: ['SC2Replay', 'sc2replay'] }],
+  })
+  return typeof selected === 'string' ? selected : null
+}
+
+export async function listenDragDrop(
+  callback: (paths: string[]) => void,
+): Promise<() => void> {
+  if (!isTauriRuntime()) return () => {}
+  const { getCurrentWindow } = await import('@tauri-apps/api/window')
+  return getCurrentWindow().onDragDropEvent((event) => {
+    if (event.payload.type === 'drop') callback(event.payload.paths)
+  })
+}
+
 export async function emitOverlayState(state: OverlayState): Promise<void> {
   if (!isTauriRuntime()) return
   const { emit } = await import('@tauri-apps/api/event')

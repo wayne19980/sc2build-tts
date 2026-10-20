@@ -7,7 +7,7 @@
           <button class="icon-button" title="刷新" @click="loadFolders">↻</button>
         </div>
         <div class="folder-list">
-          <button
+          <div
             v-for="folder in folders"
             :key="folder.id"
             class="folder-row"
@@ -16,13 +16,20 @@
           >
             <span class="folder-name">{{ folder.name }}</span>
             <span class="folder-count">{{ folder.game_count }}</span>
-          </button>
+            <button
+              class="folder-delete"
+              title="删除文件夹"
+              @click.stop="removeFolder(folder)"
+            >
+              ×
+            </button>
+          </div>
           <div v-if="!folders.length" class="empty-hint">还没有导入文件夹</div>
         </div>
       </section>
 
       <section class="sidebar-section import-section">
-        <div class="section-heading"><span>导入录像文件夹</span></div>
+        <div class="section-heading"><span>导入录像</span></div>
         <div class="path-row">
           <input
             v-model="importPath"
@@ -34,9 +41,20 @@
             选择
           </button>
         </div>
-        <button class="primary-button" :disabled="!importPath.trim() || importing" @click="startImport">
-          {{ importing ? '导入中…' : '开始导入' }}
-        </button>
+        <div class="import-buttons">
+          <button class="primary-button" :disabled="!importPath.trim() || importing" @click="startImport">
+            {{ importing ? '导入中…' : '导入文件夹' }}
+          </button>
+          <button
+            v-if="isDesktop"
+            class="ghost-button file-button"
+            :disabled="importing"
+            @click="chooseReplay"
+          >
+            选择录像文件
+          </button>
+        </div>
+        <div class="import-hint">也可以把单个 .SC2Replay 直接拖进窗口</div>
         <div v-if="importJob" class="import-status">
           <div class="import-line">
             <span>{{ importJob.phase }}</span>
@@ -88,6 +106,13 @@
             >
               {{ splitView ? '单人' : '分屏' }}
             </button>
+            <button
+              class="voice-toggle"
+              :class="{ active: voiceVisible }"
+              @click="openVoice"
+            >
+              语音播报
+            </button>
           </div>
         </header>
 
@@ -107,6 +132,13 @@
               </button>
               <button :class="{ active: countMode === 'alive' }" @click="countMode = 'alive'">
                 存活
+              </button>
+            </div>
+            <div v-if="voiceVisible" class="voice-quick">
+              <span>{{ voiceRate.toFixed(1) }}x</span>
+              <input v-model.number="voiceRate" type="range" min="0.8" max="2.5" step="0.1" />
+              <button @click="voiceLayout = voiceLayout === 'horizontal' ? 'vertical' : 'horizontal'">
+                {{ voiceLayout === 'horizontal' ? '横排' : '竖排' }}
               </button>
             </div>
             <div v-if="isDesktop" class="overlay-controls">
@@ -183,7 +215,7 @@
           />
           <div class="speed-group">
             <button
-              v-for="option in [1, 2, 4]"
+              v-for="option in [1, 2, 4, 8]"
               :key="option"
               :class="{ active: speed === option }"
               @click="speed = option"
@@ -203,6 +235,26 @@
         @open="selectGame"
       />
     </main>
+
+    <VoiceControlPanel
+      ref="voicePanelRef"
+      :visible="voiceVisible"
+      :layout="voiceLayout"
+      :timer-str="voiceTimerStr"
+      :is-playing="voiceIsRunning"
+      :prev-steps="prevVoiceSteps"
+      :current-step="currentVoiceStepObj"
+      :next-steps="nextVoiceSteps"
+      :step-progress="voiceStepProgress() / 100"
+      :timeline-progress="voiceTimelineProgress() / 100"
+      :can-pip="isPiPSupported"
+      :is-pip="!!pipWindow"
+      @pop-out="onPopOut"
+      @close="closeVoice"
+      @toggle-play="voiceTogglePlay"
+      @reset="voiceReset"
+      @timeline-click="voiceTimelineClick"
+    />
   </div>
 </template>
 
@@ -222,7 +274,7 @@ import type {
   TechTiming,
   UnitLifecycle,
 } from '../../types-analysis'
-import { formatClock, raceFromName } from '../../data/catalog'
+import { formatClock, raceFromName, resolveItem } from '../../data/catalog'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -231,10 +283,16 @@ import {
   listenOverlayEvent,
   openOverlayWindow,
   pickDirectory,
+  pickReplayFile,
   positionOverlayWindow,
   registerOverlayShortcut,
+  listenDragDrop,
 } from '../../composables/useTauri'
+import { useVoiceReader } from '../../composables/useVoiceReader'
+import { useDocumentPiP } from '../../composables/useDocumentPiP'
+import { SC2_FASTER_REAL_FACTOR } from '../../utils'
 import ReplayLibrary from './ReplayLibrary.vue'
+import VoiceControlPanel from '../VoiceControlPanel.vue'
 import ScaledTree from './ScaledTree.vue'
 import PlayerTreePanel from './PlayerTreePanel.vue'
 import UpgradeStrip from './UpgradeStrip.vue'
@@ -251,6 +309,8 @@ const splitView = ref(false)
 const buildings = ref<EventItem[]>([])
 const units = ref<UnitLifecycle[]>([])
 const tech = ref<TechTiming[]>([])
+const timeline = ref<EventItem[]>([])
+let dragUnlisten: (() => void) | null = null
 
 const time = ref(0)
 const playing = ref(false)
@@ -273,6 +333,52 @@ const overlayError = ref('')
 let overlayUnlisten: (() => void) | null = null
 let overlayShortcutUnregister: (() => Promise<void>) | null = null
 let overlaySyncTimer: number | null = null
+
+const {
+  steps: voiceSteps,
+  currentIndex: voiceCurrentIndex,
+  isRunning: voiceIsRunning,
+  rate: voiceRate,
+  visible: voiceVisible,
+  gameClockSeconds: voiceGameClockSeconds,
+  stepProgress: voiceStepProgress,
+  timelineProgress: voiceTimelineProgress,
+  loadDisplaySteps,
+  togglePlay: voiceTogglePlay,
+  reset: voiceReset,
+  timelineClick: voiceTimelineClick,
+  jumpStep: voiceJumpStep,
+} = useVoiceReader()
+const { isSupported: isPiPSupported, pipWindow, requestPiP } = useDocumentPiP()
+const voicePanelRef = ref<any>(null)
+const voiceLayout = ref<'horizontal' | 'vertical'>('horizontal')
+
+const voiceTimerStr = computed(() => formatClock(voiceGameClockSeconds()))
+const currentVoiceStepObj = computed(() => {
+  const index = voiceCurrentIndex.value
+  if (index < 0 || index >= voiceSteps.value.length) return null
+  const step = voiceSteps.value[index]
+  return {
+    time: formatClock(step.time / SC2_FASTER_REAL_FACTOR),
+    text: step.text,
+  }
+})
+const prevVoiceSteps = computed(() => {
+  const index = voiceCurrentIndex.value
+  if (index <= 0) return []
+  return voiceSteps.value.slice(Math.max(0, index - 2), index).map((step) => ({
+    time: formatClock(step.time / SC2_FASTER_REAL_FACTOR),
+    text: step.text,
+  }))
+})
+const nextVoiceSteps = computed(() => {
+  const index = voiceCurrentIndex.value
+  const start = index < 0 ? 0 : index + 1
+  return voiceSteps.value.slice(start, start + 2).map((step) => ({
+    time: formatClock(step.time / SC2_FASTER_REAL_FACTOR),
+    text: step.text,
+  }))
+})
 
 let animationFrame: number | null = null
 let lastFrame = 0
@@ -312,9 +418,19 @@ const playerTech = computed(() =>
 
 onMounted(() => {
   loadFolders()
+  window.addEventListener('keydown', handleVoiceKey)
   window.addEventListener('resize', handleViewport)
   handleViewport()
   if (isDesktop) {
+    void listenDragDrop((paths) => {
+      void handleDropPaths(paths)
+    })
+      .then((unlisten) => {
+        dragUnlisten = unlisten
+      })
+      .catch((exc) => {
+        error.value = exc instanceof Error ? exc.message : String(exc)
+      })
     void listenOverlayEvent('sc2-overlay-ready', () => {
       if (overlayEnabled.value) scheduleOverlaySync(true)
     }).then((unlisten) => {
@@ -334,7 +450,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   pause()
+  closeVoice()
+  window.removeEventListener('keydown', handleVoiceKey)
   window.removeEventListener('resize', handleViewport)
+  dragUnlisten?.()
   if (importTimer) clearTimeout(importTimer)
   if (overlaySyncTimer) clearTimeout(overlaySyncTimer)
   overlayUnlisten?.()
@@ -389,6 +508,7 @@ async function selectFolder(folder: FolderInfo) {
   activeGame.value = null
   activePlayerId.value = null
   pause()
+  closeVoice()
   await loadGames(folder.id)
 }
 
@@ -413,18 +533,21 @@ async function selectGame(game: GameSummary) {
   time.value = 0
   try {
     error.value = ''
-    const [detail, buildingEvents, unitRows, techRows] = await Promise.all([
+    const [detail, buildingEvents, unitRows, techRows, timelineRows] = await Promise.all([
       api.game(game.game_id),
       api.buildings(game.game_id),
       api.units(game.game_id),
       api.tech(game.game_id),
+      api.timeline(game.game_id),
     ])
     activeGame.value = detail
     buildings.value = buildingEvents
     units.value = unitRows
     tech.value = techRows
+    timeline.value = timelineRows
     activePlayerId.value = detail.players[0]?.id || null
     splitView.value = false
+    closeVoice()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : String(exc)
   }
@@ -432,6 +555,7 @@ async function selectGame(game: GameSummary) {
 
 function selectPlayer(playerId: number) {
   activePlayerId.value = playerId
+  if (voiceVisible.value) refreshVoiceSteps()
 }
 
 function handleViewport() {
@@ -440,6 +564,7 @@ function handleViewport() {
 
 function backToLibrary() {
   pause()
+  closeVoice()
   activeGame.value = null
   activePlayerId.value = null
   activeGameId.value = null
@@ -485,6 +610,63 @@ function resetTime() {
 
 function raceClass(raceName: string | null): string {
   return raceFromName(raceName)?.toLowerCase() || ''
+}
+
+async function chooseReplay() {
+  try {
+    const selected = await pickReplayFile()
+    if (selected) await importSingleFile(selected)
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : String(exc)
+  }
+}
+
+async function handleDropPaths(paths: string[]) {
+  const first = paths[0]
+  if (!first) return
+  if (first.toLowerCase().endsWith(".sc2replay")) {
+    await importSingleFile(first)
+  } else {
+    importPath.value = first
+    await startImport()
+  }
+}
+
+async function importSingleFile(path: string) {
+  if (importing.value) return
+  importing.value = true
+  error.value = ""
+  try {
+    const result = await api.importFile(path)
+    folders.value = await fetchFoldersWithRetry()
+    activeFolderId.value = result.folder_id
+    await loadGames(result.folder_id)
+    const replay = replays.value.find((item) => item.game_id === result.game_id)
+    if (replay) await selectGame(replay)
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : String(exc)
+  } finally {
+    importing.value = false
+  }
+}
+
+async function removeFolder(folder: FolderInfo) {
+  if (!window.confirm(`删除文件夹「${folder.name}」及其中全部对局？`)) return
+  try {
+    await api.deleteFolder(folder.id)
+    if (activeFolderId.value === folder.id) {
+      activeFolderId.value = null
+      activeGameId.value = null
+      activeGame.value = null
+      activePlayerId.value = null
+      replays.value = []
+      pause()
+      closeVoice()
+    }
+    await loadFolders()
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : String(exc)
+  }
 }
 
 async function chooseFolder() {
@@ -556,6 +738,88 @@ async function toggleOverlay() {
     scheduleOverlaySync(true)
   } catch (exc) {
     overlayError.value = exc instanceof Error ? exc.message : String(exc)
+  }
+}
+
+function refreshVoiceSteps() {
+  const player = selectedPlayer.value
+  if (!player) return
+  const items = timeline.value
+    .filter((event) => event.player_id === player.id && event.kind === "order" && !event.is_worker)
+    .sort((a, b) => a.t_sec - b.t_sec)
+    .map((event) => {
+      const item = resolveItem(event.name)
+      const name = item?.nameZh || event.name
+      return {
+        time: event.t_sec,
+        text: name,
+        speech: name,
+      }
+    })
+  loadDisplaySteps(items)
+}
+
+function openVoice() {
+  if (voiceVisible.value) {
+    closeVoice()
+    return
+  }
+  if (!selectedPlayer.value) return
+  refreshVoiceSteps()
+  voiceVisible.value = true
+}
+
+function closeVoice() {
+  voiceVisible.value = false
+  voiceReset()
+}
+
+async function onPopOut() {
+  if (!voicePanelRef.value) return
+  const element = voicePanelRef.value.$el as HTMLElement
+  await requestPiP(element, {
+    width: voiceLayout.value === "horizontal" ? 540 : 320,
+    height: voiceLayout.value === "horizontal" ? 120 : 600,
+    fallbackData: {
+      get timer() {
+        return voiceTimerStr.value
+      },
+      get currentStep() {
+        return currentVoiceStepObj.value
+      },
+      get prevSteps() {
+        return prevVoiceSteps.value
+      },
+      get nextSteps() {
+        return nextVoiceSteps.value
+      },
+      get stepProgress() {
+        return voiceStepProgress() / 100
+      },
+      get timelineProgress() {
+        return voiceTimelineProgress() / 100
+      },
+      get layout() {
+        return voiceLayout.value
+      },
+    },
+  })
+}
+
+function handleVoiceKey(event: KeyboardEvent) {
+  if (!voiceVisible.value || !event.altKey) return
+  if (event.key === "ArrowUp") {
+    event.preventDefault()
+    voiceTogglePlay()
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault()
+    closeVoice()
+  } else if (event.key === "ArrowRight") {
+    event.preventDefault()
+    voiceJumpStep(1)
+  } else if (event.key === "ArrowLeft") {
+    event.preventDefault()
+    voiceJumpStep(-1)
   }
 }
 
@@ -707,10 +971,52 @@ function pollImport(jobId: string) {
   font-size: 11px;
 }
 
+.folder-delete {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #4f6b8c;
+  font-size: 14px;
+  line-height: 16px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.folder-row:hover .folder-delete,
+.folder-row.active .folder-delete {
+  opacity: 1;
+}
+
+.folder-delete:hover {
+  background: rgba(248, 81, 73, 0.18);
+  color: #ff8c8c;
+}
+
 .import-section {
   display: flex;
   flex-direction: column;
   gap: 7px;
+}
+
+.import-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-button {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.import-hint {
+  color: #4f6b8c;
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .path-input {
@@ -934,6 +1240,22 @@ function pollImport(jobId: string) {
   color: #e8f4ff;
 }
 
+.voice-toggle {
+  padding: 7px 10px;
+  border: 1px solid #1d3352;
+  border-radius: 8px;
+  background: #080f1c;
+  color: #8ca6c8;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.voice-toggle.active {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.16);
+  color: #d8b4fe;
+}
+
 .race-dot {
   width: 8px;
   height: 8px;
@@ -1106,6 +1428,29 @@ function pollImport(jobId: string) {
   flex: none;
   padding: 0 9px;
   font-size: 11px;
+}
+
+.voice-quick {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8ca6c8;
+  font-size: 10px;
+}
+
+.voice-quick input {
+  width: 64px;
+  accent-color: #a855f7;
+}
+
+.voice-quick button {
+  padding: 3px 6px;
+  border: 1px solid #1d3352;
+  border-radius: 5px;
+  background: transparent;
+  color: #8ca6c8;
+  font-size: 10px;
+  cursor: pointer;
 }
 
 .overlay-controls {

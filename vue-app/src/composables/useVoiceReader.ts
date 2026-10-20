@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { VoiceStep } from '../types'
+import type { VoiceStep } from '../types-analysis'
 import { GAME_TIME_FACTOR, SC2_FASTER_REAL_FACTOR } from '../utils'
 
 export function useVoiceReader() {
@@ -62,6 +62,17 @@ export function useVoiceReader() {
     if (!steps.value.length) return 0
     const totalTime = steps.value[steps.value.length - 1].time + 10
     return (currentTime.value / totalTime) * 100
+  }
+
+  function loadDisplaySteps(
+    items: { time: number; text: string; speech?: string }[],
+  ) {
+    steps.value = items.map((item) => ({
+      time: item.time * SC2_FASTER_REAL_FACTOR,
+      text: item.text,
+      speech: item.speech || item.text,
+    }))
+    reset()
   }
 
   function loadSteps(
@@ -153,6 +164,7 @@ export function useVoiceReader() {
     stepProgress,
     timelineProgress,
     loadSteps,
+    loadDisplaySteps,
     togglePlay,
     jumpTo,
     jumpStep,

@@ -199,6 +199,9 @@ ITEMS = [
     ("TerranShipArmorsLevel1", "Tvas", "Ship Armor 1", "舰船护甲 1", "upgrade", "T", []),
     ("TerranShipArmorsLevel2", "Tvas", "Ship Armor 2", "舰船护甲 2", "upgrade", "T", []),
     ("TerranShipArmorsLevel3", "Tvas", "Ship Armor 3", "舰船护甲 3", "upgrade", "T", []),
+    ("TerranVehicleAndShipArmorsLevel1", "Tvav", "Vehicle/Ship Armor 1", "载具/舰船护甲 1", "upgrade", "T", []),
+    ("TerranVehicleAndShipArmorsLevel2", "Tvav", "Vehicle/Ship Armor 2", "载具/舰船护甲 2", "upgrade", "T", []),
+    ("TerranVehicleAndShipArmorsLevel3", "Tvav", "Vehicle/Ship Armor 3", "载具/舰船护甲 3", "upgrade", "T", []),
     ("ZergMeleeWeaponsLevel1", "Zbvm", "Melee Attacks 1", "近战攻击 1", "upgrade", "Z", []),
     ("ZergMeleeWeaponsLevel2", "Zbvm", "Melee Attacks 2", "近战攻击 2", "upgrade", "Z", []),
     ("ZergMeleeWeaponsLevel3", "Zbvm", "Melee Attacks 3", "近战攻击 3", "upgrade", "Z", []),
@@ -235,6 +238,17 @@ def main() -> None:
 
     if missing:
         raise SystemExit(f"missing icons: {sorted(set(missing))}")
+
+    level_dir = ICON_DIR / "level"
+    for key, item in catalog.items():
+        if item["kind"] != "upgrade":
+            continue
+        icon_key = key
+        if key.startswith("TerranVehicleAndShipArmorsLevel"):
+            icon_key = key.replace("TerranVehicleAndShipArmorsLevel", "TerranVehicleArmorsLevel")
+        candidate = level_dir / f"{icon_key}.png"
+        if candidate.exists():
+            item["icon"] = f"level/{icon_key}"
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(

@@ -34,9 +34,13 @@
 - [x] Unlock flash animation
 - [x] Rounded orthogonal tech-tree connectors
 - [x] Unit count badge (cumulative or alive)
-- [x] Timeline scrubber and playback
+- [x] Timeline scrubber and playback (1x/2x/4x/8x)
+- [x] Voice build-order reader with TTS and PiP
+- [x] Single replay file picker + drag/drop
+- [x] Folder deletion
 - [x] Three tech-tree JSON layouts derived from the reference images
 - [x] TactiX icon mapping and asset extraction
+- [x] Level-specific attack/armor/shield icons
 
 ## Overlay
 

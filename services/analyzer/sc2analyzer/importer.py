@@ -31,6 +31,7 @@ class ImportResult:
     imported: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     errors: list[ImportError] = field(default_factory=list)
+    game_ids: list[int] = field(default_factory=list)
 
 
 def _replay_files(folder: Path) -> list[Path]:
@@ -217,9 +218,10 @@ def import_folder(
             continue
 
         try:
-            _insert_parsed_replay(session, folder_row, parsed)
+            game = _insert_parsed_replay(session, folder_row, parsed)
             session.commit()
             result.imported.append(str(replay_file))
+            result.game_ids.append(game.id)
             _emit(
                 progress,
                 phase="file_imported",
@@ -255,22 +257,24 @@ def import_replay(session: Session, replay_path: str | Path, folder_path: str | 
     if not replay.is_file():
         raise FileNotFoundError(replay)
 
+    parsed = parse_replay(replay)
+    existing = session.scalar(select(Game).where(Game.file_hash == parsed.file_hash))
+    if existing is not None:
+        result = ImportResult(folder_id=existing.folder_id, folder_path=str(replay.parent))
+        result.skipped.append(str(replay))
+        result.game_ids.append(existing.id)
+        return result
+
     folder = Path(folder_path).resolve() if folder_path else replay.parent
     folder_row = get_or_create_folder(session, folder)
     session.commit()
 
     result = ImportResult(folder_id=folder_row.id, folder_path=folder_row.path)
-    parsed = parse_replay(replay)
-
-    existing = session.scalar(select(Game).where(Game.file_hash == parsed.file_hash))
-    if existing is not None:
-        result.skipped.append(str(replay))
-        return result
-
     try:
-        _insert_parsed_replay(session, folder_row, parsed)
+        game = _insert_parsed_replay(session, folder_row, parsed)
         session.commit()
         result.imported.append(str(replay))
+        result.game_ids.append(game.id)
     except Exception as exc:  # noqa: BLE001
         session.rollback()
         result.errors.append(ImportError(file=str(replay), message=str(exc)))

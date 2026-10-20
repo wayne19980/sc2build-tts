@@ -53,6 +53,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ path }),
     }),
+  importFile: (path: string) =>
+    request<{ folder_id: number; game_id: number | null; imported: number; skipped: number }>(
+      '/api/imports/file',
+      {
+        method: 'POST',
+        body: JSON.stringify({ path }),
+      },
+    ),
+  deleteFolder: (folderId: number) =>
+    request<{ deleted: number }>(`/api/folders/${folderId}`, { method: 'DELETE' }),
   imports: () => request<ImportJob[]>('/api/imports'),
   importJob: (id: string) => request<ImportJob>(`/api/imports/${id}`),
 }

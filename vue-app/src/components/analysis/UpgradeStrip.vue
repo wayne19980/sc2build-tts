@@ -9,7 +9,7 @@
         :class="{ done: completedTimes[item.key] !== undefined }"
         :title="tooltip(item)"
       >
-        <img :src="iconUrl(item.abbr)" :alt="item.name" draggable="false" />
+        <img :src="itemIconUrl(item)" :alt="item.name" draggable="false" />
         <span v-if="completedTimes[item.key] !== undefined" class="upgrade-time">
           {{ formatClock(completedTimes[item.key]) }}
         </span>
@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Race, TechTiming } from '../../types-analysis'
-import { formatClock, iconUrl, resolveItem, upgradeItems, type CatalogItem } from '../../data/catalog'
+import { formatClock, itemIconUrl, resolveItem, upgradeItems, type CatalogItem } from '../../data/catalog'
 
 const props = defineProps<{
   race: Race

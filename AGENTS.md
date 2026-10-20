@@ -132,6 +132,7 @@ Extracted assets and data:
 - `vue-app/public/sc2-icons/` - icons named by TactiX Abbr
 - `scripts/extract_tactix_icons.py` - regenerate icons from the zip
 - `scripts/build_catalog.py` - regenerate the catalog
+- `scripts/fetch_level_icons.py` - fetch level-specific upgrade icons from Liquipedia
 - `vue-app/src/data/sc2-catalog.json` - canonical key -> Abbr / official English / Chinese name
 - `vue-app/src/data/tech-trees.json` - Protoss/Terran/Zerg node positions and prerequisites
 

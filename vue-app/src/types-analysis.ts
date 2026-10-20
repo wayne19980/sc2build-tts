@@ -156,3 +156,9 @@ export interface FolderReplayPlayer {
 export interface FolderReplay extends GameSummary {
   player_details: FolderReplayPlayer[]
 }
+
+export interface VoiceStep {
+  time: number
+  text: string
+  speech: string
+}

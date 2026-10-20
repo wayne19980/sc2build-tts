@@ -31,7 +31,7 @@
           <template v-for="(entry, index) in previewUnlocks" :key="`${entry.item.key}-${entry.event.t_sec}`">
             <span v-if="index > 0" class="mini-arrow">›</span>
             <div class="mini-item" :title="`${entry.item.nameZh} ${formatClock(entry.event.t_sec)}`">
-              <img :src="iconUrl(entry.item.abbr)" :alt="entry.item.name" draggable="false" />
+              <img :src="itemIconUrl(entry.item)" :alt="entry.item.name" draggable="false" />
               <span class="mini-time" :class="{ soon: isSoon(entry.event.t_sec) }">
                 {{ formatClock(entry.event.t_sec) }}
               </span>
@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from '../../api'
-import { formatClock, iconUrl, resolveItem, type CatalogItem } from '../../data/catalog'
+import { formatClock, iconUrl, itemIconUrl, resolveItem, type CatalogItem } from '../../data/catalog'
 import type { EventItem, OverlayState } from '../../types-analysis'
 import { emitOverlayReady, isTauriRuntime, listenOverlayEvent } from '../../composables/useTauri'
 

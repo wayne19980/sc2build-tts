@@ -1412,7 +1412,8 @@
     "nameZh": "地面武器 1",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossGroundWeaponsLevel1"
   },
   "ProtossGroundWeaponsLevel2": {
     "key": "ProtossGroundWeaponsLevel2",
@@ -1421,7 +1422,8 @@
     "nameZh": "地面武器 2",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossGroundWeaponsLevel2"
   },
   "ProtossGroundWeaponsLevel3": {
     "key": "ProtossGroundWeaponsLevel3",
@@ -1430,7 +1432,8 @@
     "nameZh": "地面武器 3",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossGroundWeaponsLevel3"
   },
   "ProtossGroundArmorsLevel1": {
     "key": "ProtossGroundArmorsLevel1",
@@ -1439,7 +1442,8 @@
     "nameZh": "地面护甲 1",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossGroundArmorsLevel1"
   },
   "ProtossGroundArmorsLevel2": {
     "key": "ProtossGroundArmorsLevel2",
@@ -1448,7 +1452,8 @@
     "nameZh": "地面护甲 2",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossGroundArmorsLevel2"
   },
   "ProtossGroundArmorsLevel3": {
     "key": "ProtossGroundArmorsLevel3",
@@ -1457,7 +1462,8 @@
     "nameZh": "地面护甲 3",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossGroundArmorsLevel3"
   },
   "ProtossPlasmaShieldsLevel1": {
     "key": "ProtossPlasmaShieldsLevel1",
@@ -1466,7 +1472,8 @@
     "nameZh": "护盾 1",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossPlasmaShieldsLevel1"
   },
   "ProtossPlasmaShieldsLevel2": {
     "key": "ProtossPlasmaShieldsLevel2",
@@ -1475,7 +1482,8 @@
     "nameZh": "护盾 2",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossPlasmaShieldsLevel2"
   },
   "ProtossPlasmaShieldsLevel3": {
     "key": "ProtossPlasmaShieldsLevel3",
@@ -1484,7 +1492,8 @@
     "nameZh": "护盾 3",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossPlasmaShieldsLevel3"
   },
   "ProtossAirWeaponsLevel1": {
     "key": "ProtossAirWeaponsLevel1",
@@ -1493,7 +1502,8 @@
     "nameZh": "空中武器 1",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossAirWeaponsLevel1"
   },
   "ProtossAirWeaponsLevel2": {
     "key": "ProtossAirWeaponsLevel2",
@@ -1502,7 +1512,8 @@
     "nameZh": "空中武器 2",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossAirWeaponsLevel2"
   },
   "ProtossAirWeaponsLevel3": {
     "key": "ProtossAirWeaponsLevel3",
@@ -1511,7 +1522,8 @@
     "nameZh": "空中武器 3",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossAirWeaponsLevel3"
   },
   "ProtossAirArmorsLevel1": {
     "key": "ProtossAirArmorsLevel1",
@@ -1520,7 +1532,8 @@
     "nameZh": "空中护甲 1",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossAirArmorsLevel1"
   },
   "ProtossAirArmorsLevel2": {
     "key": "ProtossAirArmorsLevel2",
@@ -1529,7 +1542,8 @@
     "nameZh": "空中护甲 2",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossAirArmorsLevel2"
   },
   "ProtossAirArmorsLevel3": {
     "key": "ProtossAirArmorsLevel3",
@@ -1538,7 +1552,8 @@
     "nameZh": "空中护甲 3",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ProtossAirArmorsLevel3"
   },
   "TerranInfantryWeaponsLevel1": {
     "key": "TerranInfantryWeaponsLevel1",
@@ -1547,7 +1562,8 @@
     "nameZh": "步兵武器 1",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranInfantryWeaponsLevel1"
   },
   "TerranInfantryWeaponsLevel2": {
     "key": "TerranInfantryWeaponsLevel2",
@@ -1556,7 +1572,8 @@
     "nameZh": "步兵武器 2",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranInfantryWeaponsLevel2"
   },
   "TerranInfantryWeaponsLevel3": {
     "key": "TerranInfantryWeaponsLevel3",
@@ -1565,7 +1582,8 @@
     "nameZh": "步兵武器 3",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranInfantryWeaponsLevel3"
   },
   "TerranInfantryArmorsLevel1": {
     "key": "TerranInfantryArmorsLevel1",
@@ -1574,7 +1592,8 @@
     "nameZh": "步兵护甲 1",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranInfantryArmorsLevel1"
   },
   "TerranInfantryArmorsLevel2": {
     "key": "TerranInfantryArmorsLevel2",
@@ -1583,7 +1602,8 @@
     "nameZh": "步兵护甲 2",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranInfantryArmorsLevel2"
   },
   "TerranInfantryArmorsLevel3": {
     "key": "TerranInfantryArmorsLevel3",
@@ -1592,7 +1612,8 @@
     "nameZh": "步兵护甲 3",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranInfantryArmorsLevel3"
   },
   "TerranVehicleWeaponsLevel1": {
     "key": "TerranVehicleWeaponsLevel1",
@@ -1601,7 +1622,8 @@
     "nameZh": "载具武器 1",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranVehicleWeaponsLevel1"
   },
   "TerranVehicleWeaponsLevel2": {
     "key": "TerranVehicleWeaponsLevel2",
@@ -1610,7 +1632,8 @@
     "nameZh": "载具武器 2",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranVehicleWeaponsLevel2"
   },
   "TerranVehicleWeaponsLevel3": {
     "key": "TerranVehicleWeaponsLevel3",
@@ -1619,7 +1642,8 @@
     "nameZh": "载具武器 3",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranVehicleWeaponsLevel3"
   },
   "TerranVehicleArmorsLevel1": {
     "key": "TerranVehicleArmorsLevel1",
@@ -1628,7 +1652,8 @@
     "nameZh": "载具护甲 1",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranVehicleArmorsLevel1"
   },
   "TerranVehicleArmorsLevel2": {
     "key": "TerranVehicleArmorsLevel2",
@@ -1637,7 +1662,8 @@
     "nameZh": "载具护甲 2",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranVehicleArmorsLevel2"
   },
   "TerranVehicleArmorsLevel3": {
     "key": "TerranVehicleArmorsLevel3",
@@ -1646,7 +1672,8 @@
     "nameZh": "载具护甲 3",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranVehicleArmorsLevel3"
   },
   "TerranShipWeaponsLevel1": {
     "key": "TerranShipWeaponsLevel1",
@@ -1655,7 +1682,8 @@
     "nameZh": "舰船武器 1",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranShipWeaponsLevel1"
   },
   "TerranShipWeaponsLevel2": {
     "key": "TerranShipWeaponsLevel2",
@@ -1664,7 +1692,8 @@
     "nameZh": "舰船武器 2",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranShipWeaponsLevel2"
   },
   "TerranShipWeaponsLevel3": {
     "key": "TerranShipWeaponsLevel3",
@@ -1673,7 +1702,8 @@
     "nameZh": "舰船武器 3",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/TerranShipWeaponsLevel3"
   },
   "TerranShipArmorsLevel1": {
     "key": "TerranShipArmorsLevel1",
@@ -1702,6 +1732,36 @@
     "race": "T",
     "aliases": []
   },
+  "TerranVehicleAndShipArmorsLevel1": {
+    "key": "TerranVehicleAndShipArmorsLevel1",
+    "abbr": "Tvav",
+    "name": "Vehicle/Ship Armor 1",
+    "nameZh": "载具/舰船护甲 1",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": [],
+    "icon": "level/TerranVehicleArmorsLevel1"
+  },
+  "TerranVehicleAndShipArmorsLevel2": {
+    "key": "TerranVehicleAndShipArmorsLevel2",
+    "abbr": "Tvav",
+    "name": "Vehicle/Ship Armor 2",
+    "nameZh": "载具/舰船护甲 2",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": [],
+    "icon": "level/TerranVehicleArmorsLevel2"
+  },
+  "TerranVehicleAndShipArmorsLevel3": {
+    "key": "TerranVehicleAndShipArmorsLevel3",
+    "abbr": "Tvav",
+    "name": "Vehicle/Ship Armor 3",
+    "nameZh": "载具/舰船护甲 3",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": [],
+    "icon": "level/TerranVehicleArmorsLevel3"
+  },
   "ZergMeleeWeaponsLevel1": {
     "key": "ZergMeleeWeaponsLevel1",
     "abbr": "Zbvm",
@@ -1709,7 +1769,8 @@
     "nameZh": "近战攻击 1",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergMeleeWeaponsLevel1"
   },
   "ZergMeleeWeaponsLevel2": {
     "key": "ZergMeleeWeaponsLevel2",
@@ -1718,7 +1779,8 @@
     "nameZh": "近战攻击 2",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergMeleeWeaponsLevel2"
   },
   "ZergMeleeWeaponsLevel3": {
     "key": "ZergMeleeWeaponsLevel3",
@@ -1727,7 +1789,8 @@
     "nameZh": "近战攻击 3",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergMeleeWeaponsLevel3"
   },
   "ZergMissileWeaponsLevel1": {
     "key": "ZergMissileWeaponsLevel1",
@@ -1736,7 +1799,8 @@
     "nameZh": "远程攻击 1",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergMissileWeaponsLevel1"
   },
   "ZergMissileWeaponsLevel2": {
     "key": "ZergMissileWeaponsLevel2",
@@ -1745,7 +1809,8 @@
     "nameZh": "远程攻击 2",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergMissileWeaponsLevel2"
   },
   "ZergMissileWeaponsLevel3": {
     "key": "ZergMissileWeaponsLevel3",
@@ -1754,7 +1819,8 @@
     "nameZh": "远程攻击 3",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergMissileWeaponsLevel3"
   },
   "ZergGroundArmorsLevel1": {
     "key": "ZergGroundArmorsLevel1",
@@ -1763,7 +1829,8 @@
     "nameZh": "地面甲壳 1",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergGroundArmorsLevel1"
   },
   "ZergGroundArmorsLevel2": {
     "key": "ZergGroundArmorsLevel2",
@@ -1772,7 +1839,8 @@
     "nameZh": "地面甲壳 2",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergGroundArmorsLevel2"
   },
   "ZergGroundArmorsLevel3": {
     "key": "ZergGroundArmorsLevel3",
@@ -1781,7 +1849,8 @@
     "nameZh": "地面甲壳 3",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergGroundArmorsLevel3"
   },
   "ZergFlyerWeaponsLevel1": {
     "key": "ZergFlyerWeaponsLevel1",
@@ -1790,7 +1859,8 @@
     "nameZh": "空中攻击 1",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergFlyerWeaponsLevel1"
   },
   "ZergFlyerWeaponsLevel2": {
     "key": "ZergFlyerWeaponsLevel2",
@@ -1799,7 +1869,8 @@
     "nameZh": "空中攻击 2",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergFlyerWeaponsLevel2"
   },
   "ZergFlyerWeaponsLevel3": {
     "key": "ZergFlyerWeaponsLevel3",
@@ -1808,7 +1879,8 @@
     "nameZh": "空中攻击 3",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergFlyerWeaponsLevel3"
   },
   "ZergFlyerArmorsLevel1": {
     "key": "ZergFlyerArmorsLevel1",
@@ -1817,7 +1889,8 @@
     "nameZh": "空中甲壳 1",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergFlyerArmorsLevel1"
   },
   "ZergFlyerArmorsLevel2": {
     "key": "ZergFlyerArmorsLevel2",
@@ -1826,7 +1899,8 @@
     "nameZh": "空中甲壳 2",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergFlyerArmorsLevel2"
   },
   "ZergFlyerArmorsLevel3": {
     "key": "ZergFlyerArmorsLevel3",
@@ -1835,6 +1909,7 @@
     "nameZh": "空中甲壳 3",
     "kind": "upgrade",
     "race": "Z",
-    "aliases": []
+    "aliases": [],
+    "icon": "level/ZergFlyerArmorsLevel3"
   }
 }

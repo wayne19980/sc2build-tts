@@ -4,30 +4,22 @@
       <div class="topbar-brand">
         <span class="brand-mark">SC2</span>
         <span>Build Lab</span>
+        <span class="version">v{{ version }}</span>
       </div>
-      <nav class="topbar-nav">
-        <button :class="{ active: view === 'analysis' }" @click="view = 'analysis'">
-          科技树分析
-        </button>
-        <button :class="{ active: view === 'legacy' }" @click="view = 'legacy'">
-          旧版播报
-        </button>
-      </nav>
+      <span class="tagline">本地赛事流程与科技树分析</span>
     </header>
 
-    <div class="app-body" :class="{ legacy: view === 'legacy' }">
-      <AnalysisView v-if="view === 'analysis'" />
-      <LegacyApp v-else />
+    <div class="app-body">
+      <AnalysisView />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref } from 'vue'
+import packageInfo from '../package.json'
 import AnalysisView from './components/analysis/AnalysisView.vue'
 
-const LegacyApp = defineAsyncComponent(() => import('./LegacyApp.vue'))
-const view = ref<'analysis' | 'legacy'>('analysis')
+const version = packageInfo.version
 </script>
 
 <style>
@@ -100,39 +92,25 @@ body {
   box-shadow: 0 0 18px rgba(60, 120, 255, 0.35);
 }
 
-.topbar-nav {
-  display: flex;
-  gap: 4px;
+.version {
+  padding: 1px 5px;
+  border: 1px solid #1d3352;
+  border-radius: 4px;
+  color: #6f89ad;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
-.topbar-nav button {
-  padding: 6px 12px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: #7893b5;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.topbar-nav button:hover {
-  color: #cfe3fa;
-  background: #0d1929;
-}
-
-.topbar-nav button.active {
-  color: #e8f3ff;
-  border-color: #2f6caf;
-  background: #0e1d30;
+.tagline {
+  color: #5f7d9f;
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
 .app-body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-.app-body.legacy {
-  overflow: auto;
 }
 </style>

@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import type { FolderReplay, FolderReplayPlayer } from '../../types-analysis'
-import { formatClock, iconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
 
 defineProps<{
   replays: FolderReplay[]
@@ -139,7 +139,7 @@ function unitPreview(player: FolderReplayPlayer) {
 
 function techIcon(tech: string): string {
   const item = resolveItem(tech)
-  return item ? iconUrl(item.abbr) : ''
+  return item ? itemIconUrl(item) : ''
 }
 
 function techName(tech: string): string {

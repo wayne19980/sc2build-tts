@@ -12,6 +12,7 @@ export interface CatalogItem {
   kind: CatalogKind
   race: Race
   aliases: string[]
+  icon?: string
 }
 
 export interface TreeBuilding {
@@ -57,6 +58,10 @@ export function resolveItem(name: string | null | undefined): CatalogItem | unde
 
 export function iconUrl(abbr: string): string {
   return `${import.meta.env.BASE_URL}sc2-icons/${abbr}.png`
+}
+
+export function itemIconUrl(item: CatalogItem): string {
+  return iconUrl(item.icon || item.abbr)
 }
 
 export function raceFromName(race: string | null | undefined): Race | null {

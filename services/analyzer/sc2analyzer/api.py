@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from .config import SCHEMA
 from .db import SessionLocal
-from .importer import import_folder
+from .importer import import_folder, import_replay
 from .migrations import applied_versions, run_migrations
 
 
@@ -192,6 +192,10 @@ class ImportRequest(BaseModel):
     path: str
 
 
+class ImportFileRequest(BaseModel):
+    path: str
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     with SessionLocal() as session:
@@ -221,6 +225,25 @@ def create_import(request: ImportRequest) -> dict[str, Any]:
         _jobs[job.id] = job
     _executor.submit(_run_import, job.id, str(path))
     return job.to_dict()
+
+
+@app.post("/api/imports/file")
+def import_file(request: ImportFileRequest) -> dict[str, Any]:
+    path = Path(request.path).resolve()
+    if not path.is_file() or path.suffix.lower() != ".sc2replay":
+        raise HTTPException(status_code=400, detail=f"not a replay file: {path}")
+
+    with SessionLocal() as session:
+        result = import_replay(session, path, path.parent)
+    if result.errors:
+        raise HTTPException(status_code=400, detail=result.errors[0].message)
+
+    return {
+        "folder_id": result.folder_id,
+        "game_id": result.game_ids[0] if result.game_ids else None,
+        "imported": len(result.imported),
+        "skipped": len(result.skipped),
+    }
 
 
 @app.get("/api/imports/{job_id}")
@@ -253,6 +276,17 @@ def list_folders(session: Session = Depends(get_session)) -> list[dict[str, Any]
             )
         )
     )
+
+
+@app.delete("/api/folders/{folder_id}")
+def delete_folder(folder_id: int, session: Session = Depends(get_session)) -> dict[str, Any]:
+    result = session.execute(
+        text("DELETE FROM folders WHERE id = :folder_id"), {"folder_id": folder_id}
+    )
+    session.commit()
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="folder not found")
+    return {"deleted": folder_id}
 
 
 @app.get("/api/games")
