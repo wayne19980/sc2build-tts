@@ -14,6 +14,9 @@ export function useVoiceReader() {
 
   function speak(content: string) {
     if (!content) return
+    // Never let old build steps queue up behind the replay clock. At 2x/4x
+    // a backlog makes announcements look like they fire on completion.
+    synth.cancel()
     const utter = new SpeechSynthesisUtterance(content)
     utter.volume = 1
     utter.rate = rate.value
