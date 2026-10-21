@@ -28,6 +28,7 @@
       :units="playerUnits"
       :tech="playerTech"
       :orders="orders"
+      :production="production"
       :speed="speed"
       :view-mode="viewMode"
       compact
@@ -37,7 +38,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { EventItem, PlayerInfo, TechTiming, UnitLifecycle } from '../../types-analysis'
+import type {
+  EventItem,
+  PlayerInfo,
+  ProductionTaskView,
+  TechTiming,
+  UnitLifecycle,
+} from '../../types-analysis'
 import { raceFromName } from '../../data/catalog'
 import ScaledTree from './ScaledTree.vue'
 
@@ -51,6 +58,7 @@ const props = defineProps<{
   units: UnitLifecycle[]
   tech: TechTiming[]
   orders?: EventItem[]
+  production?: ProductionTaskView[]
   speed: number
 }>()
 
@@ -123,8 +131,8 @@ const playerTech = computed(() => props.tech.filter((timing) => timing.player_id
 }
 
 .race-dot.p {
-  background: #b197fc;
-  box-shadow: 0 0 6px rgba(177, 151, 252, 0.7);
+  background: #69db7c;
+  box-shadow: 0 0 6px rgba(105, 219, 124, 0.7);
 }
 
 .race-dot.t {
@@ -133,8 +141,8 @@ const playerTech = computed(() => props.tech.filter((timing) => timing.player_id
 }
 
 .race-dot.z {
-  background: #69db7c;
-  box-shadow: 0 0 6px rgba(105, 219, 124, 0.7);
+  background: #b197fc;
+  box-shadow: 0 0 6px rgba(177, 151, 252, 0.7);
 }
 
 .winner {

@@ -170,6 +170,13 @@
             "requiresAny": [
               "DarkShrine"
             ]
+          },
+          {
+            "key": "Archon",
+            "requiresAny": [
+              "TemplarArchive",
+              "DarkShrine"
+            ]
           }
         ]
       },
@@ -232,15 +239,7 @@
         ]
       }
     ],
-    "otherUnits": [
-      {
-        "key": "Archon",
-        "requiresAny": [
-          "TemplarArchive",
-          "DarkShrine"
-        ]
-      }
-    ]
+    "otherUnits": []
   },
   "T": {
     "name": "Terran",
@@ -280,15 +279,6 @@
         "y": 1,
         "requires": [
           "CommandCenter"
-        ]
-      },
-      {
-        "key": "OrbitalCommand",
-        "x": 2,
-        "y": 1,
-        "requires": [
-          "CommandCenter",
-          "Barracks"
         ]
       },
       {
@@ -348,15 +338,6 @@
         ]
       },
       {
-        "key": "PlanetaryFortress",
-        "x": 2,
-        "y": 3,
-        "requires": [
-          "CommandCenter",
-          "EngineeringBay"
-        ]
-      },
-      {
         "key": "FusionCore",
         "x": 0,
         "y": 4,
@@ -375,7 +356,9 @@
           },
           {
             "key": "Marauder",
-            "requiresAny": []
+            "requiresAny": [
+              "BarracksTechLab"
+            ]
           },
           {
             "key": "Reaper",
@@ -402,11 +385,15 @@
           },
           {
             "key": "Cyclone",
-            "requiresAny": []
+            "requiresAny": [
+              "FactoryTechLab"
+            ]
           },
           {
             "key": "SiegeTank",
-            "requiresAny": []
+            "requiresAny": [
+              "FactoryTechLab"
+            ]
           },
           {
             "key": "Hellbat",
@@ -439,11 +426,15 @@
           },
           {
             "key": "Raven",
-            "requiresAny": []
+            "requiresAny": [
+              "StarportTechLab"
+            ]
           },
           {
             "key": "Banshee",
-            "requiresAny": []
+            "requiresAny": [
+              "StarportTechLab"
+            ]
           },
           {
             "key": "Battlecruiser",
@@ -488,14 +479,6 @@
         "y": 1,
         "requires": [
           "Hatchery"
-        ]
-      },
-      {
-        "key": "Lair",
-        "x": 0,
-        "y": 2,
-        "requires": [
-          "SpawningPool"
         ]
       },
       {
@@ -568,23 +551,6 @@
         "y": 4,
         "requires": [
           "HydraliskDen"
-        ]
-      },
-      {
-        "key": "Hive",
-        "x": 1,
-        "y": 4,
-        "requires": [
-          "InfestationPit"
-        ]
-      },
-      {
-        "key": "GreaterSpire",
-        "x": 2,
-        "y": 4,
-        "requires": [
-          "Spire",
-          "Hive"
         ]
       },
       {

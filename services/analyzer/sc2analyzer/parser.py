@@ -604,6 +604,14 @@ def parse_replay(path: str | Path, file_hash: str | None = None) -> ParsedReplay
     if unix_timestamp:
         played_at = datetime.fromtimestamp(int(unix_timestamp), tz=timezone.utc)
 
+    frame_duration = (
+        float(st_data["frames"]) / fps if st_data.get("frames") and fps else None
+    )
+    stats_end = max((item.t_sec for item in parsed_stats), default=None)
+    duration_sec = frame_duration
+    if stats_end is not None and stats_end > 0:
+        duration_sec = min(frame_duration, stats_end) if frame_duration else stats_end
+
     raw = {
         "map": st_data.get("map"),
         "frames": st_data.get("frames"),
@@ -625,7 +633,7 @@ def parse_replay(path: str | Path, file_hash: str | None = None) -> ParsedReplay
         file_size=replay_path.stat().st_size,
         file_hash=file_hash or sha256_file(replay_path),
         map_name=st_data.get("map"),
-        duration_sec=(float(st_data["frames"]) / fps) if st_data.get("frames") and fps else None,
+        duration_sec=duration_sec,
         game_version=str(st_data.get("build")) if st_data.get("build") is not None else None,
         region=st_data.get("region"),
         played_at=played_at,

@@ -99,46 +99,58 @@
       </div>
       <template v-if="activeGame">
         <header class="game-header">
-          <div class="game-title-block">
-            <button class="back-button" @click="backToLibrary">← 对局列表</button>
-            <div class="eyebrow">{{ activeGame.game.folder_name }}</div>
-            <h1>{{ activeGame.game.map_name || 'Unknown Map' }}</h1>
-            <div class="game-subline">
-              <span>{{ activeGame.game.players }}</span>
-              <span v-if="activeGame.game.winner">胜者 {{ activeGame.game.winner }}</span>
-              <span>{{ formatClock(duration) }}</span>
-            </div>
+          <button class="back-button" @click="backToLibrary">← 对局列表</button>
+          <div class="header-folder" :title="activeGame.game.folder_name">
+            {{ activeGame.game.folder_name }}
           </div>
+          <h1 class="header-map" :title="activeGame.game.map_name || 'Unknown Map'">
+            {{ activeGame.game.map_name || 'Unknown Map' }}
+          </h1>
 
           <div class="player-tabs">
-            <button
-              v-for="player in activeGame.players"
-              :key="player.id"
-              class="player-tab"
-              :class="{ active: player.id === activePlayerId, winner: player.is_winner }"
-              @click="selectPlayer(player.id)"
-            >
-              <span class="race-dot" :class="raceClass(player.race)" />
-              <span>{{ player.name }}</span>
-              <span v-if="player.is_winner" class="crown">★</span>
-            </button>
-            <button
-              v-if="activeGame.players.length >= 2"
-              class="split-toggle"
-              :class="{ active: splitView }"
-              @click="splitView = !splitView"
-            >
-              {{ splitView ? '单人' : '分屏' }}
-            </button>
+            <template v-for="(player, index) in activeGame.players" :key="player.id">
+              <span v-if="index > 0" class="versus">vs</span>
+              <button
+                class="player-tab"
+                :class="{ active: player.id === activePlayerId, winner: player.is_winner }"
+                @click="selectPlayer(player.id)"
+              >
+                <span class="race-icon" :class="raceClass(player.race)">
+                  {{ raceLetter(player.race) }}
+                </span>
+                <span class="player-tab-name">{{ player.name }}</span>
+                <span v-if="player.is_winner" class="crown">★</span>
+              </button>
+            </template>
+          </div>
+
+          <button
+            v-if="activeGame.players.length >= 2"
+            class="split-switch"
+            :class="{ active: splitView }"
+            :title="splitView ? '关闭分屏' : '开启分屏'"
+            @click="splitView = !splitView"
+          >
+            <span class="split-switch-track"><span class="split-switch-knob" /></span>
+            <span class="split-switch-label">分屏</span>
+          </button>
+
+          <div class="header-metrics">
+            <div class="segmented">
+              <button
+                :class="{ active: countMode === 'cumulative' }"
+                @click="countMode = 'cumulative'"
+              >
+                累计
+              </button>
+              <button :class="{ active: countMode === 'alive' }" @click="countMode = 'alive'">
+                存活
+              </button>
+            </div>
           </div>
         </header>
 
-        <div class="tree-toolbar">
-          <div class="legend">
-            <span><i class="legend-dot locked" />未解锁</span>
-            <span><i class="legend-dot building" />建造中</span>
-            <span><i class="legend-dot done" />已完成</span>
-          </div>
+        <div v-if="!splitView || isDesktop || voiceVisible" class="tree-toolbar">
           <div class="toolbar-actions">
             <div class="segmented" v-if="!splitView">
               <button
@@ -152,17 +164,6 @@
                 @click="singleViewMode = 'flow'"
               >
                 自适应
-              </button>
-            </div>
-            <div class="segmented">
-              <button
-                :class="{ active: countMode === 'cumulative' }"
-                @click="countMode = 'cumulative'"
-              >
-                累计
-              </button>
-              <button :class="{ active: countMode === 'alive' }" @click="countMode = 'alive'">
-                存活
               </button>
             </div>
             <div v-if="voiceVisible" class="voice-quick">
@@ -199,7 +200,6 @@
               </select>
             </div>
             <span v-if="overlayError" class="overlay-error-text">{{ overlayError }}</span>
-            <span class="clock-readout">{{ formatClock(time) }}</span>
           </div>
         </div>
 
@@ -208,6 +208,7 @@
             <PlayerTreePanel
               v-for="player in activeGame?.players.slice(0, 2)"
               :key="player.id"
+              :production="productionTasksFor(player.id)"
               :player="player"
               :time="time"
               :count-mode="countMode"
@@ -228,6 +229,7 @@
             :units="playerUnits"
             :tech="playerTech"
             :orders="orders"
+            :production="productionTasksFor(activePlayerId || 0)"
             :view-mode="singleViewMode"
           />
         </div>
@@ -252,7 +254,7 @@
           />
           <div class="speed-group">
             <button
-              v-for="option in [1, 2, 4, 8]"
+              v-for="option in [1, 2, 4, 8, 16, 24]"
               :key="option"
               :class="{ active: speed === option }"
               @click="speed = option"
@@ -310,6 +312,7 @@ import type {
   OverlayAnchor,
   OverlayState,
   PlayerInfo,
+  ProductionTaskView,
   TechTiming,
   UnitLifecycle,
   UpgradeStripRow,
@@ -729,6 +732,13 @@ const constructionStrips = computed<ConstructionStripView[]>(() => {
   }))
 })
 
+function productionTasksFor(playerId: number): ProductionTaskView[] {
+  return [
+    ...(unitProductionTasks.value.get(playerId) || []),
+    ...(morphProductionTasks.value.get(playerId) || []),
+  ]
+}
+
 const upgradeRows = computed<UpgradeStripRow[]>(() => {
   const players = visiblePlayers.value
   return players.map((player, index) => ({
@@ -892,6 +902,7 @@ async function selectGame(game: GameSummary) {
     timeline.value = timelineRows
     activePlayerId.value = detail.players[0]?.id || null
     splitView.value = detail.players.length >= 2 && window.innerWidth >= 1100
+    sidebarCollapsed.value = true
     closeVoice()
     if (overlayEnabled.value) enableVoice(true)
   } catch (exc) {
@@ -919,6 +930,7 @@ function handleViewport() {
 function backToLibrary() {
   pause()
   closeVoice()
+  sidebarCollapsed.value = false
   activeGame.value = null
   activePlayerId.value = null
   activeGameId.value = null
@@ -964,6 +976,10 @@ function resetTime() {
 
 function raceClass(raceName: string | null): string {
   return raceFromName(raceName)?.toLowerCase() || ''
+}
+
+function raceLetter(raceName: string | null): string {
+  return raceFromName(raceName) || '?'
 }
 
 async function chooseReplay() {
@@ -1620,17 +1636,6 @@ function pollImport(jobId: string) {
   white-space: nowrap;
 }
 
-.game-meta {
-  display: flex;
-  justify-content: space-between;
-  color: #4f6b8c;
-  font-size: 10px;
-}
-
-.winner {
-  color: #d9b45b;
-}
-
 .empty-hint {
   padding: 6px 2px;
   color: #4f6b8c;
@@ -1647,97 +1652,186 @@ function pollImport(jobId: string) {
 
 .game-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 22px 10px;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 7px 22px;
+  overflow: hidden;
   border-bottom: 1px solid #101d2f;
   background: rgba(7, 12, 22, 0.9);
+  white-space: nowrap;
 }
 
 .back-button {
-  margin-bottom: 4px;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  color: #5f7d9f;
-  font-size: 10px;
+  flex: none;
+  padding: 4px 9px;
+  border: 1px solid #1d3352;
+  border-radius: 6px;
+  background: #080f1c;
+  color: #7f9ab9;
+  font-size: 11px;
   cursor: pointer;
 }
 
 .back-button:hover {
-  color: #9fc3ef;
+  border-color: #3d7fc4;
+  color: #e8f4ff;
 }
 
-.eyebrow {
+.header-folder {
+  flex: 0 1 auto;
+  max-width: 120px;
+  overflow: hidden;
   color: #5f7d9f;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
 }
 
-.game-title-block h1 {
-  margin: 3px 0 4px;
-  font-size: 22px;
+.header-map {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 260px;
+  margin: 0;
+  overflow: hidden;
+  font-size: 18px;
   line-height: 1.2;
+  text-overflow: ellipsis;
   background: linear-gradient(90deg, #dcecff, #7fb9ff);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.game-subline {
-  display: flex;
-  gap: 14px;
-  color: #7893b5;
-  font-size: 12px;
-}
-
 .player-tabs {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.versus {
+  flex: none;
+  color: #55708f;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .player-tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 10px;
-  border: 1px solid #1d3352;
-  border-radius: 8px;
-  background: #080f1c;
-  color: #a9bfd8;
+  max-width: 150px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #8fa9c7;
   font-size: 12px;
   cursor: pointer;
+}
+
+.player-tab:hover {
+  border-color: #1d3352;
+  background: #0c1728;
+  color: #dbe9fb;
 }
 
 .player-tab.active {
   border-color: #3d7fc4;
   background: #0e1d30;
   color: #e8f3ff;
-  box-shadow: 0 0 12px rgba(61, 127, 196, 0.25);
+  box-shadow: 0 0 10px rgba(61, 127, 196, 0.2);
+}
+
+.player-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player-tab.winner .crown {
   color: #e5bd5f;
 }
 
-.split-toggle {
-  padding: 7px 10px;
+.header-metrics {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.split-switch {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 4px;
   border: 1px solid #1d3352;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #080f1c;
-  color: #8ca6c8;
-  font-size: 11px;
+  color: #6f89ad;
+  font-size: 10px;
   cursor: pointer;
 }
 
-.split-toggle.active {
+.split-switch:hover {
+  border-color: #2f5f96;
+  color: #b8d2ef;
+}
+
+.split-switch.active {
   border-color: #3d7fc4;
-  background: #173a61;
-  color: #e8f4ff;
+  background: #102540;
+  color: #d8ebff;
+}
+
+.split-switch-track {
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 14px;
+  border-radius: 999px;
+  background: #16263d;
+  transition: background 160ms ease;
+}
+
+.split-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6f89ad;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.split-switch.active .split-switch-track {
+  background: #245a94;
+}
+
+.split-switch.active .split-switch-knob {
+  transform: translateX(12px);
+  background: #eaf4ff;
+}
+
+@media (max-width: 1250px) {
+  .header-folder {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .header-map {
+    max-width: 150px;
+  }
 }
 
 .voice-toggle {
@@ -1756,69 +1850,42 @@ function pollImport(jobId: string) {
   color: #d8b4fe;
 }
 
-.race-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.race-icon {
+  display: grid;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 4px;
   background: #6f89ad;
+  color: #07101c;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
 }
 
-.race-dot.p {
-  background: #b197fc;
-  box-shadow: 0 0 7px rgba(177, 151, 252, 0.7);
-}
-
-.race-dot.t {
-  background: #74c0fc;
-  box-shadow: 0 0 7px rgba(116, 192, 252, 0.7);
-}
-
-.race-dot.z {
+.race-icon.p {
   background: #69db7c;
-  box-shadow: 0 0 7px rgba(105, 219, 124, 0.7);
+  box-shadow: 0 0 7px rgba(105, 219, 124, 0.5);
+}
+
+.race-icon.t {
+  background: #74c0fc;
+  box-shadow: 0 0 7px rgba(116, 192, 252, 0.5);
+}
+
+.race-icon.z {
+  background: #b197fc;
+  box-shadow: 0 0 7px rgba(177, 151, 252, 0.5);
 }
 
 .tree-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 8px 22px;
   border-bottom: 1px solid #0e1a2b;
   background: rgba(6, 11, 20, 0.65);
-}
-
-.legend {
-  display: flex;
-  gap: 14px;
-  color: #6f89ad;
-  font-size: 11px;
-}
-
-.legend span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: #31527a;
-}
-
-.legend-dot.locked {
-  opacity: 0.25;
-}
-
-.legend-dot.building {
-  opacity: 0.6;
-  animation: legend-pulse 1.4s ease-in-out infinite;
-}
-
-.legend-dot.done {
-  background: #5aa7ed;
-  box-shadow: 0 0 8px rgba(90, 167, 237, 0.7);
 }
 
 .toolbar-actions {
@@ -1848,12 +1915,6 @@ function pollImport(jobId: string) {
 .speed-group button.active {
   background: #173a61;
   color: #d9ecff;
-}
-
-.clock-readout {
-  color: #9fc3ef;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 13px;
 }
 
 .tree-stage {
@@ -2033,13 +2094,4 @@ function pollImport(jobId: string) {
   pointer-events: none;
 }
 
-@keyframes legend-pulse {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.75;
-  }
-}
 </style>

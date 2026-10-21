@@ -17,7 +17,8 @@ def test_parse_test_replay() -> None:
     assert parsed.map_name == "Old Republic LE"
     assert parsed.frames_per_second == 22.4
     assert parsed.duration_sec is not None
-    assert 620 < parsed.duration_sec < 621
+    # The replay keeps running after GG; duration is the last stats tick.
+    assert 601 < parsed.duration_sec < 602
     assert {player.name for player in parsed.players} == {"Clem", "Classic"}
 
     upgrades = {

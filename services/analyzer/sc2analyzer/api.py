@@ -417,6 +417,22 @@ def list_folder_replays(
             {"ids": game_ids},
         )
     )
+    buildings = rows(
+        session.execute(
+            text(
+                """
+                SELECT game_id, player_id, name AS building, count(*) AS count
+                FROM events
+                WHERE game_id = ANY(:ids)
+                  AND COALESCE((payload->>'is_building')::boolean, false) = true
+                  AND kind IN ('build_done', 'unit_born', 'unit_morph')
+                GROUP BY game_id, player_id, name
+                ORDER BY count(*) DESC
+                """
+            ),
+            {"ids": game_ids},
+        )
+    )
 
     units_by_player: dict[int, list[dict[str, Any]]] = {}
     for row in units:
@@ -425,6 +441,12 @@ def list_folder_replays(
         )
     for items in units_by_player.values():
         items.sort(key=lambda item: (-item["count"], item["unit"]))
+
+    buildings_by_player: dict[int, list[dict[str, Any]]] = {}
+    for row in buildings:
+        buildings_by_player.setdefault(row["player_id"], []).append(
+            {"building": row["building"], "count": row["count"]}
+        )
 
     def phase_for(t_sec: float) -> str:
         if t_sec < 360:
@@ -445,6 +467,7 @@ def list_folder_replays(
     players_by_game: dict[int, list[dict[str, Any]]] = {}
     for player in players:
         player["units"] = units_by_player.get(player["id"], [])
+        player["buildings"] = buildings_by_player.get(player["id"], [])
         player["tech"] = tech_by_player.get(
             player["id"], {"early": [], "mid": [], "late": []}
         )

@@ -151,6 +151,7 @@ export interface FolderReplayPlayer {
   result: string | null
   is_winner: boolean
   units: ReplayUnitCount[]
+  buildings?: ReplayBuildingCount[]
   tech: ReplayTechPhases
 }
 
@@ -190,4 +191,16 @@ export interface UpgradeStripRow {
   race: Race
   tech: TechTiming[]
   orders: EventItem[]
+}
+
+export interface ProductionTaskView {
+  key: string
+  name: string
+  start: number
+  done: number | null
+}
+
+export interface ReplayBuildingCount {
+  building: string
+  count: number
 }

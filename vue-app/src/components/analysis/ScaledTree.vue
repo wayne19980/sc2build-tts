@@ -23,6 +23,7 @@
           :units="units"
           :tech="tech"
           :orders="orders"
+          :production="production"
           :compact="compact"
           :speed="speed"
           :view-mode="viewMode"
@@ -42,7 +43,13 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { EventItem, Race, TechTiming, UnitLifecycle } from '../../types-analysis'
+import type {
+  EventItem,
+  ProductionTaskView,
+  Race,
+  TechTiming,
+  UnitLifecycle,
+} from '../../types-analysis'
 import { CELL_W, CELL_W_COMPACT, treeSize } from '../../data/layout'
 import TechTreeCanvas from './TechTreeCanvas.vue'
 
@@ -55,6 +62,7 @@ const props = defineProps<{
   units: UnitLifecycle[]
   tech: TechTiming[]
   orders?: EventItem[]
+  production?: ProductionTaskView[]
   compact?: boolean
   speed?: number
   viewMode?: 'canvas' | 'flow'
@@ -81,7 +89,7 @@ const fitScale = computed(() => {
 })
 const scale = computed(() => {
   const value = fitScale.value * userScale.value
-  return Math.min(2.4, Math.max(0.58, value))
+  return Math.min(2.4, Math.max(0.42, value))
 })
 
 const innerStyle = computed(() => {

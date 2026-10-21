@@ -1,7 +1,7 @@
 <template>
   <div class="construction-strip" :class="{ split: strips.length > 1 }">
     <div class="strip-vertical-label">
-      <span>PRODUCTION</span>
+      <span>PROD</span>
     </div>
 
     <div class="strip-rows">
@@ -69,7 +69,7 @@ function raceClass(race?: Race): string {
 
 .strip-vertical-label {
   flex: none;
-  width: 22px;
+  width: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,9 +81,9 @@ function raceClass(race?: Race): string {
   writing-mode: vertical-lr;
   transform: rotate(180deg);
   font-family: 'JetBrains Mono', Consolas, sans-serif;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   color: #607b9e;
   text-transform: uppercase;
 }
@@ -92,21 +92,21 @@ function raceClass(race?: Race): string {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 
 .strip-row {
   display: flex;
+  flex: 1 1 0;
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
+  gap: 8px;
   min-width: 0;
-  padding: 4px 12px;
-  border-bottom: 1px solid rgba(20, 34, 56, 0.6);
+  min-height: 44px;
+  padding: 2px 10px;
 }
 
-.strip-row:last-child {
-  border-bottom: 0;
+.strip-row + .strip-row {
+  border-left: 1px solid rgba(20, 34, 56, 0.6);
 }
 
 .strip-player-badge {
@@ -114,15 +114,15 @@ function raceClass(race?: Race): string {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 72px;
-  max-width: 104px;
+  min-width: 58px;
+  max-width: 82px;
 }
 
 .strip-player-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #9ab4d6;
 }
@@ -145,8 +145,8 @@ function raceClass(race?: Race): string {
 }
 
 .race-dot.p {
-  background: #e5b948;
-  color: #e5b948;
+  background: #69db7c;
+  color: #69db7c;
 }
 
 .race-dot.t {
@@ -155,8 +155,8 @@ function raceClass(race?: Race): string {
 }
 
 .race-dot.z {
-  background: #ab57e3;
-  color: #ab57e3;
+  background: #b197fc;
+  color: #b197fc;
 }
 
 .strip-row.tint-red .race-dot {
@@ -172,7 +172,7 @@ function raceClass(race?: Race): string {
 .construction-items {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: thin;
@@ -185,7 +185,7 @@ function raceClass(race?: Race): string {
   flex: none;
   display: flex;
   flex-direction: column;
-  width: 42px;
+  width: 36px;
   background: #060b14;
   border-radius: 4px;
   overflow: hidden;
@@ -194,8 +194,8 @@ function raceClass(race?: Race): string {
 
 .item-visual {
   position: relative;
-  width: 42px;
-  height: 40px;
+  width: 36px;
+  height: 34px;
   background: #08101e;
 }
 

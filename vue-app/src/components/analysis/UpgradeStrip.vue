@@ -82,8 +82,8 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
 .upgrade-strip {
   display: flex;
   align-items: stretch;
-  gap: 12px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 4px 12px;
   border-top: 1px solid #16263d;
   background: rgba(6, 11, 20, 0.86);
 }
@@ -93,7 +93,7 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
   display: flex;
   align-items: center;
   color: #6f89ad;
-  font-size: 12px;
+  font-size: 10px;
   letter-spacing: 0.12em;
 }
 
@@ -101,28 +101,34 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  align-items: center;
 }
 
 .upgrade-row {
   display: flex;
+  flex: 1 1 0;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
-  padding: 2px 0;
+  padding: 0 8px;
+}
+
+.upgrade-row:first-child {
+  padding-left: 0;
 }
 
 .upgrade-row + .upgrade-row {
-  border-top: 1px solid #101d2f;
+  border-top: 0;
+  border-left: 1px solid #101d2f;
 }
 
 .row-player {
   flex: none;
-  width: 70px;
+  width: 58px;
   overflow: hidden;
   color: #5f7d9f;
-  font-size: 10px;
+  font-size: 9px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -137,15 +143,23 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
 
 .upgrade-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.upgrade-list::-webkit-scrollbar {
+  display: none;
 }
 
 .upgrade-icon {
   position: relative;
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
   border: 1px solid #1d3352;
   background: #0b1424;
   opacity: 0.34;
@@ -216,8 +230,9 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
 
 .upgrade-time {
   position: absolute;
-  right: -4px;
-  bottom: -6px;
+  right: -3px;
+  bottom: -5px;
+  z-index: 2;
   padding: 0 3px;
   border-radius: 4px;
   background: #07101d;

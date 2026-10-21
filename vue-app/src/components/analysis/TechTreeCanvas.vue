@@ -1,33 +1,17 @@
 <template>
   <div v-if="viewMode === 'flow'" class="flow-tree-view">
-    <div v-for="tier in tierGroups" :key="tier.id" class="flow-tier">
-      <div class="flow-tier-header">
-        <span class="flow-tier-title">{{ english ? tier.name : tier.nameZh }}</span>
-        <span class="flow-tier-badge">{{ tierDoneCount(tier) }}/{{ tier.nodes.length }} 完成</span>
-      </div>
+    <div v-for="row in treeRows" :key="row.id" class="flow-row">
       <div class="flow-grid">
         <div
-          v-for="node in tier.nodes"
+          v-for="node in row.nodes"
           :key="node.key"
-          class="flow-card"
-          :class="[node.state, { 'card-flash': node.flash }]"
+          class="flow-node"
+          :class="[node.state, { 'empty-node': !node.units.length && !node.upgrades.length }]"
         >
-          <div class="flow-card-top">
+          <div class="building-main">
             <div class="icon-shell building-icon" :class="{ 'unlock-flash': node.flash }" :title="tooltip(node.item)">
               <img :src="iconUrl(node.item.abbr)" :alt="node.item.name" draggable="false" />
               <span v-if="node.count > 0" class="count-badge building-badge">{{ node.count }}</span>
-              <span
-                v-if="node.worker"
-                class="worker-badge"
-                :title="tooltip(node.worker.item, node.worker.count)"
-              >
-                <img
-                  :src="iconUrl(node.worker.item.abbr)"
-                  :alt="node.worker.item.name"
-                  draggable="false"
-                />
-                <b>{{ node.worker.count }}</b>
-              </span>
               <div
                 v-if="node.constructing > 0"
                 class="build-progress"
@@ -37,42 +21,46 @@
               </div>
               <div v-if="node.morphs.length" class="morph-badges">
                 <span
-                  v-for="morph in node.morphs"
-                  :key="morph.key"
+                  v-for="(morph, morphIndex) in node.morphs"
+                  :key="`${morph.key}-${morphIndex}`"
                   class="morph-badge"
-                  :title="`${displayName(morph.item)} ×${morph.count}`"
+                  :title="morph.pending ? `${displayName(morph.item)} · 建造中` : `${displayName(morph.item)} ×${morph.count}`"
                 >
                   <img :src="iconUrl(morph.item.abbr)" :alt="morph.item.name" draggable="false" />
-                  <span class="morph-count">{{ morph.count }}</span>
+                  <span v-if="!morph.pending" class="morph-count">{{ morph.count }}</span>
+                  <div
+                    v-if="morph.progress !== undefined"
+                    class="morph-progress"
+                    :class="{ indeterminate: morph.indeterminate }"
+                  >
+                    <div class="morph-progress-fill" :style="{ width: `${morph.progress * 100}%` }" />
+                  </div>
                 </span>
               </div>
             </div>
 
-            <div class="flow-card-info">
-              <span class="flow-building-name">{{ displayName(node.item) }}</span>
-              <span v-if="node.state === 'locked' && requiresText(node)" class="flow-req-tag">
-                {{ requiresText(node) }}
-              </span>
-              <span v-else-if="node.state === 'building'" class="flow-state-tag building">建造中</span>
-              <span v-else-if="node.state === 'done'" class="flow-state-tag done">已就绪 ×{{ node.count }}</span>
-              <span v-else-if="node.state === 'destroyed'" class="flow-state-tag destroyed">已损毁</span>
+            <div v-if="node.units.length" class="unit-grid">
+              <div
+                v-for="unit in node.units"
+                :key="unit.key"
+                class="icon-shell unit-icon"
+                :class="{ locked: !unit.unlocked, empty: unit.count === 0, 'unlock-flash': unit.flash }"
+                :title="tooltip(unit.item, unit.count)"
+              >
+                <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
+                <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+                <div
+                  v-if="unit.progress !== undefined"
+                  class="unit-progress"
+                  :class="{ indeterminate: unit.indeterminate }"
+                >
+                  <div class="unit-progress-fill" :style="{ width: `${unit.progress * 100}%` }" />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div v-if="node.units.length" class="unit-grid flow-units">
-            <div
-              v-for="unit in node.units"
-              :key="unit.key"
-              class="icon-shell unit-icon"
-              :class="{ locked: !unit.unlocked, empty: unit.count === 0, 'unlock-flash': unit.flash }"
-              :title="tooltip(unit.item, unit.count)"
-            >
-              <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
-              <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
-            </div>
-          </div>
-
-          <div v-if="node.upgrades.length" class="upgrade-row flow-upgrades">
+          <div v-if="node.upgrades.length" class="upgrade-row">
             <div
               v-for="chip in node.upgrades"
               :key="chip.key"
@@ -94,24 +82,24 @@
       </div>
     </div>
 
-    <div v-if="otherNode" class="flow-tier">
-      <div class="flow-tier-header">
-        <span class="flow-tier-title">{{ english ? 'Other Units' : '其他特殊兵种' }}</span>
-      </div>
-      <div class="flow-grid">
-        <div class="flow-card done other-card">
-          <div class="unit-grid flow-units">
-            <div
-              v-for="unit in otherNode.units"
-              :key="unit.key"
-              class="icon-shell unit-icon"
-              :class="{ locked: !unit.unlocked, empty: unit.count === 0, 'unlock-flash': unit.flash }"
-              :title="tooltip(unit.item, unit.count)"
-            >
-              <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
-              <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
-            </div>
-          </div>
+    <div v-if="otherNode" class="flow-row">
+      <div class="unit-grid other-grid">
+        <div
+          v-for="unit in otherNode.units"
+          :key="unit.key"
+          class="icon-shell unit-icon"
+          :class="{ locked: !unit.unlocked, empty: unit.count === 0, 'unlock-flash': unit.flash }"
+          :title="tooltip(unit.item, unit.count)"
+        >
+          <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
+          <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+                <div
+                  v-if="unit.progress !== undefined"
+                  class="unit-progress"
+                  :class="{ indeterminate: unit.indeterminate }"
+                >
+                  <div class="unit-progress-fill" :style="{ width: `${unit.progress * 100}%` }" />
+                </div>
         </div>
       </div>
     </div>
@@ -161,18 +149,6 @@
           <div class="icon-shell building-icon" :class="{ 'unlock-flash': node.flash }" :title="tooltip(node.item)">
             <img :src="iconUrl(node.item.abbr)" :alt="node.item.name" draggable="false" />
             <span v-if="node.count > 0" class="count-badge building-badge">{{ node.count }}</span>
-            <span
-              v-if="node.worker"
-              class="worker-badge"
-              :title="tooltip(node.worker.item, node.worker.count)"
-            >
-              <img
-                :src="iconUrl(node.worker.item.abbr)"
-                :alt="node.worker.item.name"
-                draggable="false"
-              />
-              <b>{{ node.worker.count }}</b>
-            </span>
             <div
               v-if="node.constructing > 0"
               class="build-progress"
@@ -182,13 +158,20 @@
             </div>
             <div v-if="node.morphs.length" class="morph-badges">
               <span
-                v-for="morph in node.morphs"
-                :key="morph.key"
+                v-for="(morph, morphIndex) in node.morphs"
+                :key="`${morph.key}-${morphIndex}`"
                 class="morph-badge"
-                :title="`${displayName(morph.item)} ×${morph.count}`"
+                :title="morph.pending ? `${displayName(morph.item)} · 建造中` : `${displayName(morph.item)} ×${morph.count}`"
               >
                 <img :src="iconUrl(morph.item.abbr)" :alt="morph.item.name" draggable="false" />
-                <span class="morph-count">{{ morph.count }}</span>
+                <span v-if="!morph.pending" class="morph-count">{{ morph.count }}</span>
+                <div
+                  v-if="morph.progress !== undefined"
+                  class="morph-progress"
+                  :class="{ indeterminate: morph.indeterminate }"
+                >
+                  <div class="morph-progress-fill" :style="{ width: `${morph.progress * 100}%` }" />
+                </div>
               </span>
             </div>
           </div>
@@ -202,6 +185,13 @@
             >
               <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
               <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+                <div
+                  v-if="unit.progress !== undefined"
+                  class="unit-progress"
+                  :class="{ indeterminate: unit.indeterminate }"
+                >
+                  <div class="unit-progress-fill" :style="{ width: `${unit.progress * 100}%` }" />
+                </div>
             </div>
           </div>
         </div>
@@ -241,6 +231,13 @@
           >
             <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
             <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+                <div
+                  v-if="unit.progress !== undefined"
+                  class="unit-progress"
+                  :class="{ indeterminate: unit.indeterminate }"
+                >
+                  <div class="unit-progress-fill" :style="{ width: `${unit.progress * 100}%` }" />
+                </div>
           </div>
         </div>
       </div>
@@ -250,9 +247,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EventItem, Race, TechTiming, UnitLifecycle } from '../../types-analysis'
+import type {
+  EventItem,
+  ProductionTaskView,
+  Race,
+  TechTiming,
+  UnitLifecycle,
+} from '../../types-analysis'
 import { formatClock, iconUrl, resolveItem, techTrees, type CatalogItem } from '../../data/catalog'
 import {
+  collapseUpgrades,
   computeUpgradeStates,
   UPGRADE_BUILDINGS,
 } from '../../data/upgrades'
@@ -268,6 +272,7 @@ const props = defineProps<{
   units: UnitLifecycle[]
   tech: TechTiming[]
   orders?: EventItem[]
+  production?: ProductionTaskView[]
   compact?: boolean
   speed?: number
   viewMode?: 'canvas' | 'flow'
@@ -285,6 +290,7 @@ interface BuildingCounter {
 interface UpgradeChip {
   key: string
   item: CatalogItem
+  activeItem?: CatalogItem
   done: boolean
   doneAt?: number
   active: boolean
@@ -295,14 +301,22 @@ interface UpgradeChip {
 
 interface BuildingNode {
   key: string
+  x: number
+  y: number
   left: number
   top: number
   item: CatalogItem
   state: 'locked' | 'building' | 'done' | 'destroyed'
   count: number
-  worker?: { item: CatalogItem; count: number }
   units: UnitNode[]
-  morphs: { key: string; item: CatalogItem; count: number }[]
+  morphs: {
+    key: string
+    item: CatalogItem
+    count: number
+    progress?: number
+    indeterminate?: boolean
+    pending?: boolean
+  }[]
   upgrades: UpgradeChip[]
   flash: boolean
   constructing: number
@@ -316,6 +330,8 @@ interface UnitNode {
   count: number
   unlocked: boolean
   flash: boolean
+  progress?: number
+  indeterminate?: boolean
 }
 
 const ADDON_OWNERS = ['Barracks', 'Factory', 'Starport'] as const
@@ -335,14 +351,36 @@ function addonOf(name: string): { owner: string; key: (typeof ADDON_KEYS)[number
   return null
 }
 
-const { displayName, english } = useLanguage()
+const { displayName } = useLanguage()
 const tree = computed(() => techTrees[props.race])
 const cellWidth = computed(() => (props.compact ? CELL_W_COMPACT : CELL_W))
 const flashWindow = computed(() => 1.2 * Math.max(1, props.speed || 1))
 
+const MORPH_ROOT: Record<string, string> = {
+  WarpGate: 'Gateway',
+  OrbitalCommand: 'CommandCenter',
+  PlanetaryFortress: 'CommandCenter',
+  Lair: 'Hatchery',
+  Hive: 'Hatchery',
+  GreaterSpire: 'Spire',
+}
+
+function morphRoot(key: string): string {
+  let current = key
+  const seen = new Set<string>()
+  while (MORPH_ROOT[current] && !seen.has(current)) {
+    seen.add(current)
+    current = MORPH_ROOT[current]
+  }
+  return current
+}
+
 const buildingStats = computed(() => {
   const counters: Record<string, BuildingCounter> = {}
   const live = new Map<number, { name: string; status: 'building' | 'done' }>()
+  const liveBuildings = new Map<string, Set<number>>()
+  const addonByBuilding = new Map<number, number>()
+  const addonOwner = new Map<number, { owner: string; key: string }>()
 
   const counter = (key: string) => {
     if (!counters[key]) {
@@ -365,31 +403,106 @@ const buildingStats = computed(() => {
   const removeDone = (key: string) => {
     counter(key).done = Math.max(0, counter(key).done - 1)
   }
+  const addMorph = (previous: string, next: string) => {
+    const target = counter(morphRoot(previous))
+    target.ever = true
+    target.morphs[next] = (target.morphs[next] || 0) + 1
+  }
+  const removeMorph = (key: string) => {
+    const root = morphRoot(key)
+    if (root === key) return
+    const target = counter(root)
+    target.morphs[key] = Math.max(0, (target.morphs[key] || 0) - 1)
+  }
+  const addAddon = (owner: string, key: string, at: number) => {
+    const target = counter(owner)
+    target.ever = true
+    target.morphs[key] = (target.morphs[key] || 0) + 1
+    if (target.firstDoneT === undefined) target.firstDoneT = at
+  }
+  const removeAddon = (owner: string, key: string) => {
+    const target = counter(owner)
+    target.morphs[key] = Math.max(0, (target.morphs[key] || 0) - 1)
+  }
+  const markTechLab = (owner: string, at: number) => {
+    const target = counter(`${owner}TechLab`)
+    target.ever = true
+    if (target.firstDoneT === undefined) target.firstDoneT = at
+  }
+
+  const rememberBuilding = (owner: string, unitId: number) => {
+    const ids = liveBuildings.get(owner) || new Set<number>()
+    ids.add(unitId)
+    liveBuildings.set(owner, ids)
+  }
+  const forgetBuilding = (owner: string, unitId: number) => {
+    liveBuildings.get(owner)?.delete(unitId)
+  }
+  const attachAddon = (owner: string, key: string, addonUnitId: number, at: number) => {
+    const candidates = liveBuildings.get(owner)
+    if (!candidates?.size) return
+    const buildingUnitId = [...candidates].find((id) => !addonByBuilding.has(id))
+    if (buildingUnitId === undefined) return
+    addonByBuilding.set(buildingUnitId, addonUnitId)
+    addonOwner.set(addonUnitId, { owner, key })
+    addAddon(owner, key, at)
+  }
+  const detachAddon = (addonUnitId: number) => {
+    const info = addonOwner.get(addonUnitId)
+    if (!info) return
+    addonOwner.delete(addonUnitId)
+    for (const [buildingUnitId, id] of addonByBuilding) {
+      if (id === addonUnitId) {
+        addonByBuilding.delete(buildingUnitId)
+        break
+      }
+    }
+    removeAddon(info.owner, info.key)
+  }
+  const detachBuildingAddon = (buildingUnitId: number) => {
+    const addonUnitId = addonByBuilding.get(buildingUnitId)
+    if (addonUnitId === undefined) return
+    addonByBuilding.delete(buildingUnitId)
+    const info = addonOwner.get(addonUnitId)
+    if (!info) return
+    addonOwner.delete(addonUnitId)
+    removeAddon(info.owner, info.key)
+  }
 
   for (const event of props.buildings) {
     if (event.player_id !== props.playerId || event.t_sec > props.time) continue
     const addon = addonOf(event.name)
-    if (addon) {
+    const detachedAddon = event.name === 'TechLab' || event.name === 'Reactor'
+    if (addon || detachedAddon) {
       // Terran addons are separate units but belong to the production
-      // building they are attached to, so they show up as its badge.
+      // building they are attached to. Only attached addons are counted.
+      // Lifting a building turns the addon into a plain TechLab/Reactor,
+      // landing turns it back into e.g. BarracksReactor.
       const unitId = Number(event.payload?.unit_id)
       const hasUnitId = Number.isFinite(unitId)
       const previous = hasUnitId ? live.get(unitId) : undefined
-      if (event.kind === 'build_done' || event.kind === 'unit_born') {
+      if (event.kind === 'unit_morph') {
+        if (!hasUnitId) continue
+        detachAddon(unitId)
+        if (addon) {
+          attachAddon(addon.owner, addon.key, unitId, event.t_sec)
+          if (addon.key === 'TechLab') markTechLab(addon.owner, event.t_sec)
+          live.set(unitId, { name: addon.key, status: 'done' })
+        } else {
+          live.set(unitId, { name: event.name, status: 'done' })
+        }
+      } else if (addon && (event.kind === 'build_done' || event.kind === 'unit_born')) {
         if (previous?.status === 'done') continue
         if (hasUnitId) live.set(unitId, { name: addon.key, status: 'done' })
-        const target = counter(addon.owner)
-        target.ever = true
-        target.morphs[addon.key] = (target.morphs[addon.key] || 0) + 1
-        if (target.firstDoneT === undefined) target.firstDoneT = event.t_sec
-      } else if (event.kind === 'build_start') {
+        if (hasUnitId) attachAddon(addon.owner, addon.key, unitId, event.t_sec)
+        if (addon.key === 'TechLab') markTechLab(addon.owner, event.t_sec)
+      } else if (addon && event.kind === 'build_start') {
         if (hasUnitId) live.set(unitId, { name: addon.key, status: 'building' })
       } else if (event.kind === 'unit_died') {
-        if (previous?.status === 'done') {
-          const target = counter(addon.owner)
-          target.morphs[addon.key] = Math.max(0, (target.morphs[addon.key] || 0) - 1)
+        if (hasUnitId) {
+          detachAddon(unitId)
+          live.delete(unitId)
         }
-        if (hasUnitId) live.delete(unitId)
       }
       continue
     }
@@ -408,24 +521,123 @@ const buildingStats = computed(() => {
       if (previous?.status === 'done') continue
       if (previous?.status === 'building') removeConstructing(previous.name)
       if (hasUnitId) live.set(unitId, { name: item.key, status: 'done' })
+      if (hasUnitId) rememberBuilding(item.key, unitId)
       addDone(item.key, event.t_sec)
     } else if (event.kind === 'unit_morph') {
       if (previous?.status === 'done' && previous.name === item.key) continue
       if (previous?.status === 'building') removeConstructing(previous.name)
       if (previous && previous.name !== item.key) {
-        const base = counter(previous.name)
-        base.morphs[item.key] = (base.morphs[item.key] || 0) + 1
+        removeMorph(previous.name)
+        addMorph(previous.name, item.key)
+        if (hasUnitId) {
+          forgetBuilding(previous.name, unitId)
+          rememberBuilding(item.key, unitId)
+        }
       }
       if (hasUnitId) live.set(unitId, { name: item.key, status: 'done' })
       addDone(item.key, event.t_sec)
     } else if (event.kind === 'unit_died') {
-      if (previous?.status === 'done') removeDone(previous.name)
-      else if (previous?.status === 'building') removeConstructing(previous.name)
-      if (hasUnitId) live.delete(unitId)
+      if (previous?.status === 'done') {
+        removeDone(previous.name)
+        removeMorph(previous.name)
+      } else if (previous?.status === 'building') removeConstructing(previous.name)
+      if (hasUnitId) {
+        forgetBuilding(previous?.name ?? item.key, unitId)
+        detachBuildingAddon(unitId)
+        live.delete(unitId)
+      }
     }
   }
 
   return counters
+})
+
+interface PendingBadge {
+  key: string
+  item: CatalogItem
+  count: number
+  progress: number
+  indeterminate: boolean
+  pending: true
+}
+
+const MORPH_TARGETS = new Set([
+  'OrbitalCommand',
+  'PlanetaryFortress',
+  'Lair',
+  'Hive',
+  'GreaterSpire',
+  'WarpGate',
+])
+
+const pendingMorphBadges = computed(() => {
+  const result = new Map<string, PendingBadge[]>()
+  const orders = (props.orders || []).filter(
+    (order) => order.player_id === props.playerId && order.kind === 'order',
+  )
+  for (const event of props.buildings) {
+    if (event.player_id !== props.playerId || event.kind !== 'unit_morph') continue
+    if (!MORPH_TARGETS.has(event.name)) continue
+    const order = orders
+      .filter((item) => item.name === event.name && item.t_sec < event.t_sec)
+      .sort((a, b) => b.t_sec - a.t_sec)[0]
+    if (!order) continue
+    if (props.time < order.t_sec || props.time >= event.t_sec) continue
+    const item = resolveItem(event.name)
+    if (!item) continue
+    const root = morphRoot(event.name)
+    const list = result.get(root) || []
+    list.push({
+      key: item.key,
+      item,
+      count: 1,
+      progress: Math.min(
+        1,
+        Math.max(0, (props.time - order.t_sec) / (event.t_sec - order.t_sec)),
+      ),
+      indeterminate: false,
+      pending: true,
+    })
+    result.set(root, list)
+  }
+  return result
+})
+
+const pendingAddonBadges = computed(() => {
+  const result = new Map<string, PendingBadge[]>()
+  const starts = new Map<number, { name: string; start: number }>()
+  for (const event of props.buildings) {
+    if (event.player_id !== props.playerId) continue
+    const addon = addonOf(event.name)
+    if (!addon) continue
+    const unitId = Number(event.payload?.unit_id)
+    if (!Number.isFinite(unitId)) continue
+    if (event.kind === 'build_start') {
+      starts.set(unitId, { name: event.name, start: event.t_sec })
+      continue
+    }
+    if (event.kind !== 'build_done' && event.kind !== 'unit_born') continue
+    const start = starts.get(unitId)
+    starts.delete(unitId)
+    if (!start) continue
+    if (props.time < start.start || props.time >= event.t_sec) continue
+    const item = resolveItem(addon.key)
+    if (!item) continue
+    const list = result.get(addon.owner) || []
+    list.push({
+      key: item.key,
+      item,
+      count: 1,
+      progress: Math.min(
+        1,
+        Math.max(0, (props.time - start.start) / (event.t_sec - start.start)),
+      ),
+      indeterminate: false,
+      pending: true,
+    })
+    result.set(addon.owner, list)
+  }
+  return result
 })
 
 const unitCounts = computed(() => {
@@ -451,6 +663,23 @@ const unitCounts = computed(() => {
     }
   }
   return counts
+})
+
+const unitProgress = computed(() => {
+  const result = new Map<string, { progress: number; indeterminate: boolean }>()
+  for (const task of props.production || []) {
+    if (task.start > props.time) continue
+    if (task.done !== null && task.done <= props.time) continue
+    const progress =
+      task.done !== null && task.done > task.start
+        ? Math.min(1, Math.max(0, (props.time - task.start) / (task.done - task.start)))
+        : 0
+    const current = result.get(task.key)
+    if (!current || progress > current.progress) {
+      result.set(task.key, { progress, indeterminate: task.done === null })
+    }
+  }
+  return result
 })
 
 const unitItems = computed(() => {
@@ -484,12 +713,15 @@ const unitItems = computed(() => {
           time - unlockAt < flashWindow.value,
       )
 
+      const task = unitProgress.value.get(item.key)
       units.push({
         key: item.key,
         item,
         count: unitCounts.value[item.key] || 0,
         unlocked,
         flash,
+        progress: task?.progress,
+        indeterminate: task?.indeterminate,
       })
     }
     grouped.set(group.group, units)
@@ -547,26 +779,29 @@ const buildingUpgrades = computed(() => {
   const map = UPGRADE_BUILDINGS[props.race]
   const result: Record<string, UpgradeChip[]> = {}
   for (const [buildingKey, keys] of Object.entries(map)) {
-    const chips: UpgradeChip[] = []
-    for (const key of keys) {
-      const item = resolveItem(key)
-      if (!item) continue
-      const state = upgradeStates.value[item.key]
-      const doneAt = state?.doneAt
-      chips.push({
-        key: item.key,
-        item,
-        done: doneAt !== undefined,
-        doneAt,
-        active: Boolean(state?.active),
-        progress: state?.progress || 0,
-        indeterminate: Boolean(state?.indeterminate),
-        flash:
-          doneAt !== undefined &&
-          props.time >= doneAt &&
-          props.time - doneAt < flashWindow.value,
-      })
-    }
+    const items = keys
+      .map((key) => resolveItem(key))
+      .filter((item): item is CatalogItem => Boolean(item))
+    const chips: UpgradeChip[] = collapseUpgrades(items, upgradeStates.value).map(
+      (collapsed) => {
+        const doneAt = collapsed.doneAt
+        return {
+          key: collapsed.item.key,
+          item: collapsed.item,
+          activeItem: collapsed.activeItem,
+          done: doneAt !== undefined,
+          doneAt,
+          active: collapsed.active,
+          progress: collapsed.progress,
+          indeterminate: collapsed.indeterminate,
+          flash:
+            !collapsed.active &&
+            doneAt !== undefined &&
+            props.time >= doneAt &&
+            props.time - doneAt < flashWindow.value,
+        }
+      },
+    )
     if (chips.length) result[buildingKey] = chips
   }
   return result
@@ -585,15 +820,13 @@ const buildingNodes = computed<BuildingNode[]>(() => {
 
     return {
       key: building.key,
+      x: building.x,
+      y: building.y,
       left: MARGIN + building.x * cellWidth.value,
       top: MARGIN + building.y * ROW_H,
       item: resolveItem(building.key)!,
       state,
       count: stats?.done || 0,
-      worker:
-        building.key === baseKey && workerItem
-          ? { item: workerItem, count: unitCounts.value[workerItem.key] || 0 }
-          : undefined,
       constructing: constructionProgress.value[building.key]?.count || 0,
       progress: constructionProgress.value[building.key]?.progress || 0,
       indeterminate: constructionProgress.value[building.key]?.indeterminate || false,
@@ -601,16 +834,45 @@ const buildingNodes = computed<BuildingNode[]>(() => {
         stats?.firstDoneT !== undefined &&
         props.time >= stats.firstDoneT &&
         props.time - stats.firstDoneT < flashWindow.value,
-      units: unitItems.value.get(building.key) || [],
+      units: (() => {
+        const morphUnits = Object.keys(MORPH_ROOT)
+          .filter((key) => key !== building.key && morphRoot(key) === building.key)
+          .flatMap((key) => unitItems.value.get(key) || [])
+        const ownUnits = [...(unitItems.value.get(building.key) || []), ...morphUnits]
+        return building.key === baseKey && workerItem
+          ? [
+              {
+                key: workerItem.key,
+                item: workerItem,
+                count: unitCounts.value[workerItem.key] || 0,
+                unlocked: true,
+                flash: false,
+                progress: unitProgress.value.get(workerItem.key)?.progress,
+                indeterminate: unitProgress.value.get(workerItem.key)?.indeterminate,
+              },
+              ...ownUnits,
+            ]
+          : ownUnits
+      })(),
       upgrades: buildingUpgrades.value[building.key] || [],
-      morphs: Object.entries(stats?.morphs || {})
-        .map(([key, count]) => {
-          const item = resolveItem(key)
-          return item && item.kind === 'building' && !treeKeys.has(key)
-            ? { key, item, count }
-            : null
-        })
-        .filter((entry): entry is { key: string; item: CatalogItem; count: number } => entry !== null),
+      morphs: (() => {
+        const completed = Object.entries(stats?.morphs || {})
+          .map(([key, count]) => {
+            const item = resolveItem(key)
+            return item && item.kind === 'building' && !treeKeys.has(key) && count > 0
+              ? { key, item, count }
+              : null
+          })
+          .filter(
+            (entry): entry is { key: string; item: CatalogItem; count: number } =>
+              entry !== null,
+          )
+        return [
+          ...completed,
+          ...(pendingMorphBadges.value.get(building.key) || []),
+          ...(pendingAddonBadges.value.get(building.key) || []),
+        ]
+      })(),
     }
   })
 })
@@ -644,51 +906,30 @@ const otherNode = computed(() => {
   }
 })
 
-interface TierGroup {
+interface RowGroup {
   id: string
-  name: string
-  nameZh: string
   nodes: BuildingNode[]
 }
 
-const tierGroups = computed<TierGroup[]>(() => {
-  const nodes = buildingNodes.value
-  const t1Nodes: BuildingNode[] = []
-  const t2Nodes: BuildingNode[] = []
-  const t3Nodes: BuildingNode[] = []
-
-  for (const node of nodes) {
-    const buildingDef = tree.value.buildings.find((b) => b.key === node.key)
-    const y = buildingDef?.y ?? 0
-    if (y <= 1) {
-      t1Nodes.push(node)
-    } else if (y <= 3) {
-      t2Nodes.push(node)
-    } else {
-      t3Nodes.push(node)
-    }
+const treeRows = computed<RowGroup[]>(() => {
+  const rows = new Map<number, BuildingNode[]>()
+  for (const node of buildingNodes.value) {
+    const nodes = rows.get(node.y) || []
+    nodes.push(node)
+    rows.set(node.y, nodes)
   }
 
-  return [
-    { id: 't1', name: 'Tier 1 Base', nameZh: 'T1 基础科技', nodes: t1Nodes },
-    { id: 't2', name: 'Tier 2 Mid', nameZh: 'T2 核心进阶', nodes: t2Nodes },
-    { id: 't3', name: 'Tier 3 Advanced', nameZh: 'T3 终极高精', nodes: t3Nodes },
-  ].filter((t) => t.nodes.length > 0)
+  return [...rows.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([y, nodes]) => ({
+      id: `row-${y}`,
+      nodes: [...nodes].sort((a, b) => {
+        const aEmpty = a.units.length === 0 && a.upgrades.length === 0 ? 1 : 0
+        const bEmpty = b.units.length === 0 && b.upgrades.length === 0 ? 1 : 0
+        return aEmpty - bEmpty || a.x - b.x
+      }),
+    }))
 })
-
-function tierDoneCount(tier: TierGroup): number {
-  return tier.nodes.filter((n) => n.state === 'done').length
-}
-
-function requiresText(node: BuildingNode): string {
-  const buildingDef = tree.value.buildings.find((b) => b.key === node.key)
-  if (!buildingDef || !buildingDef.requires.length) return ''
-  const names = buildingDef.requires.map((reqKey) => {
-    const item = resolveItem(reqKey)
-    return item ? displayName(item) : reqKey
-  })
-  return `前置: ${names.join(', ')}`
-}
 
 const maxX = computed(() => Math.max(...tree.value.buildings.map((building) => building.x)))
 const maxY = computed(() => Math.max(...tree.value.buildings.map((building) => building.y)))
@@ -712,7 +953,7 @@ const edges = computed<Edge[]>(() => {
     const child = positions.get(building.key)
     if (!child) continue
     for (const parentKey of building.requires) {
-      const parent = positions.get(parentKey)
+      const parent = positions.get(parentKey) ?? positions.get(morphRoot(parentKey))
       if (!parent) continue
       result.push({
         id: `${parentKey}-${building.key}`,
@@ -724,14 +965,14 @@ const edges = computed<Edge[]>(() => {
 })
 
 function edgePath(parent: { left: number; top: number }, child: { left: number; top: number }): string {
-  const parentX = parent.left + 40
-  const parentY = parent.top + 80
-  const childX = child.left + 40
+  const parentX = parent.left + 32
+  const parentY = parent.top + 64
+  const childX = child.left + 32
   const childY = child.top
   const radius = 10
 
   if (Math.abs(parent.top - child.top) < 2) {
-    return `M ${parent.left + 80} ${parent.top + 40} L ${child.left} ${child.top + 40}`
+    return `M ${parent.left + 64} ${parent.top + 32} L ${child.left} ${child.top + 32}`
   }
 
   if (Math.abs(parentX - childX) < 2) {
@@ -756,9 +997,9 @@ function tooltip(item: CatalogItem, count?: number): string {
 }
 
 function chipTitle(chip: UpgradeChip): string {
-  const name = displayName(chip.item)
-  if (chip.doneAt !== undefined) return `${name} · ${formatClock(chip.doneAt)}`
+  const name = displayName(chip.activeItem ?? chip.item)
   if (chip.active) return `${name} · 建造中`
+  if (chip.doneAt !== undefined) return `${name} · ${formatClock(chip.doneAt)}`
   return name
 }
 </script>
@@ -789,14 +1030,16 @@ function chipTitle(chip: UpgradeChip): string {
 
 .building-node {
   position: absolute;
-  width: 224px;
+  width: 220px;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: start;
   z-index: 1;
 }
 
 .building-main {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: contents;
 }
 
 .icon-shell {
@@ -818,8 +1061,8 @@ function chipTitle(chip: UpgradeChip): string {
 }
 
 .building-icon {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
 }
 
 .building-node.done .building-icon {
@@ -846,14 +1089,14 @@ function chipTitle(chip: UpgradeChip): string {
 
 .unit-grid {
   display: grid;
-  grid-template-columns: repeat(3, 42px);
-  gap: 5px;
+  grid-template-columns: repeat(4, 34px);
+  gap: 4px;
   padding-top: 3px;
 }
 
 .unit-icon {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   transition: opacity 220ms ease, filter 220ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
 }
 
@@ -897,31 +1140,6 @@ function chipTitle(chip: UpgradeChip): string {
   color: #fff;
 }
 
-.worker-badge {
-  position: absolute;
-  left: -10px;
-  top: -10px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 6px 1px 1px;
-  border: 1px solid #2c5480;
-  border-radius: 999px;
-  background: rgba(5, 8, 17, 0.94);
-  color: #dcecff;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
-}
-
-.worker-badge img {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  object-fit: contain;
-}
 
 .build-progress {
   position: absolute;
@@ -944,23 +1162,56 @@ function chipTitle(chip: UpgradeChip): string {
   animation: build-progress-pulse 1.2s ease-in-out infinite;
 }
 
+
+.unit-progress,
+.morph-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.unit-progress {
+  height: 3px;
+  border-radius: 0 0 6px 6px;
+}
+
+.morph-progress {
+  height: 2px;
+  border-radius: 0 0 4px 4px;
+}
+
+.unit-progress-fill,
+.morph-progress-fill {
+  height: 100%;
+  background: #ffffff;
+}
+
+.unit-progress.indeterminate .unit-progress-fill,
+.morph-progress.indeterminate .morph-progress-fill {
+  width: 35% !important;
+  animation: build-progress-pulse 1.2s ease-in-out infinite;
+}
+
 /* Upgrades researched by this building, echoed from the upgrade strip. */
 .upgrade-row {
+  grid-column: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
-  margin-top: 3px;
-  padding-top: 2px;
-  max-width: 224px;
+  margin-top: 2px;
+  max-width: 148px;
 }
 
 .upgrade-chip {
   position: relative;
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
   flex: none;
   border: 1px solid #1d3352;
-  border-radius: 3px;
+  border-radius: 5px;
   background: #0b1424;
   opacity: 0.3;
   filter: grayscale(0.9);
@@ -972,7 +1223,7 @@ function chipTitle(chip: UpgradeChip): string {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .upgrade-chip.done {
@@ -992,7 +1243,7 @@ function chipTitle(chip: UpgradeChip): string {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 2px;
+  height: 3px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.6);
 }
@@ -1063,7 +1314,7 @@ function chipTitle(chip: UpgradeChip): string {
 }
 
 .other-grid {
-  grid-template-columns: repeat(3, 42px);
+  grid-template-columns: repeat(4, 34px);
 }
 
 .unlock-flash {
@@ -1111,150 +1362,70 @@ function chipTitle(chip: UpgradeChip): string {
   }
 }
 
-/* Flow View (Adaptive Layout for Split Screen) */
+/* Flow View (Adaptive icon grid, same nodes as the full canvas) */
 .flow-tree-view {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px 24px;
+  padding: 12px 14px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
   user-select: none;
 }
 
-.flow-tier {
+.flow-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.flow-tier-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 3px 6px;
-  border-bottom: 1px solid rgba(75, 155, 240, 0.2);
-}
-
-.flow-tier-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #7ca5cf;
-  text-transform: uppercase;
-}
-
-.flow-tier-badge {
-  font-size: 10px;
-  color: #55799e;
-  font-family: 'JetBrains Mono', Consolas, monospace;
+.flow-row + .flow-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(75, 155, 240, 0.1);
 }
 
 .flow-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 8px;
-}
-
-.flow-card {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 8px;
-  background: rgba(9, 17, 30, 0.75);
-  border: 1px solid #162a45;
-  transition: all 0.2s ease;
-}
-
-.flow-card.done {
-  border-color: rgba(75, 155, 240, 0.45);
-  background: rgba(10, 20, 36, 0.85);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-}
-
-.flow-card.building {
-  border-color: rgba(229, 185, 72, 0.45);
-  background: rgba(20, 24, 15, 0.8);
-}
-
-.flow-card.locked {
-  opacity: 0.45;
-  border-color: rgba(30, 45, 70, 0.4);
-  background: rgba(6, 10, 18, 0.6);
-}
-
-.flow-card-top {
-  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 6px;
   align-items: flex-start;
-  gap: 8px;
 }
 
-.flow-card-info {
-  flex: 1;
+.flow-node {
+  display: grid;
+  flex: 0 0 220px;
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: start;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  width: 220px;
 }
 
-.flow-building-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: #d8eaff;
-  line-height: 1.2;
+.flow-node.empty-node {
+  flex-basis: 64px;
+  width: 64px;
 }
 
-.flow-card.locked .flow-building-name {
-  color: #7189a6;
+.flow-node.done .building-icon {
+  border-color: #3d7fc4;
+  box-shadow: 0 0 14px rgba(61, 127, 196, 0.45), inset 0 0 10px rgba(61, 127, 196, 0.12);
 }
 
-.flow-req-tag {
-  font-size: 9.5px;
-  color: #e57373;
-  line-height: 1.25;
+.flow-node.locked .building-icon {
+  opacity: 0.32;
+  filter: grayscale(0.85);
 }
 
-.flow-state-tag {
-  font-size: 9.5px;
-  font-weight: 600;
-  padding: 1px 4px;
-  border-radius: 3px;
-  align-self: flex-start;
+.flow-node.building .building-icon {
+  opacity: 0.62;
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
-.flow-state-tag.done {
-  color: #64b5f6;
-  background: rgba(100, 181, 246, 0.15);
+.flow-node.destroyed .building-icon {
+  opacity: 0.62;
+  filter: grayscale(0.35) sepia(0.25) hue-rotate(-25deg) brightness(0.85);
+  border-color: #7a3d3d;
+  box-shadow: inset 0 0 12px rgba(180, 60, 60, 0.16);
 }
 
-.flow-state-tag.building {
-  color: #ffd54f;
-  background: rgba(255, 213, 79, 0.15);
-}
-
-.flow-state-tag.destroyed {
-  color: #ef5350;
-  background: rgba(239, 83, 80, 0.15);
-}
-
-.flow-card .building-icon {
-  width: 54px;
-  height: 54px;
-}
-
-.flow-card .unit-grid {
-  padding-top: 0;
-  grid-template-columns: repeat(auto-fill, 42px);
-}
-
-.flow-card .upgrade-row {
-  margin-top: 2px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(25, 45, 75, 0.5);
-}
-
-.other-card {
-  padding: 10px;
-}
 </style>
