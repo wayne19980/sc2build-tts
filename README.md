@@ -18,8 +18,8 @@ desktop build can read the build order aloud and show a compact in-game overlay.
 - Unified construction strip: buildings, unit training, Zerg morphs, active
   upgrades and Carrier interceptors. Voice announcements skip auto-spawned
   units such as interceptors.
-- Attack/armor lines collapse to one icon (current level), with a progress bar
-  while the next level is being researched.
+- All upgrade levels are shown with their completion times; research progress
+  is shown under the icon being researched.
 - Chinese / English switch that also drives voice language and display names.
 - Voice reader and a click-through overlay for windowed / borderless SC2.
 - Everything runs locally: no cloud service or account.

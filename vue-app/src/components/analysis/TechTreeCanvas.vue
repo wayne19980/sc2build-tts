@@ -135,9 +135,7 @@ import { computed } from 'vue'
 import type { EventItem, Race, TechTiming, UnitLifecycle } from '../../types-analysis'
 import { formatClock, iconUrl, resolveItem, techTrees, type CatalogItem } from '../../data/catalog'
 import {
-  collapseUpgradeKeys,
   computeUpgradeStates,
-  upgradeFamily,
   UPGRADE_BUILDINGS,
 } from '../../data/upgrades'
 import { CELL_W, CELL_W_COMPACT, MARGIN, ROW_H } from '../../data/layout'
@@ -168,7 +166,6 @@ interface BuildingCounter {
 interface UpgradeChip {
   key: string
   item: CatalogItem
-  activeItem?: CatalogItem
   done: boolean
   doneAt?: number
   active: boolean
@@ -415,28 +412,23 @@ const buildingUpgrades = computed(() => {
   const result: Record<string, UpgradeChip[]> = {}
   for (const [buildingKey, keys] of Object.entries(map)) {
     const chips: UpgradeChip[] = []
-    const seenFamilies = new Set<string>()
     for (const key of keys) {
-      const family = upgradeFamily(key)
-      if (family) {
-        if (seenFamilies.has(family[0])) continue
-        seenFamilies.add(family[0])
-      }
-      const collapsed = collapseUpgradeKeys(family || [key], upgradeStates.value)
-      if (!collapsed) continue
+      const item = resolveItem(key)
+      if (!item) continue
+      const state = upgradeStates.value[item.key]
+      const doneAt = state?.doneAt
       chips.push({
-        key: collapsed.item.key,
-        item: collapsed.item,
-        activeItem: collapsed.activeItem,
-        done: collapsed.doneAt !== undefined,
-        doneAt: collapsed.doneAt,
-        active: collapsed.active,
-        progress: collapsed.progress,
-        indeterminate: collapsed.indeterminate,
+        key: item.key,
+        item,
+        done: doneAt !== undefined,
+        doneAt,
+        active: Boolean(state?.active),
+        progress: state?.progress || 0,
+        indeterminate: Boolean(state?.indeterminate),
         flash:
-          collapsed.doneAt !== undefined &&
-          props.time >= collapsed.doneAt &&
-          props.time - collapsed.doneAt < flashWindow.value,
+          doneAt !== undefined &&
+          props.time >= doneAt &&
+          props.time - doneAt < flashWindow.value,
       })
     }
     if (chips.length) result[buildingKey] = chips
@@ -583,13 +575,8 @@ function tooltip(item: CatalogItem, count?: number): string {
 
 function chipTitle(chip: UpgradeChip): string {
   const name = displayName(chip.item)
-  const target = chip.activeItem ? displayName(chip.activeItem) : ''
-  if (chip.doneAt !== undefined) {
-    return target
-      ? `${name} · ${formatClock(chip.doneAt)} · ${target} 建造中`
-      : `${name} · ${formatClock(chip.doneAt)}`
-  }
-  if (chip.active) return `${target || name} · 建造中`
+  if (chip.doneAt !== undefined) return `${name} · ${formatClock(chip.doneAt)}`
+  if (chip.active) return `${name} · 建造中`
   return name
 }
 </script>

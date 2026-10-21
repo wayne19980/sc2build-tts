@@ -41,12 +41,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { UpgradeStripRow } from '../../types-analysis'
-import { formatClock, itemIconUrl, upgradeItems } from '../../data/catalog'
-import {
-  collapseUpgrades,
-  computeUpgradeStates,
-  type CollapsedUpgrade,
-} from '../../data/upgrades'
+import { formatClock, itemIconUrl, upgradeItems, type CatalogItem } from '../../data/catalog'
+import { computeUpgradeStates } from '../../data/upgrades'
 import { useLanguage } from '../../composables/useLanguage'
 
 const props = defineProps<{
@@ -58,19 +54,26 @@ const { displayName } = useLanguage()
 const resolvedRows = computed(() =>
   props.rows.map((row) => {
     const states = computeUpgradeStates(row.tech, row.orders, props.time)
-    return { ...row, items: collapseUpgrades(upgradeItems(row.race), states) }
+    const items = upgradeItems(row.race).map((item) => {
+      const state = states[item.key]
+      return {
+        item,
+        doneAt: state?.doneAt,
+        active: Boolean(state?.active),
+        progress: state?.progress ?? 0,
+        indeterminate: Boolean(state?.indeterminate),
+      }
+    })
+    return { ...row, items }
   }),
 )
 
-function tooltip(entry: CollapsedUpgrade): string {
+function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean }): string {
   const name = displayName(entry.item)
-  const target = entry.activeItem ? displayName(entry.activeItem) : ''
   if (entry.doneAt !== undefined) {
-    return target
-      ? `${name} · ${formatClock(entry.doneAt)} · ${target} 建造中`
-      : `${name} · ${formatClock(entry.doneAt)}`
+    return `${name} · ${formatClock(entry.doneAt)}`
   }
-  if (entry.active) return `${target || name} · 建造中`
+  if (entry.active) return `${name} · 建造中`
   return name
 }
 </script>

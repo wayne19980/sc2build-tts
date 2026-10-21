@@ -100,7 +100,6 @@
 <script setup lang="ts">
 import type { FolderReplay, FolderReplayPlayer } from '../../types-analysis'
 import { AUTO_SPAWNED_UNITS, formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
-import { upgradeFamily } from '../../data/upgrades'
 import { useLanguage } from '../../composables/useLanguage'
 
 defineProps<{
@@ -150,45 +149,8 @@ function unitPreview(player: FolderReplayPlayer) {
   return [...grouped.values()]
 }
 
-interface TechEntry {
-  tech: string
-  t_sec: number
-  phase: 'early' | 'mid' | 'late'
-}
-
-function collapsedTech(player: FolderReplayPlayer): TechEntry[] {
-  const singles: TechEntry[] = []
-  const families = new Map<string, { entry: TechEntry; index: number }>()
-
-  for (const phase of phases) {
-    for (const tech of player.tech[phase.key]) {
-      const item = resolveItem(tech.tech)
-      if (!item) continue
-      const entry: TechEntry = { tech: tech.tech, t_sec: tech.t_sec, phase: phase.key }
-      const family = upgradeFamily(item.key)
-      if (!family) {
-        singles.push(entry)
-        continue
-      }
-      const index = family.indexOf(item.key)
-      const current = families.get(family[0])
-      if (
-        !current ||
-        index > current.index ||
-        (index === current.index && tech.t_sec < current.entry.t_sec)
-      ) {
-        families.set(family[0], { entry, index })
-      }
-    }
-  }
-
-  return [...singles, ...[...families.values()].map((value) => value.entry)].sort(
-    (a, b) => a.t_sec - b.t_sec,
-  )
-}
-
 function phaseTech(player: FolderReplayPlayer, phase: 'early' | 'mid' | 'late') {
-  return collapsedTech(player).filter((tech) => tech.phase === phase)
+  return player.tech[phase].filter((tech) => resolveItem(tech.tech))
 }
 
 function techIcon(tech: string): string {
