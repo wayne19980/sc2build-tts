@@ -94,13 +94,15 @@ import {
   resolveItem,
   type CatalogItem,
 } from '../../data/catalog'
-import type { EventItem, OverlayState } from '../../types-analysis'
+import type { EventItem, OverlayState, UnitLifecycle } from '../../types-analysis'
 import { emitOverlayReady, isTauriRuntime, listenOverlayEvent } from '../../composables/useTauri'
+import { DEFAULT_UNIT_SECONDS, MORPH_SECONDS, UNIT_SECONDS } from '../../data/production'
 import { useLanguage } from '../../composables/useLanguage'
 
 const { english, displayName } = useLanguage()
 const state = ref<OverlayState | null>(null)
 const events = ref<EventItem[]>([])
+const units = ref<UnitLifecycle[]>([])
 const error = ref('')
 let unlisten: (() => void) | null = null
 let loadedKey = ''
@@ -183,51 +185,131 @@ interface ActiveBuild {
 const activeBuilds = computed<ActiveBuild[]>(() => {
   const time = state.value?.time ?? 0
   const includeWorkers = state.value?.includeWorkers ?? false
-  const tasks = new Map<number, { name: string; start: number; done?: number }>()
-  for (const event of events.value) {
-    const unitId = Number(event.payload?.unit_id)
-    if (!Number.isFinite(unitId)) continue
-    if (event.kind === 'build_start' || event.kind === 'unit_training_start') {
-      if (!tasks.has(unitId)) tasks.set(unitId, { name: event.name, start: event.t_sec })
-    } else if (event.kind === 'build_done' || event.kind === 'unit_born') {
-      const task = tasks.get(unitId)
-      if (task) task.done = event.t_sec
-    }
-  }
-
   const groups = new Map<string, ActiveBuild>()
-  for (const task of tasks.values()) {
-    if (task.start > time) continue
-    if (task.done !== undefined && task.done <= time) continue
-    const item = resolveItem(task.name)
-    if (!item) continue
-    if (!includeWorkers && WORKER_UNITS.has(item.key)) continue
-    if (AUTO_SPAWNED_UNITS.has(item.key) && item.key !== 'Interceptor') continue
+
+  const addGroup = (
+    key: string,
+    item: CatalogItem,
+    start: number,
+    done: number | null,
+  ) => {
     const progress =
-      task.done !== undefined && task.done > task.start
-        ? Math.min(1, Math.max(0, (time - task.start) / (task.done - task.start)))
+      done !== null && done > start
+        ? Math.min(1, Math.max(0, (time - start) / (done - start)))
         : 0
-    const current = groups.get(item.key)
+    const current = groups.get(key)
     if (current) {
       current.count += 1
       current.progress = Math.max(current.progress, progress)
-      current.indeterminate = current.indeterminate || task.done === undefined
-      current.start = Math.min(current.start, task.start)
-      continue
+      current.indeterminate = current.indeterminate || done === null
+      current.start = Math.min(current.start, start)
+      return
     }
-    groups.set(item.key, {
-      key: item.key,
+    groups.set(key, {
+      key,
       item,
       count: 1,
       progress,
-      indeterminate: task.done === undefined,
-      start: task.start,
+      indeterminate: done === null,
+      start,
     })
   }
+
+  const buildingTasks = new Map<number, { name: string; start: number; done?: number }>()
+  const unitStarts = new Map<number, number>()
+  const upgradeOrders = new Map<string, { item: CatalogItem; start: number }>()
+  const upgradeDone = new Map<string, number[]>()
+
+  for (const event of events.value) {
+    const item = resolveItem(event.name)
+    const unitId = Number(event.payload?.unit_id)
+    const hasUnitId = Number.isFinite(unitId)
+
+    if (event.kind === 'build_start' && hasUnitId) {
+      if (item?.kind === 'building') {
+        buildingTasks.set(unitId, { name: event.name, start: event.t_sec })
+      } else if (item?.kind === 'unit') {
+        unitStarts.set(unitId, event.t_sec)
+      }
+    } else if (event.kind === 'unit_training_start' && hasUnitId) {
+      unitStarts.set(unitId, event.t_sec)
+    } else if (
+      (event.kind === 'build_done' || event.kind === 'unit_born') &&
+      hasUnitId
+    ) {
+      const task = buildingTasks.get(unitId)
+      if (task) task.done = event.t_sec
+    }
+
+    if (item?.kind === 'upgrade') {
+      if (event.kind === 'order' && event.t_sec <= time) {
+        upgradeOrders.set(item.key, { item, start: event.t_sec })
+      } else if (event.kind === 'upgrade_done') {
+        const done = upgradeDone.get(item.key) || []
+        done.push(event.t_sec)
+        upgradeDone.set(item.key, done)
+      }
+    }
+  }
+
+  // Buildings, addons and other structures.
+  for (const task of buildingTasks.values()) {
+    if (task.start > time) continue
+    if (task.done !== undefined && task.done <= time) continue
+    const item = resolveItem(task.name)
+    if (!item || item.kind !== 'building') continue
+    addGroup(item.key, item, task.start, task.done ?? null)
+  }
+
+  // Unit training. Training-start events are not always present, so fall back
+  // to the unit's birth time minus the standard build time.
+  for (const unit of units.value) {
+    if (unit.is_building) continue
+    const item = resolveItem(unit.first_type)
+    if (!item || item.kind !== 'unit') continue
+    if (!includeWorkers && WORKER_UNITS.has(item.key)) continue
+    if (AUTO_SPAWNED_UNITS.has(item.key) && item.key !== 'Interceptor') continue
+    if (AUTO_SPAWNED_UNITS.has(unit.first_type) && unit.first_type !== 'Interceptor') {
+      continue
+    }
+    const duration = UNIT_SECONDS[item.key] ?? DEFAULT_UNIT_SECONDS
+    const start = unitStarts.get(unit.unit_id) ?? Math.max(0, unit.born_t_sec - duration)
+    if (start > time || unit.born_t_sec <= time) continue
+    addGroup(item.key, item, start, unit.born_t_sec)
+  }
+
+  // Zerg unit morphs (Baneling, Ravager, Lurker, Brood Lord, Overseer).
+  for (const unit of units.value) {
+    if (unit.is_building) continue
+    let previous = ''
+    for (const morph of unit.morphs) {
+      if (morph.from === morph.to) continue
+      const duration = MORPH_SECONDS[morph.to]
+      if (!duration) continue
+      const item = resolveItem(morph.to)
+      if (!item || item.kind !== 'unit') continue
+      const signature = `${item.key}:${morph.t_sec}`
+      if (signature === previous) continue
+      previous = signature
+      const start = Math.max(0, morph.t_sec - duration)
+      if (start > time || morph.t_sec <= time) continue
+      addGroup(item.key, item, start, morph.t_sec)
+    }
+  }
+
+  // Active research from order -> upgrade_done.
+  for (const [key, order] of upgradeOrders) {
+    const done = (upgradeDone.get(key) || [])
+      .filter((time) => time > order.start)
+      .sort((a, b) => a - b)[0]
+    if (done !== undefined && done <= time) continue
+    addGroup(key, order.item, order.start, done ?? null)
+  }
+
   return [...groups.values()].sort((left, right) => left.start - right.start)
 })
 
-const visibleBuilds = computed(() => activeBuilds.value.slice(0, 4))
+const visibleBuilds = computed(() => activeBuilds.value.slice(0, 10))
 const overflowBuilds = computed(() => Math.max(0, activeBuilds.value.length - visibleBuilds.value.length))
 
 interface UnlockEntry {
@@ -312,7 +394,12 @@ async function loadData() {
   loading = true
   error.value = ''
   try {
-    events.value = await api.timeline(current.gameId, current.playerId)
+    const [timeline, unitRows] = await Promise.all([
+      api.timeline(current.gameId, current.playerId),
+      api.units(current.gameId, current.playerId),
+    ])
+    events.value = timeline
+    units.value = unitRows.filter((unit) => unit.player_id === current.playerId)
     loadedKey = key
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : String(exc)
@@ -397,10 +484,13 @@ async function loadData() {
 
 .build-summary {
   display: flex;
+  flex: none;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
+  width: 54%;
   min-width: 0;
-  max-width: 330px;
+  margin-left: auto;
   padding: 2px 6px;
   border: 1px solid rgba(90, 167, 237, 0.28);
   border-radius: 5px;

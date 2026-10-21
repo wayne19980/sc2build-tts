@@ -212,6 +212,7 @@
                   <label class="overlay-setting-row">
                     <span>显示器</span>
                     <select v-model.number="overlayMonitor">
+                      <option :value="-2">主显示器</option>
                       <option :value="-1">跟随主窗口</option>
                       <option v-for="(monitor, index) in monitors" :key="index" :value="index">
                         {{ monitor.name }} · {{ monitor.width }}×{{ monitor.height }}
@@ -321,6 +322,7 @@ import type {
   UpgradeStripRow,
 } from '../../types-analysis'
 import { AUTO_SPAWNED_UNITS, formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { DEFAULT_UNIT_SECONDS, MORPH_SECONDS, UNIT_SECONDS } from '../../data/production'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -381,7 +383,7 @@ const overlayOpacity = ref(Number(localStorage.getItem('sc2-overlay-opacity-v3')
 const overlayAnchor = ref<OverlayAnchor>(
   savedAnchor('sc2-overlay-anchor', 'top-center'),
 )
-const overlayMonitor = ref(Number(localStorage.getItem('sc2-overlay-monitor') ?? -1))
+const overlayMonitor = ref(Number(localStorage.getItem('sc2-overlay-monitor-v2') ?? -2))
 const voiceIncludeWorkers = ref(localStorage.getItem('sc2-voice-include-workers') === '1')
 const overlaySettingsOpen = ref(false)
 const overlaySettingsRef = ref<HTMLElement | null>(null)
@@ -469,66 +471,6 @@ interface ProductionTask {
   icon: string
   start: number
   done: number | null
-}
-
-const UNIT_SECONDS: Record<string, number> = {
-  Probe: 12,
-  SCV: 12,
-  Drone: 12,
-  Interceptor: 9,
-  Zergling: 17,
-  Baneling: 14,
-  Roach: 19,
-  Ravager: 12,
-  Hydralisk: 24,
-  Lurker: 18,
-  Mutalisk: 24,
-  Corruptor: 29,
-  BroodLord: 24,
-  Overseer: 12,
-  Queen: 36,
-  Overlord: 18,
-  Marine: 18,
-  Marauder: 21,
-  Reaper: 23,
-  Ghost: 29,
-  Zealot: 27,
-  Stalker: 30,
-  Sentry: 23,
-  Adept: 27,
-  HighTemplar: 32,
-  DarkTemplar: 32,
-  Immortal: 39,
-  Colossus: 48,
-  Disruptor: 39,
-  Observer: 21,
-  WarpPrism: 36,
-  Phoenix: 25,
-  VoidRay: 36,
-  Oracle: 37,
-  Tempest: 43,
-  Carrier: 64,
-  Mothership: 89,
-  Hellion: 21,
-  Hellbat: 21,
-  WidowMine: 21,
-  Cyclone: 25,
-  SiegeTank: 32,
-  Thor: 43,
-  Viking: 24,
-  Medivac: 30,
-  Liberator: 30,
-  Raven: 43,
-  Banshee: 43,
-  Battlecruiser: 64,
-}
-const DEFAULT_UNIT_SECONDS = 15
-const MORPH_SECONDS: Record<string, number> = {
-  Baneling: 14,
-  Ravager: 12,
-  Lurker: 18,
-  BroodLord: 24,
-  Overseer: 12,
 }
 
 const unitProductionTasks = computed(() => {
@@ -812,7 +754,7 @@ watch(overlayAnchor, (anchor) => {
 })
 
 watch(overlayMonitor, (index) => {
-  localStorage.setItem('sc2-overlay-monitor', String(index))
+  localStorage.setItem('sc2-overlay-monitor-v2', String(index))
   if (overlayEnabled.value) void positionOverlayWindow(overlayAnchor.value, index)
 })
 

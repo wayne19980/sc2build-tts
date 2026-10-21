@@ -76,7 +76,7 @@ export async function listMonitors(): Promise<OverlayMonitor[]> {
 
 export async function openOverlayWindow(
   anchor: OverlayAnchor = 'top-center',
-  monitorIndex = -1,
+  monitorIndex = -2,
 ): Promise<void> {
   const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
   let overlay = await WebviewWindow.getByLabel(OVERLAY_LABEL)
@@ -113,18 +113,20 @@ export async function openOverlayWindow(
 
 export async function positionOverlayWindow(
   anchor: OverlayAnchor,
-  monitorIndex = -1,
+  monitorIndex = -2,
 ): Promise<void> {
   if (!isTauriRuntime()) return
   const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
   const overlay = await WebviewWindow.getByLabel(OVERLAY_LABEL)
   if (!overlay) return
 
-  const { availableMonitors, currentMonitor } = await import('@tauri-apps/api/window')
+  const { availableMonitors, currentMonitor, primaryMonitor } = await import('@tauri-apps/api/window')
   const { LogicalPosition, LogicalSize } = await import('@tauri-apps/api/dpi')
   const monitors = monitorIndex >= 0 ? await availableMonitors() : []
   const monitor =
-    (monitorIndex >= 0 ? monitors[monitorIndex] : null) ?? (await currentMonitor())
+    (monitorIndex >= 0 ? monitors[monitorIndex] : null) ??
+    (monitorIndex === -2 ? await primaryMonitor() : null) ??
+    (await currentMonitor())
   if (!monitor) return
 
   const scale = monitor.scaleFactor || 1
