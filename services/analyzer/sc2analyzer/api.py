@@ -83,6 +83,7 @@ class ImportJob:
 _jobs: dict[str, ImportJob] = {}
 _jobs_lock = threading.Lock()
 _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="sc2-import")
+_uvicorn_server = None
 
 
 def _update_job(job_id: str, **changes: Any) -> None:
@@ -181,6 +182,9 @@ async def lifespan(app: FastAPI):
     app.state.applied_migrations = applied
     yield
     _executor.shutdown(wait=False, cancel_futures=True)
+    from .embedded_pg import cleanup_database
+
+    cleanup_database()
 
 
 app = FastAPI(title="SC2 Build Analyzer", version="0.1.0", lifespan=lifespan)
@@ -210,6 +214,24 @@ def health() -> dict[str, Any]:
         "schema": SCHEMA,
         "migrations": applied_versions(),
     }
+
+
+@app.post("/api/shutdown")
+def shutdown() -> dict[str, str]:
+    """Stop PostgreSQL cleanly, then exit so the sidecar leaves no orphan server."""
+    from .embedded_pg import cleanup_database
+
+    cleanup_database()
+
+    def _stop_uvicorn() -> None:
+        time.sleep(0.25)
+        if _uvicorn_server is not None:
+            _uvicorn_server.should_exit = True
+        else:
+            os._exit(0)
+
+    threading.Thread(target=_stop_uvicorn, daemon=True).start()
+    return {"status": "stopped"}
 
 
 @app.get("/api/imports")
@@ -715,12 +737,15 @@ def get_features(game_id: int, session: Session = Depends(get_session)) -> dict[
 def main() -> None:
     import uvicorn
 
-    uvicorn.run(
+    global _uvicorn_server
+    config = uvicorn.Config(
         "sc2analyzer.api:app",
         host=os.environ.get("SC2_API_HOST", "127.0.0.1"),
         port=int(os.environ.get("SC2_API_PORT", "8765")),
         reload=False,
     )
+    _uvicorn_server = uvicorn.Server(config)
+    _uvicorn_server.run()
 
 
 if __name__ == "__main__":
