@@ -39,7 +39,7 @@
         <div class="build-chain">
           <template v-for="(row, index) in buildRows" :key="row.key">
             <span v-if="index > 0" class="chain-arrow">»</span>
-            <div class="chain-item" :class="{ past: row.past, current: row.next }">
+            <div class="chain-item" :class="{ past: row.past, current: row.current }">
               <img :src="iconUrl(row.item.abbr)" :alt="row.item.name" draggable="false" />
               <div class="item-meta">
                 <span class="item-name">
@@ -149,7 +149,7 @@ interface BuildRow {
   item: CatalogItem
   count: number
   past: boolean
-  next: boolean
+  current: boolean
 }
 
 const buildRows = computed<BuildRow[]>(() => {
@@ -166,7 +166,7 @@ const buildRows = computed<BuildRow[]>(() => {
     item: group.item,
     count: group.count,
     past: group.event.t_sec <= time,
-    next: index === past.length,
+    current: past.length > 0 ? index === past.length - 1 : index === 0,
   }))
 })
 
@@ -531,6 +531,7 @@ async function loadData() {
 }
 
 .chain-item.current {
+  opacity: 1;
   border-color: rgba(90, 167, 237, 0.5);
   background: rgba(61, 127, 196, 0.2);
 }
