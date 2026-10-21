@@ -9,14 +9,28 @@
           <span v-if="state?.race" class="race-tag">{{ state.race }}</span>
         </div>
 
-        <div v-if="nextAction" class="next-action-hero">
-          <span class="next-badge">下一步</span>
-          <img :src="iconUrl(nextAction.item.abbr)" :alt="nextAction.item.name" draggable="false" />
-          <span class="next-name">
-            {{ displayName(nextAction.item) }}
-            <b v-if="nextAction.count > 1" class="next-count">×{{ nextAction.count }}</b>
-          </span>
-          <span class="next-time">{{ formatClock(nextAction.event.t_sec) }}</span>
+        <div class="build-summary">
+          <span class="build-summary-label">建造中</span>
+          <div v-if="activeBuilds.length" class="build-summary-items">
+            <div
+              v-for="build in visibleBuilds"
+              :key="build.key"
+              class="build-summary-item"
+              :title="`${displayName(build.item)}${build.count > 1 ? ` ×${build.count}` : ''}`"
+            >
+              <img :src="iconUrl(build.item.abbr)" :alt="build.item.name" draggable="false" />
+              <span v-if="build.count > 1" class="build-summary-count">×{{ build.count }}</span>
+              <div class="build-summary-bar">
+                <div
+                  class="build-summary-fill"
+                  :class="{ indeterminate: build.indeterminate }"
+                  :style="{ width: `${build.progress * 100}%` }"
+                />
+              </div>
+            </div>
+            <span v-if="overflowBuilds > 0" class="build-summary-overflow">+{{ overflowBuilds }}</span>
+          </div>
+          <span v-else class="build-summary-empty">无</span>
         </div>
       </div>
 
@@ -71,7 +85,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from '../../api'
-import { formatClock, iconUrl, itemIconUrl, resolveItem, type CatalogItem } from '../../data/catalog'
+import {
+  AUTO_SPAWNED_UNITS,
+  WORKER_UNITS,
+  formatClock,
+  iconUrl,
+  itemIconUrl,
+  resolveItem,
+  type CatalogItem,
+} from '../../data/catalog'
 import type { EventItem, OverlayState } from '../../types-analysis'
 import { emitOverlayReady, isTauriRuntime, listenOverlayEvent } from '../../composables/useTauri'
 import { useLanguage } from '../../composables/useLanguage'
@@ -148,7 +170,65 @@ const buildRows = computed<BuildRow[]>(() => {
   }))
 })
 
-const nextAction = computed(() => buildRows.value.find((row) => row.next))
+
+interface ActiveBuild {
+  key: string
+  item: CatalogItem
+  count: number
+  progress: number
+  indeterminate: boolean
+  start: number
+}
+
+const activeBuilds = computed<ActiveBuild[]>(() => {
+  const time = state.value?.time ?? 0
+  const includeWorkers = state.value?.includeWorkers ?? false
+  const tasks = new Map<number, { name: string; start: number; done?: number }>()
+  for (const event of events.value) {
+    const unitId = Number(event.payload?.unit_id)
+    if (!Number.isFinite(unitId)) continue
+    if (event.kind === 'build_start' || event.kind === 'unit_training_start') {
+      if (!tasks.has(unitId)) tasks.set(unitId, { name: event.name, start: event.t_sec })
+    } else if (event.kind === 'build_done' || event.kind === 'unit_born') {
+      const task = tasks.get(unitId)
+      if (task) task.done = event.t_sec
+    }
+  }
+
+  const groups = new Map<string, ActiveBuild>()
+  for (const task of tasks.values()) {
+    if (task.start > time) continue
+    if (task.done !== undefined && task.done <= time) continue
+    const item = resolveItem(task.name)
+    if (!item) continue
+    if (!includeWorkers && WORKER_UNITS.has(item.key)) continue
+    if (AUTO_SPAWNED_UNITS.has(item.key) && item.key !== 'Interceptor') continue
+    const progress =
+      task.done !== undefined && task.done > task.start
+        ? Math.min(1, Math.max(0, (time - task.start) / (task.done - task.start)))
+        : 0
+    const current = groups.get(item.key)
+    if (current) {
+      current.count += 1
+      current.progress = Math.max(current.progress, progress)
+      current.indeterminate = current.indeterminate || task.done === undefined
+      current.start = Math.min(current.start, task.start)
+      continue
+    }
+    groups.set(item.key, {
+      key: item.key,
+      item,
+      count: 1,
+      progress,
+      indeterminate: task.done === undefined,
+      start: task.start,
+    })
+  }
+  return [...groups.values()].sort((left, right) => left.start - right.start)
+})
+
+const visibleBuilds = computed(() => activeBuilds.value.slice(0, 4))
+const overflowBuilds = computed(() => Math.max(0, activeBuilds.value.length - visibleBuilds.value.length))
 
 interface UnlockEntry {
   event: EventItem
@@ -315,41 +395,98 @@ async function loadData() {
   text-transform: uppercase;
 }
 
-.next-action-hero {
+.build-summary {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 8px 2px 6px;
+  min-width: 0;
+  max-width: 330px;
+  padding: 2px 6px;
+  border: 1px solid rgba(90, 167, 237, 0.28);
   border-radius: 5px;
-  background: rgba(75, 155, 240, 0.16);
-  border: 1px solid rgba(90, 167, 237, 0.5);
-  animation: hero-pulse 2s ease-in-out infinite;
+  background: rgba(75, 155, 240, 0.08);
 }
 
-.next-badge {
+.build-summary-label {
+  flex: none;
+  color: #8ec5ff;
   font-size: 9px;
   font-weight: 700;
-  color: #8ec5ff;
   letter-spacing: 0.05em;
 }
 
-.next-action-hero img {
-  width: 22px;
-  height: 22px;
+.build-summary-items {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.build-summary-item {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border: 1px solid #1f3a5e;
   border-radius: 4px;
+  background: #07101c;
+}
+
+.build-summary-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
-.next-name {
-  font-size: 12px;
-  font-weight: 700;
+.build-summary-count {
+  position: absolute;
+  right: 1px;
+  top: 0;
   color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0 2px #000, 0 1px 2px #000;
 }
 
-.next-time {
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 11px;
-  color: #b8dcff;
+.build-summary-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.build-summary-fill {
+  height: 100%;
+  background: #ffffff;
+}
+
+.build-summary-fill.indeterminate {
+  width: 35% !important;
+  animation: build-summary-pulse 1.2s ease-in-out infinite;
+}
+
+.build-summary-overflow,
+.build-summary-empty {
+  color: #4f6b8c;
+  font-size: 9px;
+  font-style: italic;
+}
+
+@keyframes build-summary-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .overlay-bottom {
@@ -414,12 +551,6 @@ async function loadData() {
 }
 
 .item-count,
-.next-count {
-  color: #8ec5ff;
-  font-size: 10px;
-  font-weight: 700;
-}
-
 .item-name {
   font-size: 11px;
   font-weight: 600;
@@ -532,12 +663,4 @@ async function loadData() {
   font-size: 9px;
 }
 
-@keyframes hero-pulse {
-  0%, 100% {
-    box-shadow: 0 0 4px rgba(90, 167, 237, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 12px rgba(90, 167, 237, 0.55);
-  }
-}
 </style>
