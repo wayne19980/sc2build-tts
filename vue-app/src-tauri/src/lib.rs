@@ -1,5 +1,7 @@
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -9,12 +11,42 @@ use tauri_plugin_shell::ShellExt;
 
 struct BackendProcess(Mutex<Option<CommandChild>>);
 
+static SHUTDOWN_STARTED: AtomicBool = AtomicBool::new(false);
+
 fn api_running() -> bool {
     let address = match "127.0.0.1:8765".parse() {
         Ok(address) => address,
         Err(_) => return false,
     };
     TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok()
+}
+
+fn request_shutdown() -> bool {
+    let address = match "127.0.0.1:8765".parse() {
+        Ok(address) => address,
+        Err(_) => return false,
+    };
+    let mut stream = match TcpStream::connect_timeout(&address, Duration::from_millis(500)) {
+        Ok(stream) => stream,
+        Err(_) => return false,
+    };
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(5)));
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
+
+    let request = concat!(
+        "POST /api/shutdown HTTP/1.1\r\n",
+        "Host: 127.0.0.1\r\n",
+        "Content-Length: 0\r\n",
+        "Connection: close\r\n",
+        "\r\n"
+    );
+    if stream.write_all(request.as_bytes()).is_err() {
+        return false;
+    }
+
+    let mut response = String::new();
+    let _ = stream.read_to_string(&mut response);
+    response.starts_with("HTTP/1.1 200")
 }
 
 fn repo_root() -> std::path::PathBuf {
@@ -97,7 +129,7 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -132,6 +164,28 @@ pub fn run() {
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::ExitRequested { api, .. } = event {
+            if !api_running() || SHUTDOWN_STARTED.swap(true, Ordering::SeqCst) {
+                return;
+            }
+            api.prevent_exit();
+
+            let handle = app_handle.clone();
+            std::thread::spawn(move || {
+                if !request_shutdown() {
+                    for _ in 0..200 {
+                        if !api_running() {
+                            break;
+                        }
+                        std::thread::sleep(Duration::from_millis(100));
+                    }
+                }
+                handle.exit(0);
+            });
+        }
+    });
 }

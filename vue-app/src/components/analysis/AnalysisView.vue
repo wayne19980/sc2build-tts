@@ -73,6 +73,10 @@
     </aside>
 
     <main class="main-panel">
+      <div v-if="backendStarting" class="backend-status">
+        <span class="status-dot" />
+        {{ english ? 'Starting local database…' : '正在启动本地数据库…' }}
+      </div>
       <template v-if="activeGame">
         <header class="game-header">
           <div class="game-title-block">
@@ -325,6 +329,7 @@ const playing = ref(false)
 const speed = ref(1)
 const countMode = ref<'cumulative' | 'alive'>('cumulative')
 const error = ref('')
+const backendStarting = ref(true)
 
 const importPath = ref('')
 const importJob = ref<ImportJob | null>(null)
@@ -569,7 +574,8 @@ watch(overlayAnchor, (anchor) => {
 async function loadFolders() {
   try {
     error.value = ''
-    folders.value = await fetchFoldersWithRetry()
+    await waitForBackend()
+    folders.value = await api.folders()
     if (activeFolderId.value === null && folders.value.length) {
       await selectFolder(folders.value[0])
     } else if (activeFolderId.value !== null) {
@@ -580,17 +586,29 @@ async function loadFolders() {
   }
 }
 
-async function fetchFoldersWithRetry(): Promise<FolderInfo[]> {
+async function waitForBackend(timeoutMs = 180_000): Promise<void> {
+  backendStarting.value = true
+  const deadline = Date.now() + timeoutMs
+  let delay = 400
   let lastError: unknown = null
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  while (Date.now() < deadline) {
     try {
-      return await api.folders()
+      await api.health()
+      backendStarting.value = false
+      return
     } catch (exc) {
       lastError = exc
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      delay = Math.min(delay * 1.5, 3000)
     }
   }
-  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+  backendStarting.value = false
+  const detail = lastError instanceof Error ? lastError.message : String(lastError)
+  throw new Error(
+    english.value
+      ? `Backend did not start in time: ${detail}`
+      : `后端启动超时：${detail}`,
+  )
 }
 
 async function selectFolder(folder: FolderInfo) {
@@ -734,7 +752,7 @@ async function importSingleFile(path: string) {
   error.value = ""
   try {
     const result = await api.importFile(path)
-    folders.value = await fetchFoldersWithRetry()
+    folders.value = await api.folders()
     activeFolderId.value = result.folder_id
     await loadGames(result.folder_id)
     const replay = replays.value.find((item) => item.game_id === result.game_id)
@@ -1218,6 +1236,35 @@ function pollImport(jobId: string) {
   color: #ff7d7d;
   font-size: 11px;
   word-break: break-word;
+}
+
+.backend-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  border-bottom: 1px solid #101d2f;
+  color: #8fb7df;
+  font-size: 12px;
+  background: #0a1524;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #63b3ff;
+  animation: status-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .game-list {
