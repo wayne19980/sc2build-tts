@@ -1,52 +1,63 @@
 <template>
-  <div class="overlay-root" :style="{ '--panel-alpha': state?.opacity ?? 0.78 }">
+  <div class="overlay-root" :style="{ '--panel-alpha': state?.opacity ?? 0.6 }">
     <div class="overlay-panel">
-      <header class="overlay-header">
-        <div class="playing">
-          <span class="label">Currently playing</span>
-          <span class="player">{{ state?.playerName || '—' }}</span>
-          <span v-if="state?.race" class="race">{{ state.race }}</span>
+      <!-- Top Line: Time + Player + Next Action Highlight -->
+      <div class="overlay-top">
+        <div class="player-block">
+          <span class="clock">{{ formatClock(state?.time || 0) }}</span>
+          <span class="player-name">{{ state?.playerName || '—' }}</span>
+          <span v-if="state?.race" class="race-tag">{{ state.race }}</span>
         </div>
-        <div class="clock">{{ formatClock(state?.time || 0) }}</div>
-      </header>
 
-      <div class="build-strip">
-        <template v-for="(row, index) in buildRows" :key="row.key">
-          <span v-if="index > 0" class="arrow">»</span>
-          <div class="build-item" :class="{ past: row.past, next: row.next }">
-            <img :src="iconUrl(row.item.abbr)" :alt="row.item.name" draggable="false" />
-            <span class="build-name">{{ displayName(row.item) }}</span>
-            <span class="build-time">{{ formatClock(row.event.t_sec) }}</span>
-          </div>
-        </template>
-        <div v-if="buildRows.length === 0" class="empty">等待建造</div>
+        <div v-if="nextAction" class="next-action-hero">
+          <span class="next-badge">下一步</span>
+          <img :src="iconUrl(nextAction.item.abbr)" :alt="nextAction.item.name" draggable="false" />
+          <span class="next-name">{{ displayName(nextAction.item) }}</span>
+          <span class="next-time">{{ formatClock(nextAction.event.t_sec) }}</span>
+        </div>
       </div>
 
-      <div class="mini-tree">
-        <div class="mini-label">
-          <span>后续解锁</span>
-          <span class="mini-sub">60s 高亮</span>
-        </div>
-        <div class="mini-chain">
-          <template v-for="(entry, index) in previewUnlocks" :key="`${entry.item.key}-${entry.event.t_sec}`">
-            <span v-if="index > 0" class="mini-arrow">›</span>
-            <div class="mini-item" :title="`${displayName(entry.item)} ${formatClock(entry.event.t_sec)}`">
-              <img :src="itemIconUrl(entry.item)" :alt="entry.item.name" draggable="false" />
-              <span class="mini-time" :class="{ soon: isSoon(entry.event.t_sec) }">
-                {{ formatClock(entry.event.t_sec) }}
-              </span>
+      <!-- Bottom Line: Ticker (Build steps) + Mini Unlocks -->
+      <div class="overlay-bottom">
+        <div class="build-chain">
+          <template v-for="(row, index) in buildRows" :key="row.key">
+            <span v-if="index > 0" class="chain-arrow">»</span>
+            <div class="chain-item" :class="{ past: row.past, current: row.next }">
+              <img :src="iconUrl(row.item.abbr)" :alt="row.item.name" draggable="false" />
+              <div class="item-meta">
+                <span class="item-name">{{ displayName(row.item) }}</span>
+                <span class="item-time">{{ formatClock(row.event.t_sec) }}</span>
+              </div>
             </div>
           </template>
-          <span v-if="overflowUnlocks > 0" class="mini-overflow">+{{ overflowUnlocks }}</span>
-          <div v-if="previewUnlocks.length === 0" class="mini-empty">暂无新的解锁</div>
+          <div v-if="buildRows.length === 0" class="empty-hint">等待建造操作</div>
+        </div>
+
+        <div class="chain-divider" />
+
+        <div class="unlock-chain">
+          <span class="unlock-label">解锁</span>
+          <div class="unlock-items">
+            <div
+              v-for="entry in previewUnlocks"
+              :key="`${entry.item.key}-${entry.event.t_sec}`"
+              class="unlock-item"
+              :class="{ soon: isSoon(entry.event.t_sec) }"
+              :title="`${displayName(entry.item)} ${formatClock(entry.event.t_sec)}`"
+            >
+              <img :src="itemIconUrl(entry.item)" :alt="entry.item.name" draggable="false" />
+              <span class="unlock-time">{{ formatClock(entry.event.t_sec) }}</span>
+            </div>
+            <span v-if="overflowUnlocks > 0" class="unlock-overflow">+{{ overflowUnlocks }}</span>
+          </div>
+          <div v-if="previewUnlocks.length === 0" class="empty-hint">暂无后续解锁</div>
         </div>
       </div>
 
-      <div v-if="!state" class="waiting">
-        <div class="waiting-title">等待主窗口</div>
-        <div class="waiting-subtitle">打开一场对局并启用 Overlay</div>
+      <div v-if="!state" class="waiting-layer">
+        <div class="waiting-title">等待主窗口连接…</div>
       </div>
-      <div v-if="error" class="error">{{ error }}</div>
+      <div v-if="error" class="error-badge">{{ error }}</div>
     </div>
   </div>
 </template>
@@ -96,6 +107,8 @@ const buildRows = computed<BuildRow[]>(() => {
   }))
 })
 
+const nextAction = computed(() => buildRows.value.find((r) => r.next))
+
 interface UnlockEntry {
   event: EventItem
   item: CatalogItem
@@ -136,8 +149,11 @@ const futureUnlocks = computed(() => {
   return unlockEntries.value.filter((entry) => entry.event.t_sec > time)
 })
 
-const previewUnlocks = computed(() => futureUnlocks.value.slice(0, 16))
-const overflowUnlocks = computed(() => Math.max(0, futureUnlocks.value.length - previewUnlocks.value.length))
+const UNLOCK_PREVIEW_COUNT = 5
+const previewUnlocks = computed(() => futureUnlocks.value.slice(0, UNLOCK_PREVIEW_COUNT))
+const overflowUnlocks = computed(() =>
+  Math.max(0, futureUnlocks.value.length - previewUnlocks.value.length),
+)
 
 function isSoon(tSec: number): boolean {
   const time = state.value?.time ?? 0
@@ -188,11 +204,11 @@ async function loadData() {
 .overlay-root {
   position: fixed;
   inset: 0;
-  padding: 6px;
+  padding: 4px;
   box-sizing: border-box;
   pointer-events: none;
   user-select: none;
-  font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
+  font-family: 'Noto Sans SC', 'Segoe UI', system-ui, sans-serif;
 }
 
 .overlay-panel {
@@ -200,241 +216,279 @@ async function loadData() {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 9px 13px 10px;
+  padding: 6px 12px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  justify-content: space-between;
   overflow: hidden;
-  border: 1px solid rgba(73, 143, 220, 0.45);
-  border-radius: 10px;
-  background: rgba(4, 9, 18, var(--panel-alpha, 0.78));
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45), inset 0 0 22px rgba(61, 127, 196, 0.08);
-  backdrop-filter: blur(5px);
+  border: 1px solid rgba(73, 143, 220, 0.35);
+  border-radius: 8px;
+  background: rgba(3, 7, 15, calc(var(--panel-alpha, 0.6) * 0.8));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
 }
 
-.overlay-header {
+.overlay-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  height: 30px;
 }
 
-.playing {
+.player-block {
   display: flex;
-  align-items: baseline;
-  gap: 7px;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
-}
-
-.label {
-  color: #6f89ad;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  flex: none;
-}
-
-.player {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #e8f4ff;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.race {
-  flex: none;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: rgba(61, 127, 196, 0.25);
-  color: #9fc3ef;
-  font-size: 9px;
 }
 
 .clock {
-  flex: none;
   color: #e8f4ff;
   font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   letter-spacing: 0.04em;
-  text-shadow: 0 0 14px rgba(90, 167, 237, 0.5);
+  text-shadow: 0 0 10px rgba(90, 167, 237, 0.6);
 }
 
-.build-strip {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 70px;
-}
-
-.build-item {
-  flex: 0 1 92px;
-  min-width: 72px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 3px;
-  border-radius: 7px;
-  border: 1px solid transparent;
-  color: #cfe3fa;
-}
-
-.build-item.past {
-  opacity: 0.4;
-}
-
-.build-item.next {
-  border-color: rgba(90, 167, 237, 0.45);
-  background: rgba(61, 127, 196, 0.14);
-}
-
-.build-item img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: 6px;
-  border: 1px solid #2c5480;
-  background: #0b1424;
-}
-
-.build-name {
-  max-width: 100%;
+.player-name {
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
-  line-height: 1.2;
+  color: #cfe3fa;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.build-time {
-  color: #7f99bb;
+.race-tag {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(61, 127, 196, 0.28);
+  color: #a4ccff;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.next-action-hero {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 5px;
+  background: rgba(75, 155, 240, 0.16);
+  border: 1px solid rgba(90, 167, 237, 0.5);
+  animation: hero-pulse 2s ease-in-out infinite;
+}
+
+.next-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #8ec5ff;
+  letter-spacing: 0.05em;
+}
+
+.next-action-hero img {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.next-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.next-time {
   font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 10px;
+  font-size: 11px;
+  color: #b8dcff;
 }
 
-.arrow {
-  flex: none;
-  color: #4b9bf0;
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-  opacity: 0.8;
-}
-
-.mini-tree {
+.overlay-bottom {
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 56px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(73, 143, 220, 0.2);
+  gap: 10px;
+  height: 52px;
+  border-top: 1px solid rgba(73, 143, 220, 0.18);
+  padding-top: 4px;
 }
 
-.mini-label {
-  flex: none;
-  width: 48px;
-  display: flex;
-  flex-direction: column;
-  color: #8ca6c8;
-  font-size: 10px;
-  line-height: 1.25;
-}
-
-.mini-sub {
-  color: #5f7d9f;
-  letter-spacing: 0.12em;
-}
-
-.mini-chain {
+.build-chain {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   overflow: hidden;
 }
 
-.mini-item {
+.chain-arrow {
+  color: #4b9bf0;
+  font-size: 16px;
+  font-weight: 800;
+  opacity: 0.7;
+}
+
+.chain-item {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: rgba(8, 16, 28, 0.5);
+  border: 1px solid transparent;
+  min-width: 0;
+}
+
+.chain-item.past {
+  opacity: 0.42;
+}
+
+.chain-item.current {
+  border-color: rgba(90, 167, 237, 0.5);
+  background: rgba(61, 127, 196, 0.2);
+}
+
+.chain-item img {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: contain;
+  border: 1px solid #1f3a5e;
+  background: #081220;
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #d6e8fc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-time {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 9px;
+  color: #7b99bd;
+}
+
+.chain-divider {
+  width: 1px;
+  height: 38px;
+  background: rgba(73, 143, 220, 0.25);
   flex: none;
+}
+
+.unlock-chain {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unlock-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7a98bd;
+  letter-spacing: 0.1em;
+}
+
+.unlock-items {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.unlock-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
 }
 
-.mini-item img {
-  width: 32px;
-  height: 32px;
+.unlock-item img {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
   object-fit: contain;
-  border-radius: 5px;
-  border: 1px solid #2c5480;
-  background: #0b1424;
+  border: 1px solid #1a3352;
+  background: #07101c;
 }
 
-.mini-time {
-  color: #4f6b8c;
+.unlock-time {
   font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 9px;
+  font-size: 8.5px;
+  color: #557294;
 }
 
-.mini-time.soon {
+.unlock-item.soon .unlock-time {
   color: #e8f4ff;
   font-weight: 700;
-  text-shadow: 0 0 8px rgba(90, 167, 237, 0.75);
+  text-shadow: 0 0 6px rgba(90, 167, 237, 0.8);
 }
 
-.mini-overflow {
-  margin-left: 3px;
-  color: #8ca6c8;
+.unlock-overflow {
+  align-self: center;
+  margin-left: 1px;
+  color: #7a98bd;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.empty-hint {
   font-size: 10px;
-}
-
-.mini-arrow {
-  flex: none;
-  color: #3d7fc4;
-  font-size: 16px;
-}
-
-.empty,
-.mini-empty {
-  color: #5f7d9f;
-  font-size: 11px;
+  color: #4f6b8c;
   font-style: italic;
-  padding: 4px;
+  padding: 2px;
 }
 
-.waiting {
+.waiting-layer {
   position: absolute;
   inset: 0;
   display: grid;
   place-content: center;
-  text-align: center;
-  background: rgba(4, 9, 18, 0.92);
-  border-radius: 10px;
+  background: rgba(4, 9, 18, 0.88);
+  border-radius: 8px;
 }
 
 .waiting-title {
-  color: #dcecff;
-  font-size: 18px;
+  color: #9ec5ed;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.waiting-subtitle {
-  margin-top: 4px;
-  color: #6f89ad;
-  font-size: 11px;
-}
-
-.error {
+.error-badge {
   position: absolute;
-  right: 10px;
-  bottom: 8px;
-  max-width: 70%;
-  padding: 4px 7px;
-  border-radius: 5px;
-  background: rgba(80, 20, 20, 0.85);
-  color: #ffb4b4;
-  font-size: 10px;
+  right: 8px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(120, 20, 20, 0.85);
+  color: #ffcccc;
+  font-size: 9px;
+}
+
+@keyframes hero-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(90, 167, 237, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(90, 167, 237, 0.55);
+  }
 }
 </style>
