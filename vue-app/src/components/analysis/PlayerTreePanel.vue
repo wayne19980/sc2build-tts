@@ -5,8 +5,18 @@
         <span class="race-dot" :class="raceClass" />
         <span class="name">{{ player.name }}</span>
         <span class="race">{{ raceLabel }}</span>
+        <span v-if="player.is_winner" class="winner">★</span>
       </div>
-      <span v-if="player.is_winner" class="winner">★</span>
+      <div class="panel-actions">
+        <button
+          class="view-mode-toggle"
+          :class="{ active: viewMode === 'flow' }"
+          :title="viewMode === 'flow' ? '切换为全景连线画布' : '切换为自适应分层流'"
+          @click="viewMode = viewMode === 'flow' ? 'canvas' : 'flow'"
+        >
+          {{ viewMode === 'flow' ? '自适应' : '全景' }}
+        </button>
+      </div>
     </header>
     <ScaledTree
       v-if="race"
@@ -19,16 +29,19 @@
       :tech="playerTech"
       :orders="orders"
       :speed="speed"
+      :view-mode="viewMode"
       compact
     />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { EventItem, PlayerInfo, TechTiming, UnitLifecycle } from '../../types-analysis'
 import { raceFromName } from '../../data/catalog'
 import ScaledTree from './ScaledTree.vue'
+
+const viewMode = ref<'canvas' | 'flow'>('flow')
 
 const props = defineProps<{
   player: PlayerInfo
@@ -127,5 +140,35 @@ const playerTech = computed(() => props.tech.filter((timing) => timing.player_id
 .winner {
   color: #e5bd5f;
   font-size: 12px;
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-mode-toggle {
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #1c3250;
+  background: rgba(12, 23, 40, 0.7);
+  color: #7ca5cf;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-mode-toggle:hover {
+  background: rgba(25, 45, 75, 0.85);
+  color: #d8eaff;
+  border-color: #2b5080;
+}
+
+.view-mode-toggle.active {
+  background: rgba(45, 100, 180, 0.25);
+  border-color: rgba(75, 155, 240, 0.6);
+  color: #a5d2ff;
 }
 </style>

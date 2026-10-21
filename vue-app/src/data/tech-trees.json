@@ -124,6 +124,17 @@
     ],
     "unitGroups": [
       {
+        "group": "Nexus",
+        "units": [
+          {
+            "key": "Mothership",
+            "requiresAny": [
+              "FleetBeacon"
+            ]
+          }
+        ]
+      },
+      {
         "group": "Gateway",
         "units": [
           {
@@ -147,23 +158,18 @@
             "requiresAny": [
               "CyberneticsCore"
             ]
-          }
-        ]
-      },
-      {
-        "group": "Stargate",
-        "units": [
-          {
-            "key": "Phoenix",
-            "requiresAny": []
           },
           {
-            "key": "Oracle",
-            "requiresAny": []
+            "key": "HighTemplar",
+            "requiresAny": [
+              "TemplarArchive"
+            ]
           },
           {
-            "key": "VoidRay",
-            "requiresAny": []
+            "key": "DarkTemplar",
+            "requiresAny": [
+              "DarkShrine"
+            ]
           }
         ]
       },
@@ -181,54 +187,47 @@
           {
             "key": "Immortal",
             "requiresAny": []
-          }
-        ]
-      },
-      {
-        "group": "FleetBeacon",
-        "units": [
-          {
-            "key": "Tempest",
-            "requiresAny": []
           },
-          {
-            "key": "Carrier",
-            "requiresAny": []
-          },
-          {
-            "key": "Mothership",
-            "requiresAny": []
-          }
-        ]
-      },
-      {
-        "group": "RoboticsBay",
-        "units": [
           {
             "key": "Colossus",
-            "requiresAny": []
+            "requiresAny": [
+              "RoboticsBay"
+            ]
           },
           {
             "key": "Disruptor",
-            "requiresAny": []
+            "requiresAny": [
+              "RoboticsBay"
+            ]
           }
         ]
       },
       {
-        "group": "TemplarArchive",
+        "group": "Stargate",
         "units": [
           {
-            "key": "HighTemplar",
+            "key": "Phoenix",
             "requiresAny": []
-          }
-        ]
-      },
-      {
-        "group": "DarkShrine",
-        "units": [
+          },
           {
-            "key": "DarkTemplar",
+            "key": "Oracle",
             "requiresAny": []
+          },
+          {
+            "key": "VoidRay",
+            "requiresAny": []
+          },
+          {
+            "key": "Tempest",
+            "requiresAny": [
+              "FleetBeacon"
+            ]
+          },
+          {
+            "key": "Carrier",
+            "requiresAny": [
+              "FleetBeacon"
+            ]
           }
         ]
       }
@@ -288,7 +287,8 @@
         "x": 2,
         "y": 1,
         "requires": [
-          "CommandCenter"
+          "CommandCenter",
+          "Barracks"
         ]
       },
       {
@@ -352,7 +352,8 @@
         "x": 2,
         "y": 3,
         "requires": [
-          "CommandCenter"
+          "CommandCenter",
+          "EngineeringBay"
         ]
       },
       {
@@ -379,15 +380,12 @@
           {
             "key": "Reaper",
             "requiresAny": []
-          }
-        ]
-      },
-      {
-        "group": "GhostAcademy",
-        "units": [
+          },
           {
             "key": "Ghost",
-            "requiresAny": []
+            "requiresAny": [
+              "GhostAcademy"
+            ]
           }
         ]
       },
@@ -409,19 +407,18 @@
           {
             "key": "SiegeTank",
             "requiresAny": []
-          }
-        ]
-      },
-      {
-        "group": "Armory",
-        "units": [
+          },
           {
             "key": "Hellbat",
-            "requiresAny": []
+            "requiresAny": [
+              "Armory"
+            ]
           },
           {
             "key": "Thor",
-            "requiresAny": []
+            "requiresAny": [
+              "Armory"
+            ]
           }
         ]
       },
@@ -447,15 +444,12 @@
           {
             "key": "Banshee",
             "requiresAny": []
-          }
-        ]
-      },
-      {
-        "group": "FusionCore",
-        "units": [
+          },
           {
             "key": "Battlecruiser",
-            "requiresAny": []
+            "requiresAny": [
+              "FusionCore"
+            ]
           }
         ]
       }
@@ -533,7 +527,7 @@
         "x": 4,
         "y": 2,
         "requires": [
-          "SpawningPool"
+          "EvolutionChamber"
         ]
       },
       {

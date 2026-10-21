@@ -1,8 +1,8 @@
 import type { OverlayAnchor, OverlayState } from '../types-analysis'
 
 const OVERLAY_LABEL = 'overlay'
-const OVERLAY_WIDTH = 760
-const OVERLAY_HEIGHT = 220
+const OVERLAY_WIDTH = 740
+const OVERLAY_HEIGHT = 112
 
 export function isTauriRuntime(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window

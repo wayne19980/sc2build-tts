@@ -136,6 +136,20 @@
             <span><i class="legend-dot done" />已完成</span>
           </div>
           <div class="toolbar-actions">
+            <div class="segmented" v-if="!splitView">
+              <button
+                :class="{ active: singleViewMode === 'canvas' }"
+                @click="singleViewMode = 'canvas'"
+              >
+                全景
+              </button>
+              <button
+                :class="{ active: singleViewMode === 'flow' }"
+                @click="singleViewMode = 'flow'"
+              >
+                自适应
+              </button>
+            </div>
             <div class="segmented">
               <button
                 :class="{ active: countMode === 'cumulative' }"
@@ -186,9 +200,9 @@
         </div>
 
         <div class="tree-stage" :class="{ split: splitView }">
-          <template v-if="splitView && activeGame.players.length >= 2">
+          <template v-if="splitView && (activeGame?.players.length ?? 0) >= 2">
             <PlayerTreePanel
-              v-for="player in activeGame.players.slice(0, 2)"
+              v-for="player in activeGame?.players.slice(0, 2)"
               :key="player.id"
               :player="player"
               :time="time"
@@ -210,6 +224,7 @@
             :units="playerUnits"
             :tech="playerTech"
             :orders="orders"
+            :view-mode="singleViewMode"
           />
         </div>
 
@@ -296,7 +311,6 @@ import type {
   UpgradeStripRow,
 } from '../../types-analysis'
 import { AUTO_SPAWNED_UNITS, formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
-import { computeUpgradeStates } from '../../data/upgrades'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -329,6 +343,7 @@ const activeGameId = ref<number | null>(null)
 const activeGame = ref<GameDetail | null>(null)
 const activePlayerId = ref<number | null>(null)
 const splitView = ref(true)
+const singleViewMode = ref<'canvas' | 'flow'>('canvas')
 const sidebarCollapsed = ref(localStorage.getItem('sc2-sidebar-collapsed') === '1')
 const { english, displayName } = useLanguage()
 
@@ -596,7 +611,7 @@ function constructionGroupsFor(playerId: number): ConstructionGroupView[] {
       name: string
       icon: string
       count: number
-      progressSum: number
+      maxProgress: number
       indeterminate: boolean
       start: number
     }
@@ -615,12 +630,12 @@ function constructionGroupsFor(playerId: number): ConstructionGroupView[] {
       name: task.name,
       icon: task.icon,
       count: 0,
-      progressSum: 0,
+      maxProgress: 0,
       indeterminate: false,
       start: task.start,
     }
     group.count += 1
-    group.progressSum += task.progress
+    group.maxProgress = Math.max(group.maxProgress, task.progress)
     group.indeterminate = group.indeterminate || task.indeterminate
     group.start = Math.min(group.start, task.start)
     groups.set(task.key, group)
@@ -686,25 +701,6 @@ function constructionGroupsFor(playerId: number): ConstructionGroupView[] {
     addProductionTask(task)
   }
 
-  const playerTech = tech.value.filter((timing) => timing.player_id === playerId)
-  const playerOrders = timeline.value.filter(
-    (event) => event.player_id === playerId && event.kind === 'order',
-  )
-  const upgradeStates = computeUpgradeStates(playerTech, playerOrders, now)
-  for (const [key, state] of Object.entries(upgradeStates)) {
-    if (!state.active) continue
-    const item = resolveItem(key)
-    if (!item || item.kind !== 'upgrade') continue
-    add({
-      key: item.key,
-      name: displayName(item, key),
-      icon: itemIconUrl(item),
-      start: state.startedAt ?? now,
-      progress: state.progress,
-      indeterminate: state.indeterminate,
-    })
-  }
-
   return Array.from(groups.values())
     .sort((a, b) => a.start - b.start)
     .map((group) => ({
@@ -712,7 +708,7 @@ function constructionGroupsFor(playerId: number): ConstructionGroupView[] {
       name: group.name,
       icon: group.icon,
       count: group.count,
-      progress: group.progressSum / group.count,
+      progress: group.maxProgress,
       indeterminate: group.indeterminate,
     }))
 }
@@ -722,6 +718,7 @@ const constructionStrips = computed<ConstructionStripView[]>(() => {
   return players.map((player, index) => ({
     key: `${player.id}`,
     playerName: player.name,
+    race: raceFromName(player.race) || undefined,
     tint: players.length > 1 ? (index === 0 ? 'red' : 'blue') : null,
     groups: constructionGroupsFor(player.id),
   }))

@@ -1,8 +1,9 @@
 <template>
-  <div class="tree-viewport" :class="{ panning }">
+  <div class="tree-viewport" :class="{ panning: panning && viewMode !== 'flow', 'is-flow': viewMode === 'flow' }">
     <div
       ref="host"
       class="scaled-tree"
+      :class="{ 'flow-mode': viewMode === 'flow' }"
       @pointerdown="startPan"
       @pointermove="movePan"
       @pointerup="endPan"
@@ -11,11 +12,7 @@
     >
       <div
         class="scaled-inner"
-        :style="{
-          width: `${size.width}px`,
-          height: `${size.height}px`,
-          zoom: scale,
-        }"
+        :style="innerStyle"
       >
         <TechTreeCanvas
           :race="race"
@@ -28,10 +25,11 @@
           :orders="orders"
           :compact="compact"
           :speed="speed"
+          :view-mode="viewMode"
         />
       </div>
     </div>
-    <div class="tree-controls" @pointerdown.stop @wheel.stop>
+    <div v-if="viewMode !== 'flow'" class="tree-controls" @pointerdown.stop @wheel.stop>
       <button title="缩小" @click="zoomBy(0.85)">−</button>
       <button class="zoom-label" title="点击适应窗口" @click="resetView">
         {{ Math.round(scale * 100) }}%
@@ -59,6 +57,7 @@ const props = defineProps<{
   orders?: EventItem[]
   compact?: boolean
   speed?: number
+  viewMode?: 'canvas' | 'flow'
 }>()
 
 const host = ref<HTMLElement | null>(null)
@@ -85,6 +84,17 @@ const scale = computed(() => {
   return Math.min(2.4, Math.max(0.58, value))
 })
 
+const innerStyle = computed(() => {
+  if (props.viewMode === 'flow') {
+    return { width: '100%', height: 'auto' }
+  }
+  return {
+    width: `${size.value.width}px`,
+    height: `${size.value.height}px`,
+    zoom: scale.value,
+  }
+})
+
 function clampUserScale(value: number): number {
   return Math.min(3, Math.max(0.5, value))
 }
@@ -94,7 +104,7 @@ function zoomBy(factor: number) {
 }
 
 function centerScroll() {
-  if (!host.value) return
+  if (!host.value || props.viewMode === 'flow') return
   host.value.scrollLeft = Math.max(0, (host.value.scrollWidth - host.value.clientWidth) / 2)
   host.value.scrollTop = Math.max(0, (host.value.scrollHeight - host.value.clientHeight) / 2)
 }
@@ -105,7 +115,7 @@ function resetView() {
 }
 
 function startPan(event: PointerEvent) {
-  if (event.button !== 0 || !host.value) return
+  if (props.viewMode === 'flow' || event.button !== 0 || !host.value) return
   dragging = true
   panning.value = true
   dragX = event.clientX
@@ -131,6 +141,7 @@ function endPan(event: PointerEvent) {
 }
 
 function onWheel(event: WheelEvent) {
+  if (props.viewMode === 'flow') return
   if (!event.ctrlKey && !event.metaKey) return
   event.preventDefault()
   zoomBy(event.deltaY < 0 ? 1.12 : 0.89)

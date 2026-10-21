@@ -176,6 +176,7 @@ export interface ConstructionGroupView {
 export interface ConstructionStripView {
   key: string
   playerName: string
+  race?: Race
   /** Player tint used by the split view; null keeps the neutral blue frame. */
   tint: 'red' | 'blue' | null
   groups: ConstructionGroupView[]

@@ -1,5 +1,123 @@
 <template>
-  <div class="tree-scroll">
+  <div v-if="viewMode === 'flow'" class="flow-tree-view">
+    <div v-for="tier in tierGroups" :key="tier.id" class="flow-tier">
+      <div class="flow-tier-header">
+        <span class="flow-tier-title">{{ english ? tier.name : tier.nameZh }}</span>
+        <span class="flow-tier-badge">{{ tierDoneCount(tier) }}/{{ tier.nodes.length }} 完成</span>
+      </div>
+      <div class="flow-grid">
+        <div
+          v-for="node in tier.nodes"
+          :key="node.key"
+          class="flow-card"
+          :class="[node.state, { 'card-flash': node.flash }]"
+        >
+          <div class="flow-card-top">
+            <div class="icon-shell building-icon" :class="{ 'unlock-flash': node.flash }" :title="tooltip(node.item)">
+              <img :src="iconUrl(node.item.abbr)" :alt="node.item.name" draggable="false" />
+              <span v-if="node.count > 0" class="count-badge building-badge">{{ node.count }}</span>
+              <span
+                v-if="node.worker"
+                class="worker-badge"
+                :title="tooltip(node.worker.item, node.worker.count)"
+              >
+                <img
+                  :src="iconUrl(node.worker.item.abbr)"
+                  :alt="node.worker.item.name"
+                  draggable="false"
+                />
+                <b>{{ node.worker.count }}</b>
+              </span>
+              <div
+                v-if="node.constructing > 0"
+                class="build-progress"
+                :class="{ indeterminate: node.indeterminate }"
+              >
+                <div class="build-progress-fill" :style="{ width: `${node.progress * 100}%` }" />
+              </div>
+              <div v-if="node.morphs.length" class="morph-badges">
+                <span
+                  v-for="morph in node.morphs"
+                  :key="morph.key"
+                  class="morph-badge"
+                  :title="`${displayName(morph.item)} ×${morph.count}`"
+                >
+                  <img :src="iconUrl(morph.item.abbr)" :alt="morph.item.name" draggable="false" />
+                  <span class="morph-count">{{ morph.count }}</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="flow-card-info">
+              <span class="flow-building-name">{{ displayName(node.item) }}</span>
+              <span v-if="node.state === 'locked' && requiresText(node)" class="flow-req-tag">
+                {{ requiresText(node) }}
+              </span>
+              <span v-else-if="node.state === 'building'" class="flow-state-tag building">建造中</span>
+              <span v-else-if="node.state === 'done'" class="flow-state-tag done">已就绪 ×{{ node.count }}</span>
+              <span v-else-if="node.state === 'destroyed'" class="flow-state-tag destroyed">已损毁</span>
+            </div>
+          </div>
+
+          <div v-if="node.units.length" class="unit-grid flow-units">
+            <div
+              v-for="unit in node.units"
+              :key="unit.key"
+              class="icon-shell unit-icon"
+              :class="{ locked: !unit.unlocked, empty: unit.count === 0, 'unlock-flash': unit.flash }"
+              :title="tooltip(unit.item, unit.count)"
+            >
+              <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
+              <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+            </div>
+          </div>
+
+          <div v-if="node.upgrades.length" class="upgrade-row flow-upgrades">
+            <div
+              v-for="chip in node.upgrades"
+              :key="chip.key"
+              class="upgrade-chip"
+              :class="{ done: chip.done, active: chip.active, 'unlock-flash': chip.flash }"
+              :title="chipTitle(chip)"
+            >
+              <img :src="iconUrl(chip.item.icon || chip.item.abbr)" :alt="chip.item.name" draggable="false" />
+              <div v-if="chip.active" class="upgrade-chip-bar">
+                <div
+                  class="upgrade-chip-fill"
+                  :class="{ indeterminate: chip.indeterminate }"
+                  :style="{ width: `${chip.progress * 100}%` }"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="otherNode" class="flow-tier">
+      <div class="flow-tier-header">
+        <span class="flow-tier-title">{{ english ? 'Other Units' : '其他特殊兵种' }}</span>
+      </div>
+      <div class="flow-grid">
+        <div class="flow-card done other-card">
+          <div class="unit-grid flow-units">
+            <div
+              v-for="unit in otherNode.units"
+              :key="unit.key"
+              class="icon-shell unit-icon"
+              :class="{ locked: !unit.unlocked, empty: unit.count === 0, 'unlock-flash': unit.flash }"
+              :title="tooltip(unit.item, unit.count)"
+            >
+              <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
+              <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="tree-scroll">
     <div class="tree-canvas" :style="{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }">
       <svg class="edges" :width="canvasWidth" :height="canvasHeight">
         <defs>
@@ -152,6 +270,7 @@ const props = defineProps<{
   orders?: EventItem[]
   compact?: boolean
   speed?: number
+  viewMode?: 'canvas' | 'flow'
 }>()
 
 
@@ -216,7 +335,7 @@ function addonOf(name: string): { owner: string; key: (typeof ADDON_KEYS)[number
   return null
 }
 
-const { displayName } = useLanguage()
+const { displayName, english } = useLanguage()
 const tree = computed(() => techTrees[props.race])
 const cellWidth = computed(() => (props.compact ? CELL_W_COMPACT : CELL_W))
 const flashWindow = computed(() => 1.2 * Math.max(1, props.speed || 1))
@@ -339,21 +458,38 @@ const unitItems = computed(() => {
   const time = props.time
   for (const group of tree.value.unitGroups) {
     const units: UnitNode[] = []
+    const prodDoneT = buildingStats.value[group.group]?.firstDoneT
     for (const unit of group.units) {
       const item = resolveItem(unit.key)
       if (!item) continue
-      const requirements = unit.requiresAny.length ? unit.requiresAny : [group.group]
-      const unlockTimes = requirements
-        .map((requirement) => buildingStats.value[requirement]?.firstDoneT)
-        .filter((value): value is number => value !== undefined)
-      const unlockAt = unlockTimes.length ? Math.min(...unlockTimes) : undefined
-      const unlocked = unlockAt !== undefined
+
+      let techDoneT: number | undefined = undefined
+      if (unit.requiresAny.length === 0) {
+        techDoneT = prodDoneT
+      } else {
+        const times = unit.requiresAny
+          .map((requirement) => buildingStats.value[requirement]?.firstDoneT)
+          .filter((value): value is number => value !== undefined)
+        if (times.length > 0) {
+          techDoneT = Math.min(...times)
+        }
+      }
+
+      const unlocked = prodDoneT !== undefined && techDoneT !== undefined
+      const unlockAt = unlocked ? Math.max(prodDoneT!, techDoneT!) : undefined
+      const flash = Boolean(
+        unlocked &&
+          unlockAt !== undefined &&
+          time >= unlockAt &&
+          time - unlockAt < flashWindow.value,
+      )
+
       units.push({
         key: item.key,
         item,
         count: unitCounts.value[item.key] || 0,
         unlocked,
-        flash: unlocked && time >= unlockAt && time - unlockAt < flashWindow.value,
+        flash,
       })
     }
     grouped.set(group.group, units)
@@ -507,6 +643,52 @@ const otherNode = computed(() => {
     units,
   }
 })
+
+interface TierGroup {
+  id: string
+  name: string
+  nameZh: string
+  nodes: BuildingNode[]
+}
+
+const tierGroups = computed<TierGroup[]>(() => {
+  const nodes = buildingNodes.value
+  const t1Nodes: BuildingNode[] = []
+  const t2Nodes: BuildingNode[] = []
+  const t3Nodes: BuildingNode[] = []
+
+  for (const node of nodes) {
+    const buildingDef = tree.value.buildings.find((b) => b.key === node.key)
+    const y = buildingDef?.y ?? 0
+    if (y <= 1) {
+      t1Nodes.push(node)
+    } else if (y <= 3) {
+      t2Nodes.push(node)
+    } else {
+      t3Nodes.push(node)
+    }
+  }
+
+  return [
+    { id: 't1', name: 'Tier 1 Base', nameZh: 'T1 基础科技', nodes: t1Nodes },
+    { id: 't2', name: 'Tier 2 Mid', nameZh: 'T2 核心进阶', nodes: t2Nodes },
+    { id: 't3', name: 'Tier 3 Advanced', nameZh: 'T3 终极高精', nodes: t3Nodes },
+  ].filter((t) => t.nodes.length > 0)
+})
+
+function tierDoneCount(tier: TierGroup): number {
+  return tier.nodes.filter((n) => n.state === 'done').length
+}
+
+function requiresText(node: BuildingNode): string {
+  const buildingDef = tree.value.buildings.find((b) => b.key === node.key)
+  if (!buildingDef || !buildingDef.requires.length) return ''
+  const names = buildingDef.requires.map((reqKey) => {
+    const item = resolveItem(reqKey)
+    return item ? displayName(item) : reqKey
+  })
+  return `前置: ${names.join(', ')}`
+}
 
 const maxX = computed(() => Math.max(...tree.value.buildings.map((building) => building.x)))
 const maxY = computed(() => Math.max(...tree.value.buildings.map((building) => building.y)))
@@ -672,20 +854,29 @@ function chipTitle(chip: UpgradeChip): string {
 .unit-icon {
   width: 42px;
   height: 42px;
-}
-
-.unit-icon.empty {
-  opacity: 0.62;
-  filter: grayscale(0.5);
+  transition: opacity 220ms ease, filter 220ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
 }
 
 .unit-icon.locked {
-  opacity: 0.3;
-  filter: grayscale(0.95);
+  opacity: 0.22;
+  filter: grayscale(1) brightness(0.55) contrast(0.9);
+  border: 1px dashed rgba(60, 95, 140, 0.35);
+  background: rgba(4, 8, 16, 0.85);
+}
+
+.unit-icon.empty:not(.locked) {
+  opacity: 0.72;
+  filter: grayscale(0.2) brightness(0.92);
+  border: 1px solid rgba(75, 155, 240, 0.45);
+  background: rgba(8, 18, 34, 0.85);
 }
 
 .unit-icon:not(.locked):not(.empty) {
-  border-color: #2c5480;
+  opacity: 1;
+  filter: none;
+  border: 1.5px solid #58a6ff;
+  background: #091528;
+  box-shadow: 0 0 10px rgba(88, 166, 255, 0.35), inset 0 0 8px rgba(88, 166, 255, 0.15);
 }
 
 .count-badge {
@@ -891,18 +1082,22 @@ function chipTitle(chip: UpgradeChip): string {
 
 @keyframes unlock-flash {
   0% {
-    filter: brightness(0.9);
+    filter: grayscale(1) brightness(0.6);
     box-shadow: 0 0 0 rgba(120, 200, 255, 0);
+    transform: scale(0.95);
   }
-  14% {
-    filter: brightness(1.9);
-    box-shadow: 0 0 28px rgba(120, 200, 255, 0.95), 0 0 10px rgba(120, 200, 255, 0.8);
-    transform: scale(1.08);
+  22% {
+    filter: brightness(2.1) contrast(1.2);
+    box-shadow: 0 0 30px rgba(120, 200, 255, 0.95), 0 0 10px #ffffff;
+    transform: scale(1.16);
+    border-color: #8ed0ff;
+    z-index: 10;
   }
   100% {
     filter: brightness(1);
-    box-shadow: 0 0 0 rgba(120, 200, 255, 0);
+    box-shadow: 0 0 8px rgba(75, 155, 240, 0.3);
     transform: scale(1);
+    z-index: 1;
   }
 }
 
@@ -914,5 +1109,152 @@ function chipTitle(chip: UpgradeChip): string {
   50% {
     box-shadow: 0 0 16px rgba(61, 127, 196, 0.55);
   }
+}
+
+/* Flow View (Adaptive Layout for Split Screen) */
+.flow-tree-view {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  user-select: none;
+}
+
+.flow-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-tier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  border-bottom: 1px solid rgba(75, 155, 240, 0.2);
+}
+
+.flow-tier-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #7ca5cf;
+  text-transform: uppercase;
+}
+
+.flow-tier-badge {
+  font-size: 10px;
+  color: #55799e;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+.flow-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(9, 17, 30, 0.75);
+  border: 1px solid #162a45;
+  transition: all 0.2s ease;
+}
+
+.flow-card.done {
+  border-color: rgba(75, 155, 240, 0.45);
+  background: rgba(10, 20, 36, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.flow-card.building {
+  border-color: rgba(229, 185, 72, 0.45);
+  background: rgba(20, 24, 15, 0.8);
+}
+
+.flow-card.locked {
+  opacity: 0.45;
+  border-color: rgba(30, 45, 70, 0.4);
+  background: rgba(6, 10, 18, 0.6);
+}
+
+.flow-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.flow-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.flow-building-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #d8eaff;
+  line-height: 1.2;
+}
+
+.flow-card.locked .flow-building-name {
+  color: #7189a6;
+}
+
+.flow-req-tag {
+  font-size: 9.5px;
+  color: #e57373;
+  line-height: 1.25;
+}
+
+.flow-state-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  align-self: flex-start;
+}
+
+.flow-state-tag.done {
+  color: #64b5f6;
+  background: rgba(100, 181, 246, 0.15);
+}
+
+.flow-state-tag.building {
+  color: #ffd54f;
+  background: rgba(255, 213, 79, 0.15);
+}
+
+.flow-state-tag.destroyed {
+  color: #ef5350;
+  background: rgba(239, 83, 80, 0.15);
+}
+
+.flow-card .building-icon {
+  width: 54px;
+  height: 54px;
+}
+
+.flow-card .unit-grid {
+  padding-top: 0;
+  grid-template-columns: repeat(auto-fill, 42px);
+}
+
+.flow-card .upgrade-row {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(25, 45, 75, 0.5);
+}
+
+.other-card {
+  padding: 10px;
 }
 </style>
