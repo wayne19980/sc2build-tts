@@ -155,7 +155,7 @@ interface BuildRow {
 const buildRows = computed<BuildRow[]>(() => {
   const time = state.value?.time ?? 0
   const groups = buildGroups.value
-  const past = groups.filter((group) => group.event.t_sec <= time).slice(-1)
+  const past = groups.filter((group) => group.event.t_sec <= time).slice(-2)
   const upcoming = groups
     .filter((group) => group.event.t_sec > time)
     .slice(0, past.length ? 3 : 4)
