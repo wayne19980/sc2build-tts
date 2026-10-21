@@ -155,9 +155,9 @@ Artifacts:
 - `vue-app/src-tauri/target/release/bundle/msi/*.msi`
 - `vue-app/src-tauri/target/release/bundle/nsis/*.exe`
 
-The sidecar binary is generated at
-`vue-app/src-tauri/binaries/sc2analyzer-api-<target-triple>.exe` and is not
-committed. If Tauri reports that the resource path does not exist, run
+The sidecar is generated as a PyInstaller `--onedir` bundle at
+`vue-app/src-tauri/sidecar/` and bundled as a Tauri resource (generated, not
+committed). If Tauri reports that the resource path does not exist, run
 `scripts/build_sidecar.py` first.
 
 Updater artifacts are signed only when `TAURI_SIGNING_PRIVATE_KEY` is set (see
@@ -201,7 +201,7 @@ test/                    Sample replay used by tests and demos
   usually stale build state or an outdated MSVC toolchain. Run `cargo clean` in
   `vue-app/src-tauri` and rebuild; if it persists, update Visual Studio Build
   Tools.
-- **Tauri build says `binaries/sc2analyzer-api-...exe` is missing**: run
+- **Tauri build says `sidecar/sc2analyzer-api.exe` is missing**: run
   `.venv\Scripts\python.exe scripts\build_sidecar.py`.
 - **`DATABASE_URL is not set`**: development started without `.env` and the
   embedded database could not start. Check that no other process is using the

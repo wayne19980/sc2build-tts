@@ -64,8 +64,8 @@ cd vue-app
 pnpm tauri:build
 ```
 
-The release sidecar is read from `src-tauri/binaries/sc2analyzer-api-<target-triple>.exe`
-and is generated (not committed).
+The release sidecar is built as a PyInstaller `--onedir` bundle into
+`src-tauri/sidecar/` and bundled as a Tauri resource (generated, not committed).
 
 ## Release
 

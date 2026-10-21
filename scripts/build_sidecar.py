@@ -9,26 +9,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ANALYZER = ROOT / "services" / "analyzer"
 ENTRY = ANALYZER / "run_api.py"
-BIN_DIR = ROOT / "vue-app" / "src-tauri" / "binaries"
-TARGET = BIN_DIR / "sc2analyzer-api-x86_64-pc-windows-msvc.exe"
-
-
-def host_triple() -> str:
-    try:
-        output = subprocess.check_output(["rustc", "-vV"], text=True)
-        for line in output.splitlines():
-            if line.startswith("host:"):
-                return line.split(":", 1)[1].strip()
-    except Exception:
-        pass
-    return "x86_64-pc-windows-msvc"
+OUT_DIR = ROOT / "vue-app" / "src-tauri" / "sidecar"
+EXE_NAME = "sc2analyzer-api.exe" if sys.platform == "win32" else "sc2analyzer-api"
 
 
 def main() -> None:
     if not ENTRY.exists():
         raise SystemExit(f"missing entry point: {ENTRY}")
 
-    BIN_DIR.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="sc2-sidecar-") as temp:
         temp_path = Path(temp)
         dist = temp_path / "dist"
@@ -41,8 +29,10 @@ def main() -> None:
             "PyInstaller",
             "--noconfirm",
             "--clean",
-            "--onefile",
+            "--onedir",
             "--console",
+            "--contents-directory",
+            "_internal",
             "--name",
             "sc2analyzer-api",
             "--distpath",
@@ -71,15 +61,16 @@ def main() -> None:
         ]
         subprocess.run(args, check=True, cwd=ROOT)
 
-        built = dist / "sc2analyzer-api.exe"
-        if not built.exists():
+        built = dist / "sc2analyzer-api"
+        if not (built / EXE_NAME).exists():
             raise SystemExit(f"PyInstaller output not found: {built}")
 
-        target = BIN_DIR / f"sc2analyzer-api-{host_triple()}.exe"
-        shutil.copy2(built, target)
-        if target != TARGET and TARGET.exists():
-            TARGET.unlink()
-        print(f"sidecar ready: {target} ({target.stat().st_size / 1024 / 1024:.1f} MB)")
+        if OUT_DIR.exists():
+            shutil.rmtree(OUT_DIR)
+        shutil.copytree(built, OUT_DIR)
+
+        size = sum(path.stat().st_size for path in OUT_DIR.rglob("*") if path.is_file())
+        print(f"sidecar ready: {OUT_DIR} ({size / 1024 / 1024:.1f} MB)")
 
 
 if __name__ == "__main__":
