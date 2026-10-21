@@ -158,7 +158,7 @@ const buildRows = computed<BuildRow[]>(() => {
   const past = groups.filter((group) => group.event.t_sec <= time).slice(-2)
   const upcoming = groups
     .filter((group) => group.event.t_sec > time)
-    .slice(0, past.length ? 3 : 4)
+    .slice(0, 2)
   const selected = [...past, ...upcoming]
   return selected.map((group, index) => ({
     key: `${group.key}:${index}`,
