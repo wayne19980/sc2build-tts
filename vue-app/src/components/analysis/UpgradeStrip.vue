@@ -1,30 +1,37 @@
 <template>
-  <div class="upgrade-strip">
+  <div class="upgrade-strip" :class="{ split: rows.length > 1 }">
     <div class="strip-title">升级</div>
-    <div class="upgrade-list">
+    <div class="upgrade-rows">
       <div
-        v-for="item in items"
-        :key="item.key"
-        class="upgrade-icon"
-        :class="{
-          done: completedTimes[item.key] !== undefined,
-          building: progressMap[item.key] !== undefined,
-        }"
-        :title="tooltip(item)"
+        v-for="row in resolvedRows"
+        :key="row.key"
+        class="upgrade-row"
+        :class="row.tint ? `tint-${row.tint}` : undefined"
       >
-        <img :src="itemIconUrl(item)" :alt="item.name" draggable="false" />
-        <span v-if="completedTimes[item.key] !== undefined" class="upgrade-time">
-          {{ formatClock(completedTimes[item.key]) }}
-        </span>
-        <div
-          v-if="progressMap[item.key] !== undefined"
-          class="upgrade-progress"
-          :class="{ indeterminate: progressMap[item.key].indeterminate }"
-        >
+        <span v-if="row.playerName" class="row-player">{{ row.playerName }}</span>
+        <div class="upgrade-list">
           <div
-            class="upgrade-progress-fill"
-            :style="{ width: `${progressMap[item.key].progress * 100}%` }"
-          />
+            v-for="entry in row.items"
+            :key="entry.item.key"
+            class="upgrade-icon"
+            :class="{
+              done: entry.doneAt !== undefined,
+              building: entry.active,
+            }"
+            :title="tooltip(entry)"
+          >
+            <img :src="itemIconUrl(entry.item)" :alt="entry.item.name" draggable="false" />
+            <span v-if="entry.doneAt !== undefined" class="upgrade-time">
+              {{ formatClock(entry.doneAt) }}
+            </span>
+            <div v-if="entry.active" class="upgrade-progress">
+              <div
+                class="upgrade-progress-fill"
+                :class="{ indeterminate: entry.indeterminate }"
+                :style="{ width: `${entry.progress * 100}%` }"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -33,85 +40,96 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EventItem, Race, TechTiming } from '../../types-analysis'
-import { formatClock, itemIconUrl, resolveItem, upgradeItems, type CatalogItem } from '../../data/catalog'
+import type { UpgradeStripRow } from '../../types-analysis'
+import { formatClock, itemIconUrl, upgradeItems } from '../../data/catalog'
+import {
+  collapseUpgrades,
+  computeUpgradeStates,
+  type CollapsedUpgrade,
+} from '../../data/upgrades'
 import { useLanguage } from '../../composables/useLanguage'
 
 const props = defineProps<{
-  race: Race
+  rows: UpgradeStripRow[]
   time: number
-  tech: TechTiming[]
-  orders: EventItem[]
 }>()
 
 const { displayName } = useLanguage()
-const items = computed(() => upgradeItems(props.race))
+const resolvedRows = computed(() =>
+  props.rows.map((row) => {
+    const states = computeUpgradeStates(row.tech, row.orders, props.time)
+    return { ...row, items: collapseUpgrades(upgradeItems(row.race), states) }
+  }),
+)
 
-const progressMap = computed<Record<string, { progress: number; indeterminate: boolean }>>(() => {
-  const completions: Record<string, number> = {}
-  for (const timing of props.tech) {
-    const item = resolveItem(timing.tech)
-    if (!item || item.kind !== 'upgrade') continue
-    const current = completions[item.key]
-    if (current === undefined || timing.t_sec < current) completions[item.key] = timing.t_sec
+function tooltip(entry: CollapsedUpgrade): string {
+  const name = displayName(entry.item)
+  const target = entry.activeItem ? displayName(entry.activeItem) : ''
+  if (entry.doneAt !== undefined) {
+    return target
+      ? `${name} · ${formatClock(entry.doneAt)} · ${target} 建造中`
+      : `${name} · ${formatClock(entry.doneAt)}`
   }
-
-  const starts: Record<string, number> = {}
-  for (const order of props.orders) {
-    if (order.kind !== 'order' || order.player_id === undefined) continue
-    const item = resolveItem(order.name)
-    if (!item || item.kind !== 'upgrade') continue
-    const current = starts[item.key]
-    if (current === undefined || order.t_sec > current) starts[item.key] = order.t_sec
-  }
-
-  const result: Record<string, { progress: number; indeterminate: boolean }> = {}
-  for (const [key, start] of Object.entries(starts)) {
-    if (start > props.time) continue
-    const done = completions[key]
-    if (done !== undefined && done <= props.time) continue
-    const progress =
-      done !== undefined && done > start
-        ? Math.min(1, Math.max(0, (props.time - start) / (done - start)))
-        : 0
-    result[key] = { progress, indeterminate: done === undefined }
-  }
-  return result
-})
-
-const completedTimes = computed(() => {
-  const result: Record<string, number> = {}
-  for (const timing of props.tech) {
-    if (timing.t_sec > props.time) continue
-    const item = resolveItem(timing.tech)
-    if (!item || item.kind !== 'upgrade') continue
-    if (result[item.key] === undefined) result[item.key] = timing.t_sec
-  }
-  return result
-})
-
-function tooltip(item: CatalogItem): string {
-  const time = completedTimes.value[item.key]
-  if (time !== undefined) return `${displayName(item)} · ${formatClock(time)}`
-  return progressMap.value[item.key] ? `${displayName(item)} · 建造中` : displayName(item)
+  if (entry.active) return `${target || name} · 建造中`
+  return name
 }
 </script>
 
 <style scoped>
 .upgrade-strip {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-top: 1px solid #16263d;
   background: rgba(6, 11, 20, 0.86);
 }
 
 .strip-title {
   flex: none;
+  display: flex;
+  align-items: center;
   color: #6f89ad;
   font-size: 12px;
   letter-spacing: 0.12em;
+}
+
+.upgrade-rows {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.upgrade-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.upgrade-row + .upgrade-row {
+  border-top: 1px solid #101d2f;
+}
+
+.row-player {
+  flex: none;
+  width: 70px;
+  overflow: hidden;
+  color: #5f7d9f;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upgrade-row.tint-red .row-player {
+  color: #ff9d9d;
+}
+
+.upgrade-row.tint-blue .row-player {
+  color: #8ec5ff;
 }
 
 .upgrade-list {
@@ -130,6 +148,16 @@ function tooltip(item: CatalogItem): string {
   opacity: 0.34;
   filter: grayscale(0.9);
   transition: opacity 160ms ease, filter 160ms ease, border-color 160ms ease;
+}
+
+.upgrade-row.tint-red .upgrade-icon {
+  border-color: rgba(229, 72, 77, 0.75);
+  background: rgba(229, 72, 77, 0.12);
+}
+
+.upgrade-row.tint-blue .upgrade-icon {
+  border-color: rgba(75, 155, 240, 0.75);
+  background: rgba(75, 155, 240, 0.12);
 }
 
 .upgrade-icon.done {
@@ -159,10 +187,10 @@ function tooltip(item: CatalogItem): string {
 
 .upgrade-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2f9e44, #69db7c);
+  background: #ffffff;
 }
 
-.upgrade-progress.indeterminate .upgrade-progress-fill {
+.upgrade-progress-fill.indeterminate {
   width: 35% !important;
   animation: upgrade-pulse 1.2s ease-in-out infinite;
 }

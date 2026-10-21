@@ -40,7 +40,7 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<(), String> {
         log::info!("starting backend from {:?}", python);
         shell
             .command(python.to_string_lossy().to_string())
-            .args(["-m", "sc2analyzer.api"])
+            .args(["run_api.py"])
             .current_dir(repo.join("services").join("analyzer"))
             .env(
                 "PYTHONPATH",

@@ -51,6 +51,32 @@ for (const item of Object.values(catalog)) {
   for (const alias of item.aliases) aliases.set(alias, item)
 }
 
+const rawAliases: Record<string, string> = {
+  zerglingmovementspeed: 'MetabolicBoost',
+  zerglingattackspeed: 'AdrenalGlands',
+  CentrificalHooks: 'CentrifugalHooks',
+  overlordspeed: 'PneumatizedCarapace',
+  EvolveMuscularAugments: 'MuscularAugments',
+  EvolveGroovedSpines: 'GroovedSpines',
+  DiggingClaws: 'AdaptiveTalons',
+  LurkerRange: 'SeismicSpines',
+  ProtossShieldsLevel1: 'ProtossPlasmaShieldsLevel1',
+  ProtossShieldsLevel2: 'ProtossPlasmaShieldsLevel2',
+  ProtossShieldsLevel3: 'ProtossPlasmaShieldsLevel3',
+  AdeptPiercingAttack: 'ResonatingGlaives',
+  HighCapacityBarrels: 'InfernalPreigniter',
+  TerranBuildingArmor: 'NeosteelArmor',
+  PhoenixRangeUpgrade: 'AnionPulseCrystals',
+  VoidRaySpeedUpgrade: 'FluxVanes',
+  CycloneLockOnDamageUpgrade: 'MagFieldAccelerator',
+  MedivacCaduceusReactor: 'CaduceusReactor',
+  HellionTank: 'Hellbat',
+}
+for (const [alias, target] of Object.entries(rawAliases)) {
+  const item = catalog[target]
+  if (item) aliases.set(alias, item)
+}
+
 export function resolveItem(name: string | null | undefined): CatalogItem | undefined {
   if (!name) return undefined
   return aliases.get(name)
@@ -86,3 +112,20 @@ export function upgradeItems(race: Race): CatalogItem[] {
     (item) => item.kind === 'upgrade' && item.race === race,
   )
 }
+
+export const AUTO_SPAWNED_UNITS = new Set([
+  'Broodling',
+  'AutoTurret',
+  'Interceptor',
+  'MULE',
+  'Locust',
+  'LocustMPFlying',
+  'Changeling',
+  'ChangelingMarine',
+  'ChangelingZealot',
+  'ChangelingZergling',
+  'Larva',
+  'Egg',
+  'CreepTumor',
+  'CreepTumorQueen',
+])

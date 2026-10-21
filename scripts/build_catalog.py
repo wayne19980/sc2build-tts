@@ -45,6 +45,7 @@ ITEMS = [
     ("Oracle", "Pvse", "Oracle", "先知", "unit", "P", []),
     ("Tempest", "Pvst", "Tempest", "风暴战舰", "unit", "P", []),
     ("Carrier", "Pvsc", "Carrier", "航母", "unit", "P", []),
+    ("Interceptor", "Pvsc", "Interceptor", "拦截机", "unit", "P", []),
     ("Mothership", "Pbnm", "Mothership", "母舰", "unit", "P", []),
     # Terran buildings
     ("CommandCenter", "Tbc", "Command Center", "指挥中心", "building", "T", []),

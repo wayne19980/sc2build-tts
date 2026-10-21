@@ -43,6 +43,18 @@
           <div class="icon-shell building-icon" :class="{ 'unlock-flash': node.flash }" :title="tooltip(node.item)">
             <img :src="iconUrl(node.item.abbr)" :alt="node.item.name" draggable="false" />
             <span v-if="node.count > 0" class="count-badge building-badge">{{ node.count }}</span>
+            <span
+              v-if="node.worker"
+              class="worker-badge"
+              :title="tooltip(node.worker.item, node.worker.count)"
+            >
+              <img
+                :src="iconUrl(node.worker.item.abbr)"
+                :alt="node.worker.item.name"
+                draggable="false"
+              />
+              <b>{{ node.worker.count }}</b>
+            </span>
             <div
               v-if="node.constructing > 0"
               class="build-progress"
@@ -55,7 +67,7 @@
                 v-for="morph in node.morphs"
                 :key="morph.key"
                 class="morph-badge"
-                :title="`${morph.item.nameZh} ×${morph.count}`"
+                :title="`${displayName(morph.item)} ×${morph.count}`"
               >
                 <img :src="iconUrl(morph.item.abbr)" :alt="morph.item.name" draggable="false" />
                 <span class="morph-count">{{ morph.count }}</span>
@@ -72,6 +84,24 @@
             >
               <img :src="iconUrl(unit.item.abbr)" :alt="unit.item.name" draggable="false" />
               <span v-if="unit.count > 0" class="count-badge">{{ unit.count }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="node.upgrades.length" class="upgrade-row">
+          <div
+            v-for="chip in node.upgrades"
+            :key="chip.key"
+            class="upgrade-chip"
+            :class="{ done: chip.done, active: chip.active, 'unlock-flash': chip.flash }"
+            :title="chipTitle(chip)"
+          >
+            <img :src="iconUrl(chip.item.icon || chip.item.abbr)" :alt="chip.item.name" draggable="false" />
+            <div v-if="chip.active" class="upgrade-chip-bar">
+              <div
+                class="upgrade-chip-fill"
+                :class="{ indeterminate: chip.indeterminate }"
+                :style="{ width: `${chip.progress * 100}%` }"
+              />
             </div>
           </div>
         </div>
@@ -103,7 +133,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { EventItem, Race, TechTiming, UnitLifecycle } from '../../types-analysis'
-import { iconUrl, resolveItem, techTrees, type CatalogItem } from '../../data/catalog'
+import { formatClock, iconUrl, resolveItem, techTrees, type CatalogItem } from '../../data/catalog'
+import {
+  collapseUpgradeKeys,
+  computeUpgradeStates,
+  upgradeFamily,
+  UPGRADE_BUILDINGS,
+} from '../../data/upgrades'
 import { CELL_W, CELL_W_COMPACT, MARGIN, ROW_H } from '../../data/layout'
 import { useLanguage } from '../../composables/useLanguage'
 
@@ -115,6 +151,7 @@ const props = defineProps<{
   buildings: EventItem[]
   units: UnitLifecycle[]
   tech: TechTiming[]
+  orders?: EventItem[]
   compact?: boolean
   speed?: number
 }>()
@@ -128,6 +165,18 @@ interface BuildingCounter {
   firstDoneT?: number
 }
 
+interface UpgradeChip {
+  key: string
+  item: CatalogItem
+  activeItem?: CatalogItem
+  done: boolean
+  doneAt?: number
+  active: boolean
+  progress: number
+  indeterminate: boolean
+  flash: boolean
+}
+
 interface BuildingNode {
   key: string
   left: number
@@ -135,8 +184,10 @@ interface BuildingNode {
   item: CatalogItem
   state: 'locked' | 'building' | 'done' | 'destroyed'
   count: number
+  worker?: { item: CatalogItem; count: number }
   units: UnitNode[]
   morphs: { key: string; item: CatalogItem; count: number }[]
+  upgrades: UpgradeChip[]
   flash: boolean
   constructing: number
   progress: number
@@ -149,6 +200,23 @@ interface UnitNode {
   count: number
   unlocked: boolean
   flash: boolean
+}
+
+const ADDON_OWNERS = ['Barracks', 'Factory', 'Starport'] as const
+const ADDON_KEYS = ['TechLab', 'Reactor'] as const
+const WORKER_BY_RACE: Record<Race, string> = { P: 'Probe', T: 'SCV', Z: 'Drone' }
+
+/**
+ * Tech Lab / Reactor are standalone units in the replay data but they belong
+ * to a production building, so resolve `BarracksTechLab` -> Barracks + TechLab.
+ */
+function addonOf(name: string): { owner: string; key: (typeof ADDON_KEYS)[number] } | null {
+  for (const key of ADDON_KEYS) {
+    if (!name.endsWith(key)) continue
+    const owner = name.slice(0, name.length - key.length)
+    return (ADDON_OWNERS as readonly string[]).includes(owner) ? { owner, key } : null
+  }
+  return null
 }
 
 const { displayName } = useLanguage()
@@ -184,6 +252,31 @@ const buildingStats = computed(() => {
 
   for (const event of props.buildings) {
     if (event.player_id !== props.playerId || event.t_sec > props.time) continue
+    const addon = addonOf(event.name)
+    if (addon) {
+      // Terran addons are separate units but belong to the production
+      // building they are attached to, so they show up as its badge.
+      const unitId = Number(event.payload?.unit_id)
+      const hasUnitId = Number.isFinite(unitId)
+      const previous = hasUnitId ? live.get(unitId) : undefined
+      if (event.kind === 'build_done' || event.kind === 'unit_born') {
+        if (previous?.status === 'done') continue
+        if (hasUnitId) live.set(unitId, { name: addon.key, status: 'done' })
+        const target = counter(addon.owner)
+        target.ever = true
+        target.morphs[addon.key] = (target.morphs[addon.key] || 0) + 1
+        if (target.firstDoneT === undefined) target.firstDoneT = event.t_sec
+      } else if (event.kind === 'build_start') {
+        if (hasUnitId) live.set(unitId, { name: addon.key, status: 'building' })
+      } else if (event.kind === 'unit_died') {
+        if (previous?.status === 'done') {
+          const target = counter(addon.owner)
+          target.morphs[addon.key] = Math.max(0, (target.morphs[addon.key] || 0) - 1)
+        }
+        if (hasUnitId) live.delete(unitId)
+      }
+      continue
+    }
     const item = resolveItem(event.name)
     if (!item || item.kind !== 'building') continue
     const unitId = Number(event.payload?.unit_id)
@@ -312,8 +405,49 @@ const constructionProgress = computed(() => {
   return result
 })
 
+const upgradeStates = computed(() => {
+  const orders = (props.orders || []).filter((order) => order.player_id === props.playerId)
+  return computeUpgradeStates(props.tech, orders, props.time)
+})
+
+const buildingUpgrades = computed(() => {
+  const map = UPGRADE_BUILDINGS[props.race]
+  const result: Record<string, UpgradeChip[]> = {}
+  for (const [buildingKey, keys] of Object.entries(map)) {
+    const chips: UpgradeChip[] = []
+    const seenFamilies = new Set<string>()
+    for (const key of keys) {
+      const family = upgradeFamily(key)
+      if (family) {
+        if (seenFamilies.has(family[0])) continue
+        seenFamilies.add(family[0])
+      }
+      const collapsed = collapseUpgradeKeys(family || [key], upgradeStates.value)
+      if (!collapsed) continue
+      chips.push({
+        key: collapsed.item.key,
+        item: collapsed.item,
+        activeItem: collapsed.activeItem,
+        done: collapsed.doneAt !== undefined,
+        doneAt: collapsed.doneAt,
+        active: collapsed.active,
+        progress: collapsed.progress,
+        indeterminate: collapsed.indeterminate,
+        flash:
+          collapsed.doneAt !== undefined &&
+          props.time >= collapsed.doneAt &&
+          props.time - collapsed.doneAt < flashWindow.value,
+      })
+    }
+    if (chips.length) result[buildingKey] = chips
+  }
+  return result
+})
+
 const buildingNodes = computed<BuildingNode[]>(() => {
   const treeKeys = new Set(tree.value.buildings.map((building) => building.key))
+  const baseKey = tree.value.buildings.find((building) => building.requires.length === 0)?.key
+  const workerItem = resolveItem(WORKER_BY_RACE[props.race])
   return tree.value.buildings.map((building) => {
     const stats = buildingStats.value[building.key]
     let state: BuildingNode['state'] = 'locked'
@@ -328,6 +462,10 @@ const buildingNodes = computed<BuildingNode[]>(() => {
       item: resolveItem(building.key)!,
       state,
       count: stats?.done || 0,
+      worker:
+        building.key === baseKey && workerItem
+          ? { item: workerItem, count: unitCounts.value[workerItem.key] || 0 }
+          : undefined,
       constructing: constructionProgress.value[building.key]?.count || 0,
       progress: constructionProgress.value[building.key]?.progress || 0,
       indeterminate: constructionProgress.value[building.key]?.indeterminate || false,
@@ -336,6 +474,7 @@ const buildingNodes = computed<BuildingNode[]>(() => {
         props.time >= stats.firstDoneT &&
         props.time - stats.firstDoneT < flashWindow.value,
       units: unitItems.value.get(building.key) || [],
+      upgrades: buildingUpgrades.value[building.key] || [],
       morphs: Object.entries(stats?.morphs || {})
         .map(([key, count]) => {
           const item = resolveItem(key)
@@ -440,6 +579,18 @@ function edgePath(parent: { left: number; top: number }, child: { left: number; 
 function tooltip(item: CatalogItem, count?: number): string {
   const countText = count === undefined ? '' : ` · ${count}`
   return `${displayName(item)}${countText}`
+}
+
+function chipTitle(chip: UpgradeChip): string {
+  const name = displayName(chip.item)
+  const target = chip.activeItem ? displayName(chip.activeItem) : ''
+  if (chip.doneAt !== undefined) {
+    return target
+      ? `${name} · ${formatClock(chip.doneAt)} · ${target} 建造中`
+      : `${name} · ${formatClock(chip.doneAt)}`
+  }
+  if (chip.active) return `${target || name} · 建造中`
+  return name
 }
 </script>
 
@@ -568,6 +719,32 @@ function tooltip(item: CatalogItem, count?: number): string {
   color: #fff;
 }
 
+.worker-badge {
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px 1px 1px;
+  border: 1px solid #2c5480;
+  border-radius: 999px;
+  background: rgba(5, 8, 17, 0.94);
+  color: #dcecff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.worker-badge img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
 .build-progress {
   position: absolute;
   left: 0;
@@ -581,7 +758,7 @@ function tooltip(item: CatalogItem, count?: number): string {
 
 .build-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2f9e44, #69db7c);
+  background: #ffffff;
 }
 
 .build-progress.indeterminate .build-progress-fill {
@@ -589,10 +766,73 @@ function tooltip(item: CatalogItem, count?: number): string {
   animation: build-progress-pulse 1.2s ease-in-out infinite;
 }
 
+/* Upgrades researched by this building, echoed from the upgrade strip. */
+.upgrade-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 3px;
+  padding-top: 2px;
+  max-width: 224px;
+}
+
+.upgrade-chip {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1px solid #1d3352;
+  border-radius: 3px;
+  background: #0b1424;
+  opacity: 0.3;
+  filter: grayscale(0.9);
+  transition: opacity 160ms ease, filter 160ms ease, border-color 160ms ease;
+}
+
+.upgrade-chip img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+.upgrade-chip.done {
+  opacity: 1;
+  filter: none;
+  border-color: #3d7fc4;
+}
+
+.upgrade-chip.active {
+  opacity: 1;
+  filter: none;
+  border-color: #9fc3ef;
+}
+
+.upgrade-chip-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.upgrade-chip-fill {
+  height: 100%;
+  background: #ffffff;
+}
+
+.upgrade-chip-fill.indeterminate {
+  width: 35% !important;
+  animation: build-progress-pulse 1.2s ease-in-out infinite;
+}
+
 .morph-badges {
   position: absolute;
-  left: -5px;
-  bottom: -7px;
+  left: -6px;
+  top: -6px;
   display: flex;
   gap: 2px;
 }

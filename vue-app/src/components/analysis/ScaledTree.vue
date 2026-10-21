@@ -25,6 +25,7 @@
           :buildings="buildings"
           :units="units"
           :tech="tech"
+          :orders="orders"
           :compact="compact"
           :speed="speed"
         />
@@ -55,6 +56,7 @@ const props = defineProps<{
   buildings: EventItem[]
   units: UnitLifecycle[]
   tech: TechTiming[]
+  orders?: EventItem[]
   compact?: boolean
   speed?: number
 }>()

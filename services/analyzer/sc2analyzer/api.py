@@ -366,9 +366,14 @@ def list_folder_replays(
                 SELECT game_id, player_id, name AS unit, count(*) AS count
                 FROM events
                 WHERE game_id = ANY(:ids)
-                  AND kind = 'unit_born'
-                  AND COALESCE((payload->>'is_worker')::boolean, false) = false
                   AND COALESCE((payload->>'is_building')::boolean, false) = false
+                  AND (
+                    kind = 'unit_born'
+                    OR (
+                      kind = 'unit_morph'
+                      AND name IN ('Baneling', 'Ravager', 'Lurker', 'BroodLord', 'Overseer')
+                    )
+                  )
                 GROUP BY game_id, player_id, name
                 ORDER BY count(*) DESC
                 """

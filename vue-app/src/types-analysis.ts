@@ -163,3 +163,30 @@ export interface VoiceStep {
   text: string
   speech: string
 }
+
+export interface ConstructionGroupView {
+  key: string
+  name: string
+  icon: string
+  count: number
+  progress: number
+  indeterminate: boolean
+}
+
+export interface ConstructionStripView {
+  key: string
+  playerName: string
+  /** Player tint used by the split view; null keeps the neutral blue frame. */
+  tint: 'red' | 'blue' | null
+  groups: ConstructionGroupView[]
+}
+
+export interface UpgradeStripRow {
+  key: string
+  playerName: string
+  /** Player tint used by the split view; null keeps the neutral blue frame. */
+  tint: 'red' | 'blue' | null
+  race: Race
+  tech: TechTiming[]
+  orders: EventItem[]
+}

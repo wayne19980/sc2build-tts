@@ -311,6 +311,15 @@
     "race": "P",
     "aliases": []
   },
+  "Interceptor": {
+    "key": "Interceptor",
+    "abbr": "Pvsc",
+    "name": "Interceptor",
+    "nameZh": "拦截机",
+    "kind": "unit",
+    "race": "P",
+    "aliases": []
+  },
   "Mothership": {
     "key": "Mothership",
     "abbr": "Pbnm",

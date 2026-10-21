@@ -3,7 +3,8 @@ import { techTrees } from './catalog'
 
 export const CELL_W = 300
 export const CELL_W_COMPACT = 230
-export const ROW_H = 100
+// Rows also carry the upgrade chips that hang under each building icon.
+export const ROW_H = 112
 export const MARGIN = 20
 
 export function treeSize(race: Race, cellWidth = CELL_W): { width: number; height: number } {

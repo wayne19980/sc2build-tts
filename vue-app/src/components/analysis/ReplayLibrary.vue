@@ -63,7 +63,7 @@
                 <img v-if="unit.icon" :src="unit.icon" :alt="unit.name" draggable="false" />
                 <span class="chip-count">{{ unit.count }}</span>
               </span>
-              <span v-if="player.units.length === 0" class="none">—</span>
+              <span v-if="unitPreview(player).length === 0" class="none">—</span>
             </div>
           </div>
 
@@ -74,7 +74,7 @@
                 <span class="phase-label" :class="phase.key">{{ phase.short }}</span>
                 <div class="tech-icons">
                   <span
-                    v-for="tech in player.tech[phase.key]"
+                    v-for="tech in phaseTech(player, phase.key)"
                     :key="tech.tech"
                     class="tech-chip"
                     :title="`${techName(tech.tech)} ${formatClock(tech.t_sec)}`"
@@ -86,7 +86,7 @@
                       draggable="false"
                     />
                   </span>
-                  <span v-if="player.tech[phase.key].length === 0" class="none">—</span>
+                  <span v-if="phaseTech(player, phase.key).length === 0" class="none">—</span>
                 </div>
               </div>
             </div>
@@ -99,7 +99,8 @@
 
 <script setup lang="ts">
 import type { FolderReplay, FolderReplayPlayer } from '../../types-analysis'
-import { formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { AUTO_SPAWNED_UNITS, formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { upgradeFamily } from '../../data/upgrades'
 import { useLanguage } from '../../composables/useLanguage'
 
 defineProps<{
@@ -129,15 +130,65 @@ function raceClass(race: string | null): string {
 }
 
 function unitPreview(player: FolderReplayPlayer) {
-  return player.units.map((unit) => {
+  const grouped = new Map<string, { key: string; count: number; name: string; icon: string }>()
+  for (const unit of player.units) {
     const item = resolveItem(unit.unit)
-    return {
-      key: unit.unit,
+    if (!item || item.kind !== 'unit') continue
+    if (AUTO_SPAWNED_UNITS.has(item.key) || AUTO_SPAWNED_UNITS.has(unit.unit)) continue
+    const current = grouped.get(item.key)
+    if (current) {
+      current.count += unit.count
+      continue
+    }
+    grouped.set(item.key, {
+      key: item.key,
       count: unit.count,
       name: displayName(item, unit.unit),
-      icon: item ? iconUrl(item.abbr) : '',
+      icon: iconUrl(item.abbr),
+    })
+  }
+  return [...grouped.values()]
+}
+
+interface TechEntry {
+  tech: string
+  t_sec: number
+  phase: 'early' | 'mid' | 'late'
+}
+
+function collapsedTech(player: FolderReplayPlayer): TechEntry[] {
+  const singles: TechEntry[] = []
+  const families = new Map<string, { entry: TechEntry; index: number }>()
+
+  for (const phase of phases) {
+    for (const tech of player.tech[phase.key]) {
+      const item = resolveItem(tech.tech)
+      if (!item) continue
+      const entry: TechEntry = { tech: tech.tech, t_sec: tech.t_sec, phase: phase.key }
+      const family = upgradeFamily(item.key)
+      if (!family) {
+        singles.push(entry)
+        continue
+      }
+      const index = family.indexOf(item.key)
+      const current = families.get(family[0])
+      if (
+        !current ||
+        index > current.index ||
+        (index === current.index && tech.t_sec < current.entry.t_sec)
+      ) {
+        families.set(family[0], { entry, index })
+      }
     }
-  })
+  }
+
+  return [...singles, ...[...families.values()].map((value) => value.entry)].sort(
+    (a, b) => a.t_sec - b.t_sec,
+  )
+}
+
+function phaseTech(player: FolderReplayPlayer, phase: 'early' | 'mid' | 'late') {
+  return collapsedTech(player).filter((tech) => tech.phase === phase)
 }
 
 function techIcon(tech: string): string {

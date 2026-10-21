@@ -1,76 +1,96 @@
 <template>
   <div class="analysis-root">
-    <aside class="sidebar">
-      <section class="sidebar-section">
-        <div class="section-heading">
-          <span>赛事文件夹</span>
-          <button class="icon-button" title="刷新" @click="loadFolders">↻</button>
-        </div>
-        <div class="folder-list">
-          <div
-            v-for="folder in folders"
-            :key="folder.id"
-            class="folder-row"
-            :class="{ active: folder.id === activeFolderId }"
-            @click="selectFolder(folder)"
+    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+      <div class="sidebar-inner">
+        <div class="sidebar-bar" title="点击收起侧栏" @click="sidebarCollapsed = true">
+          <span class="sidebar-bar-title">录像库</span>
+          <button
+            class="icon-button collapse-button"
+            title="收起侧栏"
+            @click.stop="sidebarCollapsed = true"
           >
-            <span class="folder-name">{{ folder.name }}</span>
-            <span class="folder-count">{{ folder.game_count }}</span>
-            <button
-              class="folder-delete"
-              title="删除文件夹"
-              @click.stop="removeFolder(folder)"
+            «
+          </button>
+        </div>
+        <section class="sidebar-section">
+          <div class="section-heading">
+            <span>赛事文件夹</span>
+            <button class="icon-button" title="刷新" @click="loadFolders">↻</button>
+          </div>
+          <div class="folder-list">
+            <div
+              v-for="folder in folders"
+              :key="folder.id"
+              class="folder-row"
+              :class="{ active: folder.id === activeFolderId }"
+              @click="selectFolder(folder)"
             >
-              ×
+              <span class="folder-name">{{ folder.name }}</span>
+              <span class="folder-count">{{ folder.game_count }}</span>
+              <button
+                class="folder-delete"
+                title="删除文件夹"
+                @click.stop="removeFolder(folder)"
+              >
+                ×
+              </button>
+            </div>
+            <div v-if="!folders.length" class="empty-hint">还没有导入文件夹</div>
+          </div>
+        </section>
+
+        <section class="sidebar-section import-section">
+          <div class="section-heading"><span>导入录像</span></div>
+          <div class="path-row">
+            <input
+              v-model="importPath"
+              class="path-input"
+              placeholder="D:\Replays\Tournament"
+              @keyup.enter="startImport"
+            />
+            <button v-if="isDesktop" class="ghost-button choose-button" @click="chooseFolder">
+              选择
             </button>
           </div>
-          <div v-if="!folders.length" class="empty-hint">还没有导入文件夹</div>
-        </div>
-      </section>
-
-      <section class="sidebar-section import-section">
-        <div class="section-heading"><span>导入录像</span></div>
-        <div class="path-row">
-          <input
-            v-model="importPath"
-            class="path-input"
-            placeholder="D:\Replays\Tournament"
-            @keyup.enter="startImport"
-          />
-          <button v-if="isDesktop" class="ghost-button choose-button" @click="chooseFolder">
-            选择
-          </button>
-        </div>
-        <div class="import-buttons">
-          <button class="primary-button" :disabled="!importPath.trim() || importing" @click="startImport">
-            {{ importing ? '导入中…' : '导入文件夹' }}
-          </button>
-          <button
-            v-if="isDesktop"
-            class="ghost-button file-button"
-            :disabled="importing"
-            @click="chooseReplay"
-          >
-            选择录像文件
-          </button>
-        </div>
-        <div class="import-hint">也可以把单个 .SC2Replay 直接拖进窗口</div>
-        <div v-if="importJob" class="import-status">
-          <div class="import-line">
-            <span>{{ importJob.phase }}</span>
-            <span>{{ importJob.processed }}/{{ importJob.total }}</span>
+          <div class="import-buttons">
+            <button class="primary-button" :disabled="!importPath.trim() || importing" @click="startImport">
+              {{ importing ? '导入中…' : '导入文件夹' }}
+            </button>
+            <button
+              v-if="isDesktop"
+              class="ghost-button file-button"
+              :disabled="importing"
+              @click="chooseReplay"
+            >
+              选择录像文件
+            </button>
           </div>
-          <div class="progress-track">
-            <div class="progress-fill" :style="{ width: `${importJob.progress}%` }" />
+          <div class="import-hint">也可以把单个 .SC2Replay 直接拖进窗口</div>
+          <div v-if="importJob" class="import-status">
+            <div class="import-line">
+              <span>{{ importJob.phase }}</span>
+              <span>{{ importJob.processed }}/{{ importJob.total }}</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" :style="{ width: `${importJob.progress}%` }" />
+            </div>
+            <div class="import-meta">
+              +{{ importJob.imported }} · ={{ importJob.skipped }} · !{{ importJob.errors.length }}
+            </div>
           </div>
-          <div class="import-meta">
-            +{{ importJob.imported }} · ={{ importJob.skipped }} · !{{ importJob.errors.length }}
-          </div>
-        </div>
-        <div v-if="error" class="error-text">{{ error }}</div>
-      </section>
-
+          <div v-if="error" class="error-text">{{ error }}</div>
+        </section>
+      </div>
     </aside>
+
+    <button
+      v-if="sidebarCollapsed"
+      class="sidebar-expand"
+      title="展开侧栏"
+      @click="sidebarCollapsed = false"
+    >
+      »
+    </button>
 
     <main class="main-panel">
       <template v-if="activeGame">
@@ -176,6 +196,7 @@
               :buildings="buildings"
               :units="units"
               :tech="tech"
+              :orders="orders"
               :speed="speed"
             />
           </template>
@@ -188,21 +209,13 @@
             :buildings="playerBuildings"
             :units="playerUnits"
             :tech="playerTech"
+            :orders="orders"
           />
         </div>
 
-        <ConstructionStrip
-          :player-name="selectedPlayer?.name || ''"
-          :groups="constructionGroups"
-        />
+        <ConstructionStrip :strips="constructionStrips" />
 
-        <UpgradeStrip
-          v-if="race"
-          :race="race"
-          :time="time"
-          :tech="playerTech"
-          :orders="playerOrders"
-        />
+        <UpgradeStrip v-if="race" :rows="upgradeRows" :time="time" />
 
         <footer class="timeline-bar">
           <button class="play-button" @click="togglePlay">
@@ -267,6 +280,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import type {
+  ConstructionGroupView,
+  ConstructionStripView,
   EventItem,
   FolderInfo,
   FolderReplay,
@@ -278,8 +293,10 @@ import type {
   PlayerInfo,
   TechTiming,
   UnitLifecycle,
+  UpgradeStripRow,
 } from '../../types-analysis'
-import { formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { AUTO_SPAWNED_UNITS, formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { computeUpgradeStates } from '../../data/upgrades'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -311,7 +328,8 @@ const activeFolderId = ref<number | null>(null)
 const activeGameId = ref<number | null>(null)
 const activeGame = ref<GameDetail | null>(null)
 const activePlayerId = ref<number | null>(null)
-const splitView = ref(false)
+const splitView = ref(true)
+const sidebarCollapsed = ref(localStorage.getItem('sc2-sidebar-collapsed') === '1')
 const { english, displayName } = useLanguage()
 
 const buildings = ref<EventItem[]>([])
@@ -433,31 +451,143 @@ const playerUnits = computed(() =>
 const playerTech = computed(() =>
   tech.value.filter((timing) => timing.player_id === activePlayerId.value),
 )
-const playerOrders = computed(() =>
-  timeline.value.filter(
-    (event) => event.player_id === activePlayerId.value && event.kind === 'order',
-  ),
-)
+const orders = computed(() => timeline.value.filter((event) => event.kind === 'order'))
 
-const constructionGroups = computed(() => {
-  const playerId = activePlayerId.value
-  if (!playerId) return []
+/** Players shown by the split view, or just the selected player. */
+const visiblePlayers = computed<PlayerInfo[]>(() => {
+  const players = activeGame.value?.players || []
+  if (splitView.value && players.length >= 2) return players.slice(0, 2)
+  const current = selectedPlayer.value
+  return current ? [current] : []
+})
 
-  const tasks = new Map<number, { name: string; start: number; done?: number }>()
-  for (const event of buildings.value) {
-    if (event.player_id !== playerId) continue
+interface ProductionTask {
+  key: string
+  name: string
+  icon: string
+  start: number
+  done: number | null
+}
+
+const UNIT_SECONDS: Record<string, number> = {
+  Probe: 12,
+  SCV: 12,
+  Drone: 12,
+  Interceptor: 9,
+  Zergling: 17,
+  Baneling: 14,
+  Roach: 19,
+  Ravager: 12,
+  Hydralisk: 24,
+  Lurker: 18,
+  Mutalisk: 24,
+  Corruptor: 29,
+  BroodLord: 24,
+  Overseer: 12,
+  Queen: 36,
+  Overlord: 18,
+  Marine: 18,
+  Marauder: 21,
+  Reaper: 23,
+  Ghost: 29,
+  Zealot: 27,
+  Stalker: 30,
+  Sentry: 23,
+  Adept: 27,
+  HighTemplar: 32,
+  DarkTemplar: 32,
+  Immortal: 39,
+  Colossus: 48,
+  Disruptor: 39,
+  Observer: 21,
+  WarpPrism: 36,
+  Phoenix: 25,
+  VoidRay: 36,
+  Oracle: 37,
+  Tempest: 43,
+  Carrier: 64,
+  Mothership: 89,
+  Hellion: 21,
+  Hellbat: 21,
+  WidowMine: 21,
+  Cyclone: 25,
+  SiegeTank: 32,
+  Thor: 43,
+  Viking: 24,
+  Medivac: 30,
+  Liberator: 30,
+  Raven: 43,
+  Banshee: 43,
+  Battlecruiser: 64,
+}
+const DEFAULT_UNIT_SECONDS = 15
+const MORPH_SECONDS: Record<string, number> = {
+  Baneling: 14,
+  Ravager: 12,
+  Lurker: 18,
+  BroodLord: 24,
+  Overseer: 12,
+}
+
+const unitProductionTasks = computed(() => {
+  const starts = new Map<number, number>()
+  for (const event of timeline.value) {
+    if (event.kind !== 'unit_training_start') continue
     const unitId = Number(event.payload?.unit_id)
-    if (!Number.isFinite(unitId)) continue
-    if (event.kind === "build_start") {
-      tasks.set(unitId, { name: event.name, start: event.t_sec })
-    } else if (event.kind === "build_done" || event.kind === "unit_born") {
-      const task = tasks.get(unitId)
-      if (task && task.done === undefined) task.done = event.t_sec
-    } else if (event.kind === "unit_died" && event.t_sec <= time.value) {
-      tasks.delete(unitId)
-    }
+    if (Number.isFinite(unitId)) starts.set(unitId, event.t_sec)
   }
 
+  const result = new Map<number, ProductionTask[]>()
+  for (const unit of units.value) {
+    if (unit.is_building) continue
+    const item = resolveItem(unit.first_type)
+    if (!item || item.kind !== 'unit') continue
+    if (AUTO_SPAWNED_UNITS.has(item.key) && item.key !== 'Interceptor') continue
+    if (AUTO_SPAWNED_UNITS.has(unit.first_type) && unit.first_type !== 'Interceptor') continue
+    const fallback = UNIT_SECONDS[item.key] ?? DEFAULT_UNIT_SECONDS
+    const start = starts.get(unit.unit_id) ?? Math.max(0, unit.born_t_sec - fallback)
+    const tasks = result.get(unit.player_id) || []
+    tasks.push({
+      key: item.key,
+      name: displayName(item, unit.first_type),
+      icon: itemIconUrl(item),
+      start,
+      done: unit.born_t_sec,
+    })
+    result.set(unit.player_id, tasks)
+  }
+  return result
+})
+
+const morphProductionTasks = computed(() => {
+  const result = new Map<number, ProductionTask[]>()
+  for (const unit of units.value) {
+    if (unit.is_building) continue
+    let previous = ''
+    for (const morph of unit.morphs) {
+      if (morph.from === morph.to) continue
+      const seconds = MORPH_SECONDS[morph.to]
+      if (!seconds) continue
+      const item = resolveItem(morph.to)
+      if (!item || item.kind !== 'unit') continue
+      const signature = `${item.key}:${morph.t_sec}`
+      if (signature === previous) continue
+      previous = signature
+      const tasks = result.get(unit.player_id) || []
+      tasks.push({
+        key: item.key,
+        name: displayName(item, morph.to),
+        icon: itemIconUrl(item),
+        start: Math.max(0, morph.t_sec - seconds),
+        done: morph.t_sec,
+      })
+      result.set(unit.player_id, tasks)
+    }
+  }
+  return result
+})
+
+function constructionGroupsFor(playerId: number): ConstructionGroupView[] {
   const now = time.value
   const groups = new Map<
     string,
@@ -466,39 +596,148 @@ const constructionGroups = computed(() => {
       name: string
       icon: string
       count: number
-      tasks: { progress: number; indeterminate: boolean }[]
+      progressSum: number
+      indeterminate: boolean
+      start: number
     }
   >()
 
-  for (const task of tasks.values()) {
+  const add = (task: {
+    key: string
+    name: string
+    icon: string
+    start: number
+    progress: number
+    indeterminate: boolean
+  }) => {
+    const group = groups.get(task.key) || {
+      key: task.key,
+      name: task.name,
+      icon: task.icon,
+      count: 0,
+      progressSum: 0,
+      indeterminate: false,
+      start: task.start,
+    }
+    group.count += 1
+    group.progressSum += task.progress
+    group.indeterminate = group.indeterminate || task.indeterminate
+    group.start = Math.min(group.start, task.start)
+    groups.set(task.key, group)
+  }
+
+  const buildingTasks = new Map<number, { name: string; start: number; done?: number }>()
+  for (const event of buildings.value) {
+    if (event.player_id !== playerId) continue
+    const unitId = Number(event.payload?.unit_id)
+    if (!Number.isFinite(unitId)) continue
+    if (event.kind === 'build_start') {
+      buildingTasks.set(unitId, { name: event.name, start: event.t_sec })
+    } else if (event.kind === 'build_done' || event.kind === 'unit_born') {
+      const task = buildingTasks.get(unitId)
+      if (task && task.done === undefined) task.done = event.t_sec
+    } else if (event.kind === 'unit_died' && event.t_sec <= now) {
+      buildingTasks.delete(unitId)
+    }
+  }
+
+  for (const task of buildingTasks.values()) {
     if (task.start > now) continue
     if (task.done !== undefined && task.done <= now) continue
     const item = resolveItem(task.name)
-    const key = item?.key || task.name
-    const group = groups.get(key) || {
-      key,
-      name: displayName(item, task.name),
-      icon: item ? itemIconUrl(item) : "",
-      count: 0,
-      tasks: [],
-    }
+    if (!item) continue
+    if (item.kind !== 'building' && item.kind !== 'unit') continue
+    if (AUTO_SPAWNED_UNITS.has(item.key) && item.key !== 'Interceptor') continue
     const progress =
       task.done !== undefined && task.done > task.start
         ? Math.min(1, Math.max(0, (now - task.start) / (task.done - task.start)))
         : 0
-    group.count += 1
-    group.tasks.push({ progress, indeterminate: task.done === undefined })
-    groups.set(key, group)
+    add({
+      key: item.key,
+      name: displayName(item, task.name),
+      icon: itemIconUrl(item),
+      start: task.start,
+      progress,
+      indeterminate: task.done === undefined,
+    })
   }
 
-  return Array.from(groups.values()).map((group) => ({
-    key: group.key,
-    name: group.name,
-    icon: group.icon,
-    count: group.count,
-    progress:
-      group.tasks.reduce((sum, task) => sum + task.progress, 0) / group.count,
-    indeterminate: group.tasks.some((task) => task.indeterminate),
+  const addProductionTask = (task: ProductionTask) => {
+    if (task.start > now) return
+    if (task.done !== null && task.done <= now) return
+    const progress =
+      task.done !== null && task.done > task.start
+        ? Math.min(1, Math.max(0, (now - task.start) / (task.done - task.start)))
+        : 0
+    add({
+      key: task.key,
+      name: task.name,
+      icon: task.icon,
+      start: task.start,
+      progress,
+      indeterminate: task.done === null,
+    })
+  }
+
+  for (const task of unitProductionTasks.value.get(playerId) || []) {
+    addProductionTask(task)
+  }
+  for (const task of morphProductionTasks.value.get(playerId) || []) {
+    addProductionTask(task)
+  }
+
+  const playerTech = tech.value.filter((timing) => timing.player_id === playerId)
+  const playerOrders = timeline.value.filter(
+    (event) => event.player_id === playerId && event.kind === 'order',
+  )
+  const upgradeStates = computeUpgradeStates(playerTech, playerOrders, now)
+  for (const [key, state] of Object.entries(upgradeStates)) {
+    if (!state.active) continue
+    const item = resolveItem(key)
+    if (!item || item.kind !== 'upgrade') continue
+    add({
+      key: item.key,
+      name: displayName(item, key),
+      icon: itemIconUrl(item),
+      start: state.startedAt ?? now,
+      progress: state.progress,
+      indeterminate: state.indeterminate,
+    })
+  }
+
+  return Array.from(groups.values())
+    .sort((a, b) => a.start - b.start)
+    .map((group) => ({
+      key: group.key,
+      name: group.name,
+      icon: group.icon,
+      count: group.count,
+      progress: group.progressSum / group.count,
+      indeterminate: group.indeterminate,
+    }))
+}
+
+const constructionStrips = computed<ConstructionStripView[]>(() => {
+  const players = visiblePlayers.value
+  return players.map((player, index) => ({
+    key: `${player.id}`,
+    playerName: player.name,
+    tint: players.length > 1 ? (index === 0 ? 'red' : 'blue') : null,
+    groups: constructionGroupsFor(player.id),
+  }))
+})
+
+const upgradeRows = computed<UpgradeStripRow[]>(() => {
+  const players = visiblePlayers.value
+  return players.map((player, index) => ({
+    key: `${player.id}`,
+    playerName: players.length > 1 ? player.name : '',
+    tint: players.length > 1 ? (index === 0 ? 'red' : 'blue') : null,
+    race: raceFromName(player.race) || 'P',
+    tech: tech.value.filter((timing) => timing.player_id === player.id),
+    orders: orders.value.filter(
+      (event) => event.player_id === player.id && event.kind === 'order',
+    ),
   }))
 })
 
@@ -637,7 +876,7 @@ async function selectGame(game: GameSummary) {
     tech.value = techRows
     timeline.value = timelineRows
     activePlayerId.value = detail.players[0]?.id || null
-    splitView.value = false
+    splitView.value = detail.players.length >= 2
     closeVoice()
     if (overlayEnabled.value) enableVoice(true)
   } catch (exc) {
@@ -653,6 +892,10 @@ function selectPlayer(playerId: number) {
     refreshVoiceSteps()
   }
 }
+
+watch(sidebarCollapsed, (collapsed) => {
+  localStorage.setItem('sc2-sidebar-collapsed', collapsed ? '1' : '0')
+})
 
 function handleViewport() {
   if (window.innerWidth < 1100) splitView.value = false
@@ -845,7 +1088,15 @@ function refreshVoiceSteps() {
   if (!player) return
 
   const orders = timeline.value
-    .filter((event) => event.player_id === player.id && event.kind === "order" && !event.is_worker)
+    .filter((event) => {
+      if (event.player_id !== player.id || event.kind !== 'order' || event.is_worker) {
+        return false
+      }
+      const item = resolveItem(event.name)
+      if (AUTO_SPAWNED_UNITS.has(event.name)) return false
+      if (item && AUTO_SPAWNED_UNITS.has(item.key)) return false
+      return true
+    })
     .sort((a, b) => a.t_sec - b.t_sec)
 
   const mergeWindow = 4
@@ -984,6 +1235,7 @@ function pollImport(jobId: string) {
 
 <style scoped>
 .analysis-root {
+  position: relative;
   display: flex;
   height: 100%;
   min-height: 0;
@@ -998,10 +1250,84 @@ function pollImport(jobId: string) {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   border-right: 1px solid #142238;
   background:
     linear-gradient(180deg, rgba(17, 31, 53, 0.9), rgba(5, 9, 17, 0.98)),
     #070b14;
+  transition: width 180ms ease;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  border-right: 0;
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 310px;
+  min-height: 0;
+}
+
+.sidebar-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid #101d2f;
+  color: #6f89ad;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidebar-bar:hover {
+  color: #a8c2e0;
+}
+
+.sidebar-bar-title {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.collapse-button {
+  flex: none;
+  height: 22px;
+  line-height: 1;
+}
+
+.collapse-button:hover {
+  color: #dbe9fb;
+  border-color: #2f6caf;
+}
+
+.sidebar-expand {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 6;
+  width: 16px;
+  height: 64px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid #1d3352;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  background: rgba(11, 20, 36, 0.94);
+  color: #7fa8d8;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sidebar-expand:hover {
+  color: #eaf4ff;
+  border-color: #2f6caf;
+  background: #0e1d30;
 }
 
 .sidebar-section {
