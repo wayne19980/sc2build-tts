@@ -10,7 +10,7 @@
         </div>
 
         <div v-if="nextAction" class="next-action-hero">
-          <span class="next-badge">即将建造</span>
+          <span class="next-badge">下一步</span>
           <img :src="iconUrl(nextAction.item.abbr)" :alt="nextAction.item.name" draggable="false" />
           <span class="next-name">{{ displayName(nextAction.item) }}</span>
           <span class="next-time">{{ formatClock(nextAction.event.t_sec) }}</span>
@@ -39,7 +39,7 @@
           <span class="unlock-label">解锁</span>
           <div class="unlock-items">
             <div
-              v-for="entry in previewUnlocks.slice(0, 5)"
+              v-for="entry in previewUnlocks"
               :key="`${entry.item.key}-${entry.event.t_sec}`"
               class="unlock-item"
               :class="{ soon: isSoon(entry.event.t_sec) }"
@@ -48,6 +48,7 @@
               <img :src="itemIconUrl(entry.item)" :alt="entry.item.name" draggable="false" />
               <span class="unlock-time">{{ formatClock(entry.event.t_sec) }}</span>
             </div>
+            <span v-if="overflowUnlocks > 0" class="unlock-overflow">+{{ overflowUnlocks }}</span>
           </div>
           <div v-if="previewUnlocks.length === 0" class="empty-hint">暂无后续解锁</div>
         </div>
@@ -148,7 +149,11 @@ const futureUnlocks = computed(() => {
   return unlockEntries.value.filter((entry) => entry.event.t_sec > time)
 })
 
-const previewUnlocks = computed(() => futureUnlocks.value.slice(0, 10))
+const UNLOCK_PREVIEW_COUNT = 5
+const previewUnlocks = computed(() => futureUnlocks.value.slice(0, UNLOCK_PREVIEW_COUNT))
+const overflowUnlocks = computed(() =>
+  Math.max(0, futureUnlocks.value.length - previewUnlocks.value.length),
+)
 
 function isSoon(tSec: number): boolean {
   const time = state.value?.time ?? 0
@@ -434,6 +439,15 @@ async function loadData() {
   color: #e8f4ff;
   font-weight: 700;
   text-shadow: 0 0 6px rgba(90, 167, 237, 0.8);
+}
+
+.unlock-overflow {
+  align-self: center;
+  margin-left: 1px;
+  color: #7a98bd;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .empty-hint {

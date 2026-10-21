@@ -8,6 +8,7 @@
       </div>
       <div class="topbar-right">
         <span class="tagline">本地赛事流程与科技树分析</span>
+        <button class="settings-toggle" @click="settingsOpen = true">设置</button>
         <button v-if="isDesktop" class="update-check" :disabled="checking" @click="checkForUpdates(true)">
           {{ checking ? '检查中…' : '检查更新' }}
         </button>
@@ -19,13 +20,15 @@
       <AnalysisView />
     </div>
     <UpdateBanner />
+    <SettingsPanel v-if="settingsOpen" @close="settingsOpen = false" />
   </div>
 </template>
 
 <script setup lang="ts">
 import packageInfo from '../package.json'
 import AnalysisView from './components/analysis/AnalysisView.vue'
-import { onMounted } from 'vue'
+import SettingsPanel from './components/SettingsPanel.vue'
+import { onMounted, ref } from 'vue'
 import { useLanguage } from './composables/useLanguage'
 import { useUpdater } from './composables/useUpdater'
 import { isTauriRuntime } from './composables/useTauri'
@@ -33,6 +36,7 @@ import UpdateBanner from './components/UpdateBanner.vue'
 
 const version = packageInfo.version
 const isDesktop = isTauriRuntime()
+const settingsOpen = ref(false)
 const { english, toggleLanguage } = useLanguage()
 const { checking, checkForUpdates, autoCheck } = useUpdater()
 
@@ -133,6 +137,7 @@ body {
   letter-spacing: 0.08em;
 }
 
+.settings-toggle,
 .update-check {
   padding: 3px 8px;
   border: 1px solid #1d3352;
@@ -143,6 +148,7 @@ body {
   cursor: pointer;
 }
 
+.settings-toggle:hover,
 .update-check:hover {
   border-color: #3d7fc4;
   color: #e8f4ff;

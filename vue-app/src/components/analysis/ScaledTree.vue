@@ -1,5 +1,5 @@
 <template>
-  <div class="tree-viewport" :class="{ panning: panning && viewMode !== 'flow', 'is-flow': viewMode === 'flow' }">
+  <div class="tree-viewport" :class="{ panning: panning && viewMode !== 'flow' }">
     <div
       ref="host"
       class="scaled-tree"
@@ -170,6 +170,19 @@ watch(
   },
 )
 
+watch(
+  () => props.viewMode,
+  (mode) => {
+    if (!host.value) return
+    if (mode === 'flow') {
+      host.value.scrollTop = 0
+      host.value.scrollLeft = 0
+    } else {
+      void nextTick(centerScroll)
+    }
+  },
+)
+
 onBeforeUnmount(() => {
   observer?.disconnect()
 })
@@ -200,6 +213,10 @@ onBeforeUnmount(() => {
 .scaled-tree.panning,
 .tree-viewport.panning .scaled-tree {
   cursor: grabbing;
+}
+
+.scaled-tree.flow-mode {
+  cursor: default;
 }
 
 .scaled-inner {

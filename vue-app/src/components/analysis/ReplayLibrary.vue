@@ -99,8 +99,17 @@
 
 <script setup lang="ts">
 import type { FolderReplay, FolderReplayPlayer } from '../../types-analysis'
-import { AUTO_SPAWNED_UNITS, formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import {
+  AUTO_SPAWNED_UNITS,
+  WORKER_UNITS,
+  formatClock,
+  iconUrl,
+  itemIconUrl,
+  raceFromName,
+  resolveItem,
+} from '../../data/catalog'
 import { useLanguage } from '../../composables/useLanguage'
+import { useSettings } from '../../composables/useSettings'
 
 defineProps<{
   replays: FolderReplay[]
@@ -113,6 +122,7 @@ defineEmits<{
 }>()
 
 const { displayName } = useLanguage()
+const { settings } = useSettings()
 
 const phases = [
   { key: 'early' as const, short: '前' },
@@ -134,6 +144,7 @@ function unitPreview(player: FolderReplayPlayer) {
     const item = resolveItem(unit.unit)
     if (!item || item.kind !== 'unit') continue
     if (AUTO_SPAWNED_UNITS.has(item.key) || AUTO_SPAWNED_UNITS.has(unit.unit)) continue
+    if (!settings.showLibraryWorkers && WORKER_UNITS.has(item.key)) continue
     const current = grouped.get(item.key)
     if (current) {
       current.count += unit.count

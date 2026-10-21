@@ -113,6 +113,8 @@ export function upgradeItems(race: Race): CatalogItem[] {
   )
 }
 
+export const WORKER_UNITS = new Set(['Probe', 'SCV', 'Drone'])
+
 export const AUTO_SPAWNED_UNITS = new Set([
   'Broodling',
   'AutoTurret',

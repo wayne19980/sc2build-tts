@@ -891,7 +891,7 @@ async function selectGame(game: GameSummary) {
     tech.value = techRows
     timeline.value = timelineRows
     activePlayerId.value = detail.players[0]?.id || null
-    splitView.value = detail.players.length >= 2
+    splitView.value = detail.players.length >= 2 && window.innerWidth >= 1100
     closeVoice()
     if (overlayEnabled.value) enableVoice(true)
   } catch (exc) {
