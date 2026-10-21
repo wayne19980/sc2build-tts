@@ -89,9 +89,13 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<(), String> {
             .app_data_dir()
             .map_err(|error| error.to_string())?;
         std::fs::create_dir_all(&data_dir).map_err(|error| error.to_string())?;
+        let resource_dir = app.path().resource_dir().map_err(|error| error.to_string())?;
+        let sidecar = resource_dir.join("sidecar").join("sc2analyzer-api.exe");
+        if !sidecar.is_file() {
+            return Err(format!("backend sidecar not found: {}", sidecar.display()));
+        }
         shell
-            .sidecar("sc2analyzer-api")
-            .map_err(|error| error.to_string())?
+            .command(sidecar.to_string_lossy().to_string())
             .env("SC2_EMBEDDED_PG", "1")
             .env("SC2_DATA_DIR", data_dir.to_string_lossy().to_string())
             .env("SC2_API_HOST", "127.0.0.1")

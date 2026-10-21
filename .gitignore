@@ -145,7 +145,7 @@ __pycache__/
 .pytest_cache/
 
 # Generated Tauri sidecar
-vue-app/src-tauri/binaries/*.exe
+vue-app/src-tauri/sidecar/
 
 # Playwright CLI artifacts
 .playwright-cli/

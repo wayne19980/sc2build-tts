@@ -39,8 +39,8 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/sc2analyzer-api"
+    "resources": [
+      "sidecar/"
     ]
   },
   "plugins": {
