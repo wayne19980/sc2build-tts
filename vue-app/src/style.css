@@ -294,3 +294,10 @@ code {
     border-right-color: var(--border);
   }
 }
+
+
+html.overlay-mode,
+body.overlay-mode,
+body.overlay-mode #app {
+  background: transparent !important;
+}
