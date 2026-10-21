@@ -99,7 +99,14 @@
 
 <script setup lang="ts">
 import type { FolderReplay, FolderReplayPlayer } from '../../types-analysis'
-import { formatClock, iconUrl, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import {
+  AUTO_SPAWNED_UNITS,
+  formatClock,
+  iconUrl,
+  itemIconUrl,
+  raceFromName,
+  resolveItem,
+} from '../../data/catalog'
 import { useLanguage } from '../../composables/useLanguage'
 
 defineProps<{
@@ -129,15 +136,24 @@ function raceClass(race: string | null): string {
 }
 
 function unitPreview(player: FolderReplayPlayer) {
-  return player.units.map((unit) => {
+  const grouped = new Map<string, { key: string; count: number; name: string; icon: string }>()
+  for (const unit of player.units) {
     const item = resolveItem(unit.unit)
-    return {
-      key: unit.unit,
+    if (!item || item.kind !== 'unit') continue
+    if (AUTO_SPAWNED_UNITS.has(item.key) || AUTO_SPAWNED_UNITS.has(unit.unit)) continue
+    const current = grouped.get(item.key)
+    if (current) {
+      current.count += unit.count
+      continue
+    }
+    grouped.set(item.key, {
+      key: item.key,
       count: unit.count,
       name: displayName(item, unit.unit),
-      icon: item ? iconUrl(item.abbr) : '',
-    }
-  })
+      icon: iconUrl(item.abbr),
+    })
+  }
+  return [...grouped.values()]
 }
 
 function techIcon(tech: string): string {

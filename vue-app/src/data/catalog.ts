@@ -86,3 +86,20 @@ export function upgradeItems(race: Race): CatalogItem[] {
     (item) => item.kind === 'upgrade' && item.race === race,
   )
 }
+
+export const AUTO_SPAWNED_UNITS = new Set([
+  'Broodling',
+  'AutoTurret',
+  'Interceptor',
+  'MULE',
+  'Locust',
+  'LocustMPFlying',
+  'Changeling',
+  'ChangelingMarine',
+  'ChangelingZealot',
+  'ChangelingZergling',
+  'Larva',
+  'Egg',
+  'CreepTumor',
+  'CreepTumorQueen',
+])

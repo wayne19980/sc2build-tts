@@ -72,7 +72,7 @@ ITEMS = [
     ("Reaper", "Tbbr", "Reaper", "收割者", "unit", "T", []),
     ("Ghost", "Tbbg", "Ghost", "幽灵", "unit", "T", []),
     ("Hellion", "Tvfe", "Hellion", "恶火", "unit", "T", []),
-    ("Hellbat", "Tvfr", "Hellbat", "恶蝠", "unit", "T", ["BattleHellion"]),
+    ("Hellbat", "Tvfr", "Hellbat", "恶蝠", "unit", "T", ["BattleHellion", "HellionTank"]),
     ("WidowMine", "Tvfd", "Widow Mine", "寡妇雷", "unit", "T", ["WidowMineBurrowed"]),
     ("Cyclone", "Tvfn", "Cyclone", "飓风", "unit", "T", []),
     ("SiegeTank", "Tvfs", "Siege Tank", "攻城坦克", "unit", "T", ["SiegeTankSieged"]),

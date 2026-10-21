@@ -556,7 +556,8 @@
     "kind": "unit",
     "race": "T",
     "aliases": [
-      "BattleHellion"
+      "BattleHellion",
+      "HellionTank"
     ]
   },
   "WidowMine": {

@@ -283,7 +283,7 @@ import type {
   TechTiming,
   UnitLifecycle,
 } from '../../types-analysis'
-import { formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
+import { AUTO_SPAWNED_UNITS, formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -479,11 +479,13 @@ const constructionGroups = computed(() => {
     if (task.start > now) continue
     if (task.done !== undefined && task.done <= now) continue
     const item = resolveItem(task.name)
-    const key = item?.key || task.name
+    if (!item || AUTO_SPAWNED_UNITS.has(item.key)) continue
+    if (item.kind !== 'building' && item.kind !== 'unit') continue
+    const key = item.key
     const group = groups.get(key) || {
       key,
       name: displayName(item, task.name),
-      icon: item ? itemIconUrl(item) : "",
+      icon: itemIconUrl(item),
       count: 0,
       tasks: [],
     }
