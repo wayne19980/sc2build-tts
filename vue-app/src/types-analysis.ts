@@ -124,6 +124,7 @@ export interface OverlayState {
   countMode: 'cumulative' | 'alive'
   opacity: number
   english: boolean
+  includeWorkers: boolean
 }
 
 export interface ReplayUnitCount {

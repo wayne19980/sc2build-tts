@@ -12,7 +12,10 @@
         <div v-if="nextAction" class="next-action-hero">
           <span class="next-badge">下一步</span>
           <img :src="iconUrl(nextAction.item.abbr)" :alt="nextAction.item.name" draggable="false" />
-          <span class="next-name">{{ displayName(nextAction.item) }}</span>
+          <span class="next-name">
+            {{ displayName(nextAction.item) }}
+            <b v-if="nextAction.count > 1" class="next-count">×{{ nextAction.count }}</b>
+          </span>
           <span class="next-time">{{ formatClock(nextAction.event.t_sec) }}</span>
         </div>
       </div>
@@ -25,7 +28,10 @@
             <div class="chain-item" :class="{ past: row.past, current: row.next }">
               <img :src="iconUrl(row.item.abbr)" :alt="row.item.name" draggable="false" />
               <div class="item-meta">
-                <span class="item-name">{{ displayName(row.item) }}</span>
+                <span class="item-name">
+                  {{ displayName(row.item) }}
+                  <b v-if="row.count > 1" class="item-count">×{{ row.count }}</b>
+                </span>
                 <span class="item-time">{{ formatClock(row.event.t_sec) }}</span>
               </div>
             </div>
@@ -78,36 +84,71 @@ let unlisten: (() => void) | null = null
 let loadedKey = ''
 let loading = false
 
-const buildActions = computed(() =>
-  events.value
-    .filter((event) => event.kind === 'order' && !event.is_worker && resolveItem(event.name))
-    .sort((a, b) => a.t_sec - b.t_sec),
-)
+const buildGroups = computed(() => {
+  const includeWorkers = state.value?.includeWorkers ?? false
+  const actions = events.value
+    .filter(
+      (event) =>
+        event.kind === 'order' &&
+        (includeWorkers || !event.is_worker) &&
+        resolveItem(event.name),
+    )
+    .sort((a, b) => a.t_sec - b.t_sec)
+
+  const groups: {
+    key: string
+    event: EventItem
+    item: CatalogItem
+    count: number
+    lastTime: number
+  }[] = []
+  for (const event of actions) {
+    const item = resolveItem(event.name)!
+    const last = groups[groups.length - 1]
+    if (last && last.item.key === item.key && event.t_sec - last.lastTime <= 4) {
+      last.count += 1
+      last.lastTime = event.t_sec
+      continue
+    }
+    groups.push({
+      key: `${event.kind}:${event.name}:${event.t_sec}`,
+      event,
+      item,
+      count: 1,
+      lastTime: event.t_sec,
+    })
+  }
+  return groups
+})
 
 interface BuildRow {
   key: string
   event: EventItem
   item: CatalogItem
+  count: number
   past: boolean
   next: boolean
 }
 
 const buildRows = computed<BuildRow[]>(() => {
   const time = state.value?.time ?? 0
-  const actions = buildActions.value
-  const past = actions.filter((event) => event.t_sec <= time).slice(-1)
-  const upcoming = actions.filter((event) => event.t_sec > time).slice(0, past.length ? 3 : 4)
+  const groups = buildGroups.value
+  const past = groups.filter((group) => group.event.t_sec <= time).slice(-1)
+  const upcoming = groups
+    .filter((group) => group.event.t_sec > time)
+    .slice(0, past.length ? 3 : 4)
   const selected = [...past, ...upcoming]
-  return selected.map((event, index) => ({
-    key: `${event.kind}:${event.name}:${event.t_sec}:${index}`,
-    event,
-    item: resolveItem(event.name)!,
-    past: event.t_sec <= time,
+  return selected.map((group, index) => ({
+    key: `${group.key}:${index}`,
+    event: group.event,
+    item: group.item,
+    count: group.count,
+    past: group.event.t_sec <= time,
     next: index === past.length,
   }))
 })
 
-const nextAction = computed(() => buildRows.value.find((r) => r.next))
+const nextAction = computed(() => buildRows.value.find((row) => row.next))
 
 interface UnlockEntry {
   event: EventItem
@@ -124,9 +165,10 @@ const unlockEntries = computed<UnlockEntry[]>(() => {
       event.kind === 'build_done' ||
       (event.kind === 'unit_born' && event.payload?.is_building === true)
     const isUpgradeDone = event.kind === 'upgrade_done'
+    const includeWorkers = state.value?.includeWorkers ?? false
     const isUnitBorn =
       event.kind === 'unit_born' &&
-      !event.is_worker &&
+      (includeWorkers || !event.is_worker) &&
       event.payload?.is_building !== true
 
     if (!isBuildingDone && !isUpgradeDone && !isUnitBorn) continue
@@ -223,7 +265,7 @@ async function loadData() {
   overflow: hidden;
   border: 1px solid rgba(73, 143, 220, 0.35);
   border-radius: 8px;
-  background: rgba(3, 7, 15, calc(var(--panel-alpha, 0.6) * 0.8));
+  background: rgba(3, 7, 15, var(--panel-alpha, 0.6));
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
 }
@@ -369,6 +411,13 @@ async function loadData() {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.item-count,
+.next-count {
+  color: #8ec5ff;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .item-name {

@@ -175,42 +175,51 @@
               >
                 Overlay/语音 {{ overlayEnabled ? '关闭' : '开启' }}
               </button>
-              <span class="voice-rate-label">{{ voiceRate.toFixed(1) }}x</span>
-              <input
-                v-model.number="voiceRate"
-                class="voice-rate"
-                type="range"
-                min="0.8"
-                max="2.5"
-                step="0.1"
-                title="语音速度"
-              />
-              <label class="voice-workers" title="语音播报包含农民">
-                <input v-model="voiceIncludeWorkers" type="checkbox" />
-                农民
-              </label>
-              <input
-                v-model.number="overlayOpacity"
-                class="overlay-opacity"
-                type="range"
-                min="0.25"
-                max="0.9"
-                step="0.01"
-                title="Overlay 透明度"
-              />
-              <select v-model="overlayAnchor" class="anchor-select" title="Overlay 位置">
-                <option value="top-center">顶部居中</option>
-                <option value="top-left">左上</option>
-                <option value="top-right">右上</option>
-                <option value="bottom-left">左下</option>
-                <option value="bottom-right">右下</option>
-              </select>
-              <select v-model.number="overlayMonitor" class="anchor-select monitor-select" title="Overlay 显示器">
-                <option :value="-1">跟随主窗口</option>
-                <option v-for="(monitor, index) in monitors" :key="index" :value="index">
-                  {{ monitor.name }} · {{ monitor.width }}×{{ monitor.height }}
-                </option>
-              </select>
+              <div ref="overlaySettingsRef" class="overlay-settings-picker">
+                <button
+                  class="overlay-settings-button"
+                  :class="{ active: overlaySettingsOpen }"
+                  title="Overlay 设置"
+                  @click="overlaySettingsOpen = !overlaySettingsOpen"
+                >
+                  设置
+                </button>
+                <div v-if="overlaySettingsOpen" class="overlay-settings-panel" @click.stop>
+                  <label class="overlay-setting-row">
+                    <span>语音速度</span>
+                    <b>{{ voiceRate.toFixed(1) }}x</b>
+                    <input v-model.number="voiceRate" type="range" min="0.8" max="2.5" step="0.1" />
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>播报农民</span>
+                    <input v-model="voiceIncludeWorkers" class="overlay-setting-check" type="checkbox" />
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>透明度</span>
+                    <b>{{ Math.round(overlayOpacity * 100) }}%</b>
+                    <input v-model.number="overlayOpacity" type="range" min="0.1" max="1" step="0.01" />
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>位置</span>
+                    <select v-model="overlayAnchor">
+                      <option value="top-center">顶部居中</option>
+                      <option value="top-left">左上</option>
+                      <option value="top-right">右上</option>
+                      <option value="bottom-left">左下</option>
+                      <option value="bottom-right">右下</option>
+                    </select>
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>显示器</span>
+                    <select v-model.number="overlayMonitor">
+                      <option :value="-1">跟随主窗口</option>
+                      <option v-for="(monitor, index) in monitors" :key="index" :value="index">
+                        {{ monitor.name }} · {{ monitor.width }}×{{ monitor.height }}
+                      </option>
+                    </select>
+                  </label>
+                </div>
+              </div>
             </div>
             <span v-if="overlayError" class="overlay-error-text">{{ overlayError }}</span>
           </div>
@@ -328,6 +337,7 @@ import {
   type OverlayMonitor,
 } from '../../composables/useTauri'
 import { useVoiceReader } from '../../composables/useVoiceReader'
+import { SC2_FASTER_REAL_FACTOR } from '../../utils'
 import { useLanguage } from '../../composables/useLanguage'
 import ConstructionStrip from './ConstructionStrip.vue'
 import ReplayLibrary from './ReplayLibrary.vue'
@@ -367,12 +377,14 @@ let importTimer: ReturnType<typeof setTimeout> | null = null
 
 const isDesktop = isTauriRuntime()
 const overlayEnabled = ref(false)
-const overlayOpacity = ref(Number(localStorage.getItem('sc2-overlay-opacity-v2') || 0.55))
+const overlayOpacity = ref(Number(localStorage.getItem('sc2-overlay-opacity-v3') || 0.55))
 const overlayAnchor = ref<OverlayAnchor>(
   savedAnchor('sc2-overlay-anchor', 'top-center'),
 )
 const overlayMonitor = ref(Number(localStorage.getItem('sc2-overlay-monitor') ?? -1))
 const voiceIncludeWorkers = ref(localStorage.getItem('sc2-voice-include-workers') === '1')
+const overlaySettingsOpen = ref(false)
+const overlaySettingsRef = ref<HTMLElement | null>(null)
 const monitors = ref<OverlayMonitor[]>([])
 const overlayError = ref('')
 let overlayUnlisten: (() => void) | null = null
@@ -380,22 +392,31 @@ let overlayShortcutUnregister: (() => Promise<void>) | null = null
 let overlaySyncTimer: number | null = null
 
 const {
-  isRunning: voiceIsRunning,
   rate: voiceRate,
   lang: voiceLang,
   loadDisplaySteps,
-  togglePlay: voiceTogglePlay,
-  reset: voiceReset,
+  start: voiceStart,
+  stop: voiceStop,
+  sync: voiceSync,
 } = useVoiceReader()
+voiceRate.value = Number(localStorage.getItem('sc2-voice-rate') || 1.2)
 
 watch(
   english,
   (value) => {
     voiceLang.value = value ? 'en-US' : 'zh-CN'
-    if (overlayEnabled.value) refreshVoiceSteps()
+    if (overlayEnabled.value) {
+      refreshVoiceSteps()
+      voiceStart()
+      syncVoiceToTimeline()
+    }
   },
   { immediate: true },
 )
+
+watch(voiceRate, (value) => {
+  localStorage.setItem('sc2-voice-rate', String(value))
+})
 
 let animationFrame: number | null = null
 let lastFrame = 0
@@ -711,8 +732,20 @@ const upgradeRows = computed<UpgradeStripRow[]>(() => {
   }))
 })
 
+function handleOverlaySettingsOutside(event: MouseEvent) {
+  if (!overlaySettingsOpen.value) return
+  if (overlaySettingsRef.value?.contains(event.target as Node)) return
+  overlaySettingsOpen.value = false
+}
+
+function handleOverlaySettingsKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') overlaySettingsOpen.value = false
+}
+
 onMounted(() => {
   loadFolders()
+  document.addEventListener('click', handleOverlaySettingsOutside)
+  document.addEventListener('keydown', handleOverlaySettingsKeydown)
   window.addEventListener('resize', handleViewport)
   handleViewport()
   if (isDesktop) {
@@ -749,6 +782,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   pause()
   closeVoice()
+  document.removeEventListener('click', handleOverlaySettingsOutside)
+  document.removeEventListener('keydown', handleOverlaySettingsKeydown)
   window.removeEventListener('resize', handleViewport)
   dragUnlisten?.()
   if (importTimer) clearTimeout(importTimer)
@@ -767,7 +802,7 @@ watch(english, () => {
 })
 
 watch(overlayOpacity, (value) => {
-  localStorage.setItem('sc2-overlay-opacity-v2', String(value))
+  localStorage.setItem('sc2-overlay-opacity-v3', String(value))
   if (overlayEnabled.value) scheduleOverlaySync(true)
 })
 
@@ -784,9 +819,15 @@ watch(overlayMonitor, (index) => {
 watch(voiceIncludeWorkers, (includeWorkers) => {
   localStorage.setItem('sc2-voice-include-workers', includeWorkers ? '1' : '0')
   if (!overlayEnabled.value) return
-  const wasRunning = voiceIsRunning.value
+  scheduleOverlaySync(true)
   refreshVoiceSteps()
-  if (wasRunning) voiceTogglePlay()
+  voiceStart()
+  syncVoiceToTimeline()
+})
+
+watch(time, () => {
+  if (!overlayEnabled.value) return
+  syncVoiceToTimeline(playing.value)
 })
 
 async function loadFolders() {
@@ -1030,6 +1071,7 @@ function buildOverlayState(): OverlayState {
     countMode: countMode.value,
     opacity: overlayOpacity.value,
     english: english.value,
+    includeWorkers: voiceIncludeWorkers.value,
   }
 }
 
@@ -1142,14 +1184,19 @@ function refreshVoiceSteps() {
   loadDisplaySteps(items)
 }
 
+function syncVoiceToTimeline(speak = playing.value) {
+  voiceSync(time.value * SC2_FASTER_REAL_FACTOR, { speak })
+}
+
 function enableVoice(autoplay = false) {
   if (!selectedPlayer.value) return
   refreshVoiceSteps()
-  if (autoplay && !voiceIsRunning.value) voiceTogglePlay()
+  voiceStart()
+  if (autoplay) syncVoiceToTimeline(playing.value)
 }
 
 function closeVoice() {
-  voiceReset()
+  voiceStop()
 }
 
 async function startImport() {
@@ -1914,32 +1961,6 @@ function pollImport(jobId: string) {
   font-size: 11px;
 }
 
-.voice-rate-label {
-  color: #8ca6c8;
-  font-size: 10px;
-}
-
-.voice-rate {
-  width: 64px;
-  accent-color: #a855f7;
-}
-
-.voice-workers {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  color: #8ca6c8;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.voice-workers input {
-  width: 12px;
-  height: 12px;
-  margin: 0;
-  accent-color: #a855f7;
-}
-
 .overlay-controls {
   display: flex;
   align-items: center;
@@ -1963,16 +1984,84 @@ function pollImport(jobId: string) {
   box-shadow: 0 0 10px rgba(61, 127, 196, 0.25);
 }
 
-.overlay-opacity {
-  width: 70px;
+.overlay-settings-picker {
+  position: relative;
+}
+
+.overlay-settings-button {
+  padding: 4px 9px;
+  border: 1px solid #1d3352;
+  border-radius: 7px;
+  background: transparent;
+  color: #7893b5;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.overlay-settings-button:hover,
+.overlay-settings-button.active {
+  border-color: #3d7fc4;
+  color: #d9ecff;
+}
+
+.overlay-settings-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  width: 270px;
+  padding: 8px 10px;
+  border: 1px solid #24466f;
+  border-radius: 8px;
+  background: #08111f;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.overlay-setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  color: #9fb8d8;
+  font-size: 10px;
+}
+
+.overlay-setting-row + .overlay-setting-row {
+  border-top: 1px solid #162a45;
+}
+
+.overlay-setting-row > span {
+  width: 58px;
+  color: #7ca5cf;
+}
+
+.overlay-setting-row b {
+  margin-left: auto;
+  color: #cfe3fa;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+}
+
+.overlay-setting-row input[type='range'] {
+  width: 100%;
   accent-color: #4b9bf0;
 }
 
-.anchor-select {
+.overlay-setting-check {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  accent-color: #a855f7;
+}
+
+.overlay-setting-row select {
+  flex: 1;
+  min-width: 0;
   padding: 3px 5px;
   border: 1px solid #1d3352;
-  border-radius: 6px;
-  background: #080f1c;
+  border-radius: 5px;
+  background: #070d18;
   color: #9fb8d8;
   font-size: 10px;
   outline: none;
