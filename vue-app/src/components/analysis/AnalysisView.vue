@@ -150,7 +150,7 @@
           </div>
         </header>
 
-        <div v-if="!splitView || isDesktop || voiceVisible" class="tree-toolbar">
+        <div v-if="!splitView || isDesktop" class="tree-toolbar">
           <div class="toolbar-actions">
             <div class="segmented" v-if="!splitView">
               <button
@@ -166,13 +166,6 @@
                 自适应
               </button>
             </div>
-            <div v-if="voiceVisible" class="voice-quick">
-              <span>{{ voiceRate.toFixed(1) }}x</span>
-              <input v-model.number="voiceRate" type="range" min="0.8" max="2.5" step="0.1" />
-              <button @click="voiceLayout = voiceLayout === 'horizontal' ? 'vertical' : 'horizontal'">
-                {{ voiceLayout === 'horizontal' ? '横排' : '竖排' }}
-              </button>
-            </div>
             <div v-if="isDesktop" class="overlay-controls">
               <button
                 class="overlay-button"
@@ -182,6 +175,20 @@
               >
                 Overlay/语音 {{ overlayEnabled ? '关闭' : '开启' }}
               </button>
+              <span class="voice-rate-label">{{ voiceRate.toFixed(1) }}x</span>
+              <input
+                v-model.number="voiceRate"
+                class="voice-rate"
+                type="range"
+                min="0.8"
+                max="2.5"
+                step="0.1"
+                title="语音速度"
+              />
+              <label class="voice-workers" title="语音播报包含农民">
+                <input v-model="voiceIncludeWorkers" type="checkbox" />
+                农民
+              </label>
               <input
                 v-model.number="overlayOpacity"
                 class="overlay-opacity"
@@ -197,6 +204,12 @@
                 <option value="top-right">右上</option>
                 <option value="bottom-left">左下</option>
                 <option value="bottom-right">右下</option>
+              </select>
+              <select v-model.number="overlayMonitor" class="anchor-select monitor-select" title="Overlay 显示器">
+                <option :value="-1">跟随主窗口</option>
+                <option v-for="(monitor, index) in monitors" :key="index" :value="index">
+                  {{ monitor.name }} · {{ monitor.width }}×{{ monitor.height }}
+                </option>
               </select>
             </div>
             <span v-if="overlayError" class="overlay-error-text">{{ overlayError }}</span>
@@ -275,25 +288,6 @@
       />
     </main>
 
-    <VoiceControlPanel
-      ref="voicePanelRef"
-      :visible="voiceVisible"
-      :layout="voiceLayout"
-      :timer-str="voiceTimerStr"
-      :is-playing="voiceIsRunning"
-      :prev-steps="prevVoiceSteps"
-      :current-step="currentVoiceStepObj"
-      :next-steps="nextVoiceSteps"
-      :step-progress="voiceStepProgress() / 100"
-      :timeline-progress="voiceTimelineProgress() / 100"
-      :can-pip="isPiPSupported"
-      :is-pip="!!pipWindow"
-      @pop-out="onPopOut"
-      @close="closeVoice"
-      @toggle-play="voiceTogglePlay"
-      @reset="voiceReset"
-      @timeline-click="voiceTimelineClick"
-    />
   </div>
 </template>
 
@@ -323,6 +317,7 @@ import {
   emitOverlayState,
   hideOverlayWindow,
   isTauriRuntime,
+  listMonitors,
   listenOverlayEvent,
   openOverlayWindow,
   pickDirectory,
@@ -330,14 +325,12 @@ import {
   positionOverlayWindow,
   registerOverlayShortcut,
   listenDragDrop,
+  type OverlayMonitor,
 } from '../../composables/useTauri'
 import { useVoiceReader } from '../../composables/useVoiceReader'
-import { useDocumentPiP } from '../../composables/useDocumentPiP'
-import { SC2_FASTER_REAL_FACTOR } from '../../utils'
 import { useLanguage } from '../../composables/useLanguage'
 import ConstructionStrip from './ConstructionStrip.vue'
 import ReplayLibrary from './ReplayLibrary.vue'
-import VoiceControlPanel from '../VoiceControlPanel.vue'
 import ScaledTree from './ScaledTree.vue'
 import PlayerTreePanel from './PlayerTreePanel.vue'
 import UpgradeStrip from './UpgradeStrip.vue'
@@ -378,66 +371,31 @@ const overlayOpacity = ref(Number(localStorage.getItem('sc2-overlay-opacity-v2')
 const overlayAnchor = ref<OverlayAnchor>(
   savedAnchor('sc2-overlay-anchor', 'top-center'),
 )
+const overlayMonitor = ref(Number(localStorage.getItem('sc2-overlay-monitor') ?? -1))
+const voiceIncludeWorkers = ref(localStorage.getItem('sc2-voice-include-workers') === '1')
+const monitors = ref<OverlayMonitor[]>([])
 const overlayError = ref('')
 let overlayUnlisten: (() => void) | null = null
 let overlayShortcutUnregister: (() => Promise<void>) | null = null
 let overlaySyncTimer: number | null = null
 
 const {
-  steps: voiceSteps,
-  currentIndex: voiceCurrentIndex,
   isRunning: voiceIsRunning,
   rate: voiceRate,
   lang: voiceLang,
-  visible: voiceVisible,
-  gameClockSeconds: voiceGameClockSeconds,
-  stepProgress: voiceStepProgress,
-  timelineProgress: voiceTimelineProgress,
   loadDisplaySteps,
   togglePlay: voiceTogglePlay,
   reset: voiceReset,
-  timelineClick: voiceTimelineClick,
-  jumpStep: voiceJumpStep,
 } = useVoiceReader()
-const { isSupported: isPiPSupported, pipWindow, requestPiP } = useDocumentPiP()
-const voicePanelRef = ref<any>(null)
-const voiceLayout = ref<'horizontal' | 'vertical'>('horizontal')
 
 watch(
   english,
   (value) => {
     voiceLang.value = value ? 'en-US' : 'zh-CN'
-    if (voiceVisible.value) refreshVoiceSteps()
+    if (overlayEnabled.value) refreshVoiceSteps()
   },
   { immediate: true },
 )
-
-const voiceTimerStr = computed(() => formatClock(voiceGameClockSeconds()))
-const currentVoiceStepObj = computed(() => {
-  const index = voiceCurrentIndex.value
-  if (index < 0 || index >= voiceSteps.value.length) return null
-  const step = voiceSteps.value[index]
-  return {
-    time: formatClock(step.time / SC2_FASTER_REAL_FACTOR),
-    text: step.text,
-  }
-})
-const prevVoiceSteps = computed(() => {
-  const index = voiceCurrentIndex.value
-  if (index <= 0) return []
-  return voiceSteps.value.slice(Math.max(0, index - 2), index).map((step) => ({
-    time: formatClock(step.time / SC2_FASTER_REAL_FACTOR),
-    text: step.text,
-  }))
-})
-const nextVoiceSteps = computed(() => {
-  const index = voiceCurrentIndex.value
-  const start = index < 0 ? 0 : index + 1
-  return voiceSteps.value.slice(start, start + 2).map((step) => ({
-    time: formatClock(step.time / SC2_FASTER_REAL_FACTOR),
-    text: step.text,
-  }))
-})
 
 let animationFrame: number | null = null
 let lastFrame = 0
@@ -755,10 +713,12 @@ const upgradeRows = computed<UpgradeStripRow[]>(() => {
 
 onMounted(() => {
   loadFolders()
-  window.addEventListener('keydown', handleVoiceKey)
   window.addEventListener('resize', handleViewport)
   handleViewport()
   if (isDesktop) {
+    void listMonitors().then((items) => {
+      monitors.value = items
+    })
     void listenDragDrop((paths) => {
       void handleDropPaths(paths)
     })
@@ -789,7 +749,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   pause()
   closeVoice()
-  window.removeEventListener('keydown', handleVoiceKey)
   window.removeEventListener('resize', handleViewport)
   dragUnlisten?.()
   if (importTimer) clearTimeout(importTimer)
@@ -814,7 +773,20 @@ watch(overlayOpacity, (value) => {
 
 watch(overlayAnchor, (anchor) => {
   localStorage.setItem('sc2-overlay-anchor', anchor)
-  if (overlayEnabled.value) void positionOverlayWindow(anchor)
+  if (overlayEnabled.value) void positionOverlayWindow(anchor, overlayMonitor.value)
+})
+
+watch(overlayMonitor, (index) => {
+  localStorage.setItem('sc2-overlay-monitor', String(index))
+  if (overlayEnabled.value) void positionOverlayWindow(overlayAnchor.value, index)
+})
+
+watch(voiceIncludeWorkers, (includeWorkers) => {
+  localStorage.setItem('sc2-voice-include-workers', includeWorkers ? '1' : '0')
+  if (!overlayEnabled.value) return
+  const wasRunning = voiceIsRunning.value
+  refreshVoiceSteps()
+  if (wasRunning) voiceTogglePlay()
 })
 
 async function loadFolders() {
@@ -914,8 +886,6 @@ function selectPlayer(playerId: number) {
   activePlayerId.value = playerId
   if (overlayEnabled.value) {
     enableVoice(true)
-  } else if (voiceVisible.value) {
-    refreshVoiceSteps()
   }
 }
 
@@ -1105,7 +1075,8 @@ async function toggleOverlay() {
       closeVoice()
       return
     }
-    await openOverlayWindow(overlayAnchor.value)
+    monitors.value = await listMonitors()
+    await openOverlayWindow(overlayAnchor.value, overlayMonitor.value)
     overlayEnabled.value = true
     scheduleOverlaySync(true)
     enableVoice(true)
@@ -1120,7 +1091,10 @@ function refreshVoiceSteps() {
 
   const orders = timeline.value
     .filter((event) => {
-      if (event.player_id !== player.id || event.kind !== 'order' || event.is_worker) {
+      if (event.player_id !== player.id || event.kind !== 'order') {
+        return false
+      }
+      if (!voiceIncludeWorkers.value && event.is_worker) {
         return false
       }
       const item = resolveItem(event.name)
@@ -1171,62 +1145,11 @@ function refreshVoiceSteps() {
 function enableVoice(autoplay = false) {
   if (!selectedPlayer.value) return
   refreshVoiceSteps()
-  voiceVisible.value = true
   if (autoplay && !voiceIsRunning.value) voiceTogglePlay()
 }
 
 function closeVoice() {
-  voiceVisible.value = false
   voiceReset()
-}
-
-async function onPopOut() {
-  if (!voicePanelRef.value) return
-  const element = voicePanelRef.value.$el as HTMLElement
-  await requestPiP(element, {
-    width: voiceLayout.value === "horizontal" ? 540 : 320,
-    height: voiceLayout.value === "horizontal" ? 120 : 600,
-    fallbackData: {
-      get timer() {
-        return voiceTimerStr.value
-      },
-      get currentStep() {
-        return currentVoiceStepObj.value
-      },
-      get prevSteps() {
-        return prevVoiceSteps.value
-      },
-      get nextSteps() {
-        return nextVoiceSteps.value
-      },
-      get stepProgress() {
-        return voiceStepProgress() / 100
-      },
-      get timelineProgress() {
-        return voiceTimelineProgress() / 100
-      },
-      get layout() {
-        return voiceLayout.value
-      },
-    },
-  })
-}
-
-function handleVoiceKey(event: KeyboardEvent) {
-  if (!voiceVisible.value || !event.altKey) return
-  if (event.key === "ArrowUp") {
-    event.preventDefault()
-    voiceTogglePlay()
-  } else if (event.key === "ArrowDown") {
-    event.preventDefault()
-    closeVoice()
-  } else if (event.key === "ArrowRight") {
-    event.preventDefault()
-    voiceJumpStep(1)
-  } else if (event.key === "ArrowLeft") {
-    event.preventDefault()
-    voiceJumpStep(-1)
-  }
 }
 
 async function startImport() {
@@ -1991,27 +1914,30 @@ function pollImport(jobId: string) {
   font-size: 11px;
 }
 
-.voice-quick {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.voice-rate-label {
   color: #8ca6c8;
   font-size: 10px;
 }
 
-.voice-quick input {
+.voice-rate {
   width: 64px;
   accent-color: #a855f7;
 }
 
-.voice-quick button {
-  padding: 3px 6px;
-  border: 1px solid #1d3352;
-  border-radius: 5px;
-  background: transparent;
+.voice-workers {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   color: #8ca6c8;
   font-size: 10px;
   cursor: pointer;
+}
+
+.voice-workers input {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  accent-color: #a855f7;
 }
 
 .overlay-controls {

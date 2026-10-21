@@ -34,7 +34,6 @@ Run the API (migrations run automatically at startup):
 Run the Vue app against the local API:
 
 ```bash
-cd vue-app
 pnpm dev
 ```
 
@@ -51,7 +50,6 @@ cd services/analyzer
 Tauri desktop shell (starts the backend automatically):
 
 ```bash
-cd vue-app
 pnpm tauri:dev
 ```
 

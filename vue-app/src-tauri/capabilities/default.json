@@ -22,6 +22,7 @@
     "core:window:allow-set-ignore-cursor-events",
     "core:window:allow-set-focus",
     "core:window:allow-set-focusable",
+    "core:window:allow-available-monitors",
     "core:window:allow-current-monitor",
     "core:window:allow-primary-monitor",
     "core:window:allow-inner-size",

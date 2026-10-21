@@ -57,7 +57,27 @@ export async function listenOverlayEvent<T>(
   return listen<T>(event, (message) => callback(message.payload))
 }
 
-export async function openOverlayWindow(anchor: OverlayAnchor = 'top-center'): Promise<void> {
+export interface OverlayMonitor {
+  name: string
+  width: number
+  height: number
+}
+
+export async function listMonitors(): Promise<OverlayMonitor[]> {
+  if (!isTauriRuntime()) return []
+  const { availableMonitors } = await import('@tauri-apps/api/window')
+  const monitors = await availableMonitors()
+  return monitors.map((monitor, index) => ({
+    name: monitor.name || `显示器 ${index + 1}`,
+    width: Math.round(monitor.size.width / (monitor.scaleFactor || 1)),
+    height: Math.round(monitor.size.height / (monitor.scaleFactor || 1)),
+  }))
+}
+
+export async function openOverlayWindow(
+  anchor: OverlayAnchor = 'top-center',
+  monitorIndex = -1,
+): Promise<void> {
   const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
   let overlay = await WebviewWindow.getByLabel(OVERLAY_LABEL)
 
@@ -87,19 +107,24 @@ export async function openOverlayWindow(anchor: OverlayAnchor = 'top-center'): P
   await overlay.setIgnoreCursorEvents(true)
   await overlay.setAlwaysOnTop(true)
   await overlay.setFocusable(false)
-  await positionOverlayWindow(anchor)
+  await positionOverlayWindow(anchor, monitorIndex)
   await overlay.show()
 }
 
-export async function positionOverlayWindow(anchor: OverlayAnchor): Promise<void> {
+export async function positionOverlayWindow(
+  anchor: OverlayAnchor,
+  monitorIndex = -1,
+): Promise<void> {
   if (!isTauriRuntime()) return
   const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
   const overlay = await WebviewWindow.getByLabel(OVERLAY_LABEL)
   if (!overlay) return
 
-  const { currentMonitor } = await import('@tauri-apps/api/window')
+  const { availableMonitors, currentMonitor } = await import('@tauri-apps/api/window')
   const { LogicalPosition, LogicalSize } = await import('@tauri-apps/api/dpi')
-  const monitor = await currentMonitor()
+  const monitors = monitorIndex >= 0 ? await availableMonitors() : []
+  const monitor =
+    (monitorIndex >= 0 ? monitors[monitorIndex] : null) ?? (await currentMonitor())
   if (!monitor) return
 
   const scale = monitor.scaleFactor || 1

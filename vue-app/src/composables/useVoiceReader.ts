@@ -6,7 +6,6 @@ export function useVoiceReader() {
   const steps = ref<VoiceStep[]>([])
   const currentIndex = ref(-1)
   const isRunning = ref(false)
-  const visible = ref(false)
   const currentTime = ref(0) // real elapsed seconds
   const rate = ref(2.0)
   const lang = ref('zh-CN')
@@ -156,7 +155,6 @@ export function useVoiceReader() {
     steps,
     currentIndex,
     isRunning,
-    visible,
     currentTime,
     rate,
     lang,

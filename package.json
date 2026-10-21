@@ -1,0 +1,12 @@
+{
+  "name": "sc2build-tts",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --dir vue-app dev",
+    "build": "pnpm --dir vue-app build",
+    "tauri": "pnpm --dir vue-app tauri",
+    "tauri:dev": "pnpm --dir vue-app tauri:dev",
+    "tauri:build": "pnpm --dir vue-app tauri:build"
+  },
+  "packageManager": "pnpm@10.34.7"
+}
