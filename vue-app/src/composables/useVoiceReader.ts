@@ -7,7 +7,7 @@ export function useVoiceReader() {
   const currentIndex = ref(-1)
   const isRunning = ref(false)
   const currentTime = ref(0) // real elapsed seconds
-  const rate = ref(1.2)
+  const rate = ref(2.0)
   const lang = ref('zh-CN')
 
   const synth = window.speechSynthesis

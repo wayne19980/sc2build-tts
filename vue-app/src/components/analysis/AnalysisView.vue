@@ -379,7 +379,7 @@ let importTimer: ReturnType<typeof setTimeout> | null = null
 
 const isDesktop = isTauriRuntime()
 const overlayEnabled = ref(false)
-const overlayOpacity = ref(Number(localStorage.getItem('sc2-overlay-opacity-v3') || 0.55))
+const overlayOpacity = ref(Number(localStorage.getItem('sc2-overlay-opacity-v4') || 0.7))
 const overlayAnchor = ref<OverlayAnchor>(
   savedAnchor('sc2-overlay-anchor', 'top-center'),
 )
@@ -401,12 +401,22 @@ const {
   stop: voiceStop,
   sync: voiceSync,
 } = useVoiceReader()
-voiceRate.value = Number(localStorage.getItem('sc2-voice-rate') || 1.2)
+
+function voiceRateKey(isEnglish: boolean) {
+  return isEnglish ? 'sc2-voice-rate-en' : 'sc2-voice-rate-zh'
+}
+
+function loadVoiceRate(isEnglish: boolean) {
+  const stored = localStorage.getItem(voiceRateKey(isEnglish))
+  if (stored) return Number(stored)
+  return isEnglish ? 1.5 : 2.0
+}
 
 watch(
   english,
   (value) => {
     voiceLang.value = value ? 'en-US' : 'zh-CN'
+    voiceRate.value = loadVoiceRate(value)
     if (overlayEnabled.value) {
       refreshVoiceSteps()
       voiceStart()
@@ -417,7 +427,7 @@ watch(
 )
 
 watch(voiceRate, (value) => {
-  localStorage.setItem('sc2-voice-rate', String(value))
+  localStorage.setItem(voiceRateKey(voiceLang.value === 'en-US'), String(value))
 })
 
 let animationFrame: number | null = null
@@ -744,7 +754,7 @@ watch(english, () => {
 })
 
 watch(overlayOpacity, (value) => {
-  localStorage.setItem('sc2-overlay-opacity-v3', String(value))
+  localStorage.setItem('sc2-overlay-opacity-v4', String(value))
   if (overlayEnabled.value) scheduleOverlaySync(true)
 })
 
