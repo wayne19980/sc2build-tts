@@ -75,7 +75,7 @@
     <main class="main-panel">
       <div v-if="backendStarting" class="backend-status">
         <span class="status-dot" />
-        {{ english ? 'Starting local database…' : '正在启动本地数据库…' }}
+        {{ english ? 'Starting local database (first launch may take a minute)…' : '正在启动本地数据库（首次启动可能需要一分钟）…' }}
       </div>
       <template v-if="activeGame">
         <header class="game-header">

@@ -25,7 +25,7 @@ def _patch_pg_ctl_timeout() -> None:
         return
 
     def pg_ctl_with_timeout(args, **kwargs):
-        kwargs.setdefault("timeout", _PG_CTL_TIMEOUT)
+        kwargs["timeout"] = _PG_CTL_TIMEOUT
         return original(args, **kwargs)
 
     pg_ctl_with_timeout._sc2_timeout = _PG_CTL_TIMEOUT
