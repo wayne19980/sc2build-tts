@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
-from sc2analyzer.parser import canonical_unit_name, parse_replay
+import pytest
+
+from sc2analyzer.parser import canonical_unit_name, display_fps, parse_replay
 
 REPLAY = (
     Path(__file__).resolve().parents[3]
@@ -80,3 +83,24 @@ def test_zerg_variant_names_are_canonicalized() -> None:
     assert canonical_unit_name("OverlordCocoon") == "Overseer"
     assert canonical_unit_name("BanelingCocoon") == "Baneling"
     assert canonical_unit_name("RavagerCocoon") == "Ravager"
+
+
+def test_display_fps_ignores_cooperative_bit_for_ai_games() -> None:
+    replay = SimpleNamespace(
+        game_fps=16.0,
+        build=98370,
+        players=[SimpleNamespace(commander="")],
+    )
+    st_data = {"frames_per_second": 16, "cooperative": True}
+
+    assert display_fps(replay, st_data) == pytest.approx(22.4)
+
+
+def test_display_fps_uses_coop_rate_for_real_coop_replays() -> None:
+    replay = SimpleNamespace(
+        game_fps=16.0,
+        build=98370,
+        players=[SimpleNamespace(commander="Raynor")],
+    )
+
+    assert display_fps(replay, {"frames_per_second": 16}) == 16

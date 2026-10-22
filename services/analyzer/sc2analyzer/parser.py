@@ -19,14 +19,6 @@ from sc2reader.events.tracker import (
 )
 from sc2reader.events.tracker import PlayerStatsEvent
 
-SPEED_FACTOR = {
-    "Slower": 0.6,
-    "Slow": 0.8,
-    "Normal": 1.0,
-    "Fast": 1.2,
-    "Faster": 1.4,
-}
-
 UNIT_VARIANTS = {
     "AdeptPhaseShift": "AdeptPhaseShift",
     "BattleHellion": "Hellbat",
@@ -84,11 +76,21 @@ def canonical_unit_name(name: str) -> str:
     return UNIT_VARIANTS.get(name, name)
 
 
+LOTV_BUILD = 34784
+
+
 def display_fps(replay: Any, st_data: dict[str, Any]) -> float:
-    fps = st_data.get("frames_per_second")
-    if fps:
-        return float(fps)
-    return float(replay.game_fps) * SPEED_FACTOR.get(replay.speed, 1.0)
+    # spawningtool switches to co-op constants (16 fps) whenever the replay's
+    # "cooperative" bit is set. That bit is also set for vs-AI games, which
+    # still use the normal LotV simulation rate, so only trust the co-op rate
+    # when actual co-op commanders are present.
+    if any(getattr(player, "commander", None) for player in replay.players):
+        fps = st_data.get("frames_per_second")
+        if fps:
+            return float(fps)
+    if replay.build >= LOTV_BUILD:
+        return float(replay.game_fps) * 1.4
+    return float(replay.game_fps)
 
 
 @dataclass
