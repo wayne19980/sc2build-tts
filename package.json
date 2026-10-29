@@ -2,8 +2,11 @@
   "name": "sc2build-tts",
   "private": true,
   "scripts": {
-    "dev": "pnpm --dir vue-app dev",
-    "build": "pnpm --dir vue-app build",
+    "dev": "node scripts/dev-all.mjs",
+    "dev:frontend": "pnpm --dir vue-app dev",
+    "build": "node scripts/build-all.mjs",
+    "build:frontend": "pnpm --dir vue-app build",
+    "version:bump": "node scripts/bump-version.mjs",
     "tauri": "pnpm --dir vue-app tauri",
     "tauri:dev": "pnpm --dir vue-app tauri:dev",
     "tauri:build": "pnpm --dir vue-app tauri:build"

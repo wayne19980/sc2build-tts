@@ -119,7 +119,10 @@
                   {{ raceLetter(player.race) }}
                 </span>
                 <span class="player-tab-name">{{ player.name }}</span>
-                <span v-if="player.is_winner" class="crown">★</span>
+                <template v-if="!splitView">
+                  <span v-if="player.is_winner" class="crown">★</span>
+                  <SupplyBreakdown :supply="playerSupplyInfo.get(player.id)" />
+                </template>
               </button>
             </template>
           </div>
@@ -166,63 +169,6 @@
                 自适应
               </button>
             </div>
-            <div v-if="isDesktop" class="overlay-controls">
-              <button
-                class="overlay-button"
-                :class="{ active: overlayEnabled }"
-                title="Overlay 与语音播报开关 (Ctrl+Shift+O)"
-                @click="toggleOverlay"
-              >
-                Overlay/语音 {{ overlayEnabled ? '关闭' : '开启' }}
-              </button>
-              <div ref="overlaySettingsRef" class="overlay-settings-picker">
-                <button
-                  class="overlay-settings-button"
-                  :class="{ active: overlaySettingsOpen }"
-                  title="Overlay 设置"
-                  @click="overlaySettingsOpen = !overlaySettingsOpen"
-                >
-                  设置
-                </button>
-                <div v-if="overlaySettingsOpen" class="overlay-settings-panel" @click.stop>
-                  <label class="overlay-setting-row">
-                    <span>语音速度</span>
-                    <b>{{ voiceRate.toFixed(1) }}x</b>
-                    <input v-model.number="voiceRate" type="range" min="0.8" max="2.5" step="0.1" />
-                  </label>
-                  <label class="overlay-setting-row">
-                    <span>播报农民</span>
-                    <input v-model="voiceIncludeWorkers" class="overlay-setting-check" type="checkbox" />
-                  </label>
-                  <label class="overlay-setting-row">
-                    <span>透明度</span>
-                    <b>{{ Math.round(overlayOpacity * 100) }}%</b>
-                    <input v-model.number="overlayOpacity" type="range" min="0.1" max="1" step="0.01" />
-                  </label>
-                  <label class="overlay-setting-row">
-                    <span>位置</span>
-                    <select v-model="overlayAnchor">
-                      <option value="top-center">顶部居中</option>
-                      <option value="top-left">左上</option>
-                      <option value="top-right">右上</option>
-                      <option value="bottom-left">左下</option>
-                      <option value="bottom-right">右下</option>
-                    </select>
-                  </label>
-                  <label class="overlay-setting-row">
-                    <span>显示器</span>
-                    <select v-model.number="overlayMonitor">
-                      <option :value="-2">主显示器</option>
-                      <option :value="-1">跟随主窗口</option>
-                      <option v-for="(monitor, index) in monitors" :key="index" :value="index">
-                        {{ monitor.name }} · {{ monitor.width }}×{{ monitor.height }}
-                      </option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <span v-if="overlayError" class="overlay-error-text">{{ overlayError }}</span>
           </div>
         </div>
 
@@ -240,6 +186,7 @@
               :tech="tech"
               :orders="orders"
               :speed="speed"
+              :supply="playerSupplyInfo.get(player.id)"
             />
           </template>
           <ScaledTree
@@ -262,10 +209,39 @@
         <UpgradeStrip v-if="race" :rows="upgradeRows" :time="time" />
 
         <footer class="timeline-bar">
-          <button class="play-button" @click="togglePlay">
-            {{ playing ? '暂停' : '播放' }}
+          <button
+            class="transport-button"
+            :title="playing ? '暂停' : '播放'"
+            :aria-label="playing ? '暂停' : '播放'"
+            @click="togglePlay"
+          >
+            <svg v-if="playing" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="4" y="3" width="3" height="10" rx="1" />
+              <rect x="9" y="3" width="3" height="10" rx="1" />
+            </svg>
+            <svg v-else viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M5 3.2v9.6L12.5 8z" />
+            </svg>
           </button>
-          <button class="ghost-button" @click="resetTime">重置</button>
+          <button class="transport-button" title="重置" aria-label="重置" @click="resetTime">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M8 3a5 5 0 1 1-4.6 3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+              <path
+                d="M3 2v3.6h3.6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
           <input
             v-model.number="time"
             class="timeline-slider"
@@ -286,6 +262,117 @@
             </button>
           </div>
           <span class="timeline-time">{{ formatClock(time) }} / {{ formatClock(duration) }}</span>
+          <div class="playback-controls">
+            <button
+              v-if="isDesktop"
+              class="transport-button"
+              :class="{ active: overlayEnabled }"
+              title="Overlay 与语音播报 (Ctrl+Shift+O)"
+              aria-label="Overlay 与语音播报"
+              @click="toggleOverlay"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <rect x="6" y="2" width="4" height="7" rx="2" />
+                <path
+                  d="M4 7.5a4 4 0 0 0 8 0M8 11.5V14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+            <div ref="overlaySettingsRef" class="overlay-settings-picker">
+              <button
+                class="transport-button"
+                :class="{ active: overlaySettingsOpen }"
+                title="播放设置"
+                aria-label="播放设置"
+                @click="overlaySettingsOpen = !overlaySettingsOpen"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <circle
+                    cx="8"
+                    cy="8"
+                    r="2.3"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                  />
+                  <path
+                    d="M8 1.8v1.7M8 12.5v1.7M1.8 8h1.7M12.5 8h1.7M3.6 3.6l1.2 1.2M11.2 11.2l1.2 1.2M12.4 3.6l-1.2 1.2M4.8 11.2l-1.2 1.2"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+              <div v-if="overlaySettingsOpen" class="overlay-settings-panel" @click.stop>
+                <div class="overlay-setting-row">
+                  <span>时钟模式</span>
+                  <div class="segmented clock-mode">
+                    <button
+                      :class="{ active: clockMode === 'replay' }"
+                      @click="clockMode = 'replay'"
+                    >
+                      回放 1:1
+                    </button>
+                    <button :class="{ active: clockMode === 'live' }" @click="clockMode = 'live'">
+                      实战 ×1.02
+                    </button>
+                  </div>
+                </div>
+                <template v-if="isDesktop">
+                  <label class="overlay-setting-row">
+                    <span>语音速度</span>
+                    <b>{{ voiceRate.toFixed(1) }}x</b>
+                    <input v-model.number="voiceRate" type="range" min="0.8" max="2.5" step="0.1" />
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>播报农民</span>
+                    <input
+                      v-model="voiceIncludeWorkers"
+                      class="overlay-setting-check"
+                      type="checkbox"
+                    />
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>透明度</span>
+                    <b>{{ Math.round(overlayOpacity * 100) }}%</b>
+                    <input
+                      v-model.number="overlayOpacity"
+                      type="range"
+                      min="0.1"
+                      max="1"
+                      step="0.01"
+                    />
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>位置</span>
+                    <select v-model="overlayAnchor">
+                      <option value="top-center">顶部居中</option>
+                      <option value="top-left">左上</option>
+                      <option value="top-right">右上</option>
+                      <option value="bottom-left">左下</option>
+                      <option value="bottom-right">右下</option>
+                    </select>
+                  </label>
+                  <label class="overlay-setting-row">
+                    <span>显示器</span>
+                    <select v-model.number="overlayMonitor">
+                      <option :value="-2">主显示器</option>
+                      <option :value="-1">跟随主窗口</option>
+                      <option v-for="(monitor, index) in monitors" :key="index" :value="index">
+                        {{ monitor.name }} · {{ monitor.width }}×{{ monitor.height }}
+                      </option>
+                    </select>
+                  </label>
+                </template>
+                <div v-if="overlayError" class="overlay-error-text">{{ overlayError }}</div>
+              </div>
+            </div>
+          </div>
         </footer>
       </template>
 
@@ -316,13 +403,20 @@ import type {
   OverlayAnchor,
   OverlayState,
   PlayerInfo,
+  PlayerStat,
   ProductionTaskView,
+  SupplyInfo,
   TechTiming,
   UnitLifecycle,
   UpgradeStripRow,
 } from '../../types-analysis'
 import { AUTO_SPAWNED_UNITS, formatClock, itemIconUrl, raceFromName, resolveItem } from '../../data/catalog'
-import { DEFAULT_UNIT_SECONDS, MORPH_SECONDS, UNIT_SECONDS } from '../../data/production'
+import {
+  DEFAULT_UNIT_SECONDS,
+  MORPH_SECONDS,
+  ORDER_BUILD_SECONDS,
+  UNIT_SECONDS,
+} from '../../data/production'
 import {
   closeOverlayWindow,
   emitOverlayState,
@@ -345,6 +439,7 @@ import ConstructionStrip from './ConstructionStrip.vue'
 import ReplayLibrary from './ReplayLibrary.vue'
 import ScaledTree from './ScaledTree.vue'
 import PlayerTreePanel from './PlayerTreePanel.vue'
+import SupplyBreakdown from './SupplyBreakdown.vue'
 import UpgradeStrip from './UpgradeStrip.vue'
 
 const folders = ref<FolderInfo[]>([])
@@ -363,11 +458,15 @@ const buildings = ref<EventItem[]>([])
 const units = ref<UnitLifecycle[]>([])
 const tech = ref<TechTiming[]>([])
 const timeline = ref<EventItem[]>([])
+const playerStats = ref<PlayerStat[]>([])
 let dragUnlisten: (() => void) | null = null
 
 const time = ref(0)
 const playing = ref(false)
 const speed = ref(1)
+const clockMode = ref<'replay' | 'live'>(
+  localStorage.getItem('sc2-clock-mode') === 'live' ? 'live' : 'replay',
+)
 const countMode = ref<'cumulative' | 'alive'>('cumulative')
 const error = ref('')
 const backendStarting = ref(true)
@@ -466,6 +565,35 @@ const playerTech = computed(() =>
   tech.value.filter((timing) => timing.player_id === activePlayerId.value),
 )
 const orders = computed(() => timeline.value.filter((event) => event.kind === 'order'))
+
+/** Supply used / cap per player at the current timeline position. */
+const playerSupplyInfo = computed<Map<number, SupplyInfo>>(() => {
+  const info = new Map<number, SupplyInfo>()
+  const first = new Map<number, PlayerStat>()
+  const latest = new Map<number, PlayerStat>()
+  for (const stat of playerStats.value) {
+    if (!first.has(stat.player_id)) first.set(stat.player_id, stat)
+    if (stat.t_sec > time.value) continue
+    const previous = latest.get(stat.player_id)
+    if (!previous || stat.t_sec >= previous.t_sec) latest.set(stat.player_id, stat)
+  }
+  for (const [playerId, stat] of first) {
+    if (!latest.has(playerId)) latest.set(playerId, stat)
+  }
+  for (const [playerId, stat] of latest) {
+    const used = Math.round(stat.supply_used ?? 0)
+    const made = Math.round(stat.supply_made ?? 0)
+    if (made <= 0) continue
+    const workers = Math.min(used, Math.round(stat.workers ?? 0))
+    info.set(playerId, {
+      used,
+      made,
+      workers,
+      army: Math.max(0, used - workers),
+    })
+  }
+  return info
+})
 
 /** Players shown by the split view, or just the selected player. */
 const visiblePlayers = computed<PlayerInfo[]>(() => {
@@ -638,6 +766,54 @@ function constructionGroupsFor(playerId: number): ConstructionGroupView[] {
   }
   for (const task of morphProductionTasks.value.get(playerId) || []) {
     addProductionTask(task)
+  }
+
+  // Building morphs (Orbital Command, Planetary Fortress, Lair, Hive,
+  // Greater Spire). Buildings have no unit lifecycle rows.
+  for (const event of buildings.value) {
+    if (event.player_id !== playerId) continue
+    if (event.kind !== 'unit_morph') continue
+    const item = resolveItem(event.name)
+    if (!item || item.kind !== 'building') continue
+    const seconds = MORPH_SECONDS[item.key]
+    if (!seconds) continue
+    const start = Math.max(0, event.t_sec - seconds)
+    if (start > now || event.t_sec <= now) continue
+    add({
+      key: item.key,
+      name: displayName(item, event.name),
+      icon: itemIconUrl(item),
+      start,
+      progress: Math.min(1, Math.max(0, (now - start) / seconds)),
+      indeterminate: false,
+    })
+  }
+
+  // Orders that queue production but never emit a birth event (Nuke).
+  const bornKeys = new Set<string>()
+  for (const unit of units.value) {
+    if (unit.player_id !== playerId) continue
+    bornKeys.add(unit.first_type)
+    bornKeys.add(unit.unit_type)
+  }
+  for (const event of orders.value) {
+    if (event.player_id !== playerId) continue
+    const item = resolveItem(event.name)
+    if (!item) continue
+    const seconds = ORDER_BUILD_SECONDS[item.key]
+    if (!seconds) continue
+    if (bornKeys.has(event.name) || bornKeys.has(item.key)) continue
+    const start = event.t_sec
+    const done = start + seconds
+    if (start > now || done <= now) continue
+    add({
+      key: item.key,
+      name: displayName(item, event.name),
+      icon: itemIconUrl(item),
+      start,
+      progress: Math.min(1, Math.max(0, (now - start) / seconds)),
+      indeterminate: false,
+    })
   }
 
   return Array.from(groups.values())
@@ -853,18 +1029,21 @@ async function selectGame(game: GameSummary) {
   time.value = 0
   try {
     error.value = ''
-    const [detail, buildingEvents, unitRows, techRows, timelineRows] = await Promise.all([
-      api.game(game.game_id),
-      api.buildings(game.game_id),
-      api.units(game.game_id),
-      api.tech(game.game_id),
-      api.timeline(game.game_id),
-    ])
+    const [detail, buildingEvents, unitRows, techRows, timelineRows, statRows] =
+      await Promise.all([
+        api.game(game.game_id),
+        api.buildings(game.game_id),
+        api.units(game.game_id),
+        api.tech(game.game_id),
+        api.timeline(game.game_id),
+        api.stats(game.game_id),
+      ])
     activeGame.value = detail
     buildings.value = buildingEvents
     units.value = unitRows
     tech.value = techRows
     timeline.value = timelineRows
+    playerStats.value = statRows
     activePlayerId.value = detail.players[0]?.id || null
     splitView.value = detail.players.length >= 2 && window.innerWidth >= 1100
     sidebarCollapsed.value = true
@@ -886,6 +1065,10 @@ watch(sidebarCollapsed, (collapsed) => {
   localStorage.setItem('sc2-sidebar-collapsed', collapsed ? '1' : '0')
 })
 
+watch(clockMode, (mode) => {
+  localStorage.setItem('sc2-clock-mode', mode)
+})
+
 function handleViewport() {
   if (window.innerWidth < 1100) splitView.value = false
 }
@@ -897,6 +1080,7 @@ function backToLibrary() {
   activeGame.value = null
   activePlayerId.value = null
   activeGameId.value = null
+  playerStats.value = []
   splitView.value = false
 }
 
@@ -916,7 +1100,8 @@ function tick(now: number) {
   if (!playing.value) return
   const delta = (now - lastFrame) / 1000
   lastFrame = now
-  time.value = Math.min(duration.value, time.value + delta * speed.value)
+  const clockFactor = clockMode.value === 'live' ? 1 / SC2_FASTER_REAL_FACTOR : 1
+  time.value = Math.min(duration.value, time.value + delta * speed.value * clockFactor)
   if (time.value >= duration.value) {
     pause()
     return
@@ -1647,7 +1832,7 @@ function pollImport(jobId: string) {
   display: flex;
   align-items: center;
   gap: 6px;
-  max-width: 150px;
+  max-width: 260px;
   min-width: 0;
   padding: 4px 8px;
   border: 1px solid transparent;
@@ -1897,6 +2082,45 @@ function pollImport(jobId: string) {
   text-align: right;
 }
 
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.transport-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #1d3352;
+  border-radius: 7px;
+  background: transparent;
+  color: #8ca6c8;
+  cursor: pointer;
+}
+
+.transport-button:hover {
+  border-color: #2f5f96;
+  color: #dbe9fb;
+}
+
+.transport-button.active {
+  border-color: #3d7fc4;
+  background: #173a61;
+  color: #d9ecff;
+  box-shadow: 0 0 10px rgba(61, 127, 196, 0.25);
+}
+
+.transport-button svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
 .path-row {
   display: flex;
   gap: 6px;
@@ -1958,7 +2182,8 @@ function pollImport(jobId: string) {
 
 .overlay-settings-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: auto;
+  bottom: calc(100% + 8px);
   right: 0;
   z-index: 50;
   width: 270px;
@@ -1986,6 +2211,18 @@ function pollImport(jobId: string) {
 .overlay-setting-row > span {
   width: 58px;
   color: #7ca5cf;
+}
+
+.overlay-setting-row .segmented {
+  flex: 1;
+  min-width: 0;
+}
+
+.overlay-setting-row .segmented button {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .overlay-setting-row b {

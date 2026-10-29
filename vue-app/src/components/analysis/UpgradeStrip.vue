@@ -8,7 +8,6 @@
         class="upgrade-row"
         :class="row.tint ? `tint-${row.tint}` : undefined"
       >
-        <span v-if="row.playerName" class="row-player">{{ row.playerName }}</span>
         <div class="upgrade-list">
           <div
             v-for="entry in row.items"
@@ -82,8 +81,8 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
 .upgrade-strip {
   display: flex;
   align-items: stretch;
-  gap: 8px;
-  padding: 4px 12px;
+  gap: 0;
+  padding: 4px 18px 4px 0;
   border-top: 1px solid #16263d;
   background: rgba(6, 11, 20, 0.86);
 }
@@ -92,9 +91,14 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
   flex: none;
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 20px;
+  overflow: hidden;
+  border-right: 1px solid #142238;
   color: #6f89ad;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .upgrade-rows {
@@ -114,31 +118,9 @@ function tooltip(entry: { item: CatalogItem; doneAt?: number; active: boolean })
   padding: 0 8px;
 }
 
-.upgrade-row:first-child {
-  padding-left: 0;
-}
-
 .upgrade-row + .upgrade-row {
   border-top: 0;
   border-left: 1px solid #101d2f;
-}
-
-.row-player {
-  flex: none;
-  width: 58px;
-  overflow: hidden;
-  color: #5f7d9f;
-  font-size: 9px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.upgrade-row.tint-red .row-player {
-  color: #ff9d9d;
-}
-
-.upgrade-row.tint-blue .row-player {
-  color: #8ec5ff;
 }
 
 .upgrade-list {

@@ -18,7 +18,7 @@
               class="build-summary-item"
               :title="`${displayName(build.item)}${build.count > 1 ? ` ×${build.count}` : ''}`"
             >
-              <img :src="iconUrl(build.item.abbr)" :alt="build.item.name" draggable="false" />
+              <img :src="itemIconUrl(build.item)" :alt="build.item.name" draggable="false" />
               <span v-if="build.count > 1" class="build-summary-count">×{{ build.count }}</span>
               <div class="build-summary-bar">
                 <div
@@ -40,7 +40,7 @@
           <template v-for="(row, index) in buildRows" :key="row.key">
             <span v-if="index > 0" class="chain-arrow">»</span>
             <div class="chain-item" :class="{ past: row.past, current: row.current }">
-              <img :src="iconUrl(row.item.abbr)" :alt="row.item.name" draggable="false" />
+              <img :src="itemIconUrl(row.item)" :alt="row.item.name" draggable="false" />
               <div class="item-meta">
                 <span class="item-name">
                   {{ displayName(row.item) }}
@@ -89,14 +89,18 @@ import {
   AUTO_SPAWNED_UNITS,
   WORKER_UNITS,
   formatClock,
-  iconUrl,
   itemIconUrl,
   resolveItem,
   type CatalogItem,
 } from '../../data/catalog'
 import type { EventItem, OverlayState, UnitLifecycle } from '../../types-analysis'
 import { emitOverlayReady, isTauriRuntime, listenOverlayEvent } from '../../composables/useTauri'
-import { DEFAULT_UNIT_SECONDS, MORPH_SECONDS, UNIT_SECONDS } from '../../data/production'
+import {
+  DEFAULT_UNIT_SECONDS,
+  MORPH_SECONDS,
+  ORDER_BUILD_SECONDS,
+  UNIT_SECONDS,
+} from '../../data/production'
 import { useLanguage } from '../../composables/useLanguage'
 
 const { english, displayName } = useLanguage()
@@ -295,6 +299,38 @@ const activeBuilds = computed<ActiveBuild[]>(() => {
       if (start > time || morph.t_sec <= time) continue
       addGroup(item.key, item, start, morph.t_sec)
     }
+  }
+
+  // Building morphs (Orbital Command, Planetary Fortress, Lair, Hive,
+  // Greater Spire). Buildings have no unit lifecycle rows, so use the
+  // type-change events directly.
+  for (const event of events.value) {
+    if (event.kind !== 'unit_morph') continue
+    const item = resolveItem(event.name)
+    if (!item || item.kind !== 'building') continue
+    const duration = MORPH_SECONDS[item.key]
+    if (!duration) continue
+    const start = Math.max(0, event.t_sec - duration)
+    if (start > time || event.t_sec <= time) continue
+    addGroup(item.key, item, start, event.t_sec)
+  }
+
+  // Orders that queue production but never emit a birth event (Nuke).
+  const bornKeys = new Set<string>()
+  for (const unit of units.value) {
+    bornKeys.add(unit.first_type)
+    bornKeys.add(unit.unit_type)
+  }
+  for (const event of events.value) {
+    if (event.kind !== 'order') continue
+    const item = resolveItem(event.name)
+    if (!item) continue
+    const duration = ORDER_BUILD_SECONDS[item.key]
+    if (!duration) continue
+    if (bornKeys.has(event.name) || bornKeys.has(item.key)) continue
+    const done = event.t_sec + duration
+    if (event.t_sec > time || done <= time) continue
+    addGroup(item.key, item, event.t_sec, done)
   }
 
   // Active research from order -> upgrade_done.

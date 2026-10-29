@@ -58,4 +58,14 @@ export const MORPH_SECONDS: Record<string, number> = {
   Lurker: 18,
   BroodLord: 24,
   Overseer: 12,
+  OrbitalCommand: 25,
+  PlanetaryFortress: 36,
+  Lair: 57,
+  Hive: 71,
+  GreaterSpire: 71,
+}
+
+/** Production queued by an order without a matching birth/done event. */
+export const ORDER_BUILD_SECONDS: Record<string, number> = {
+  Nuke: 43,
 }

@@ -60,6 +60,7 @@ function raceClass(race?: Race): string {
   flex: none;
   display: flex;
   align-items: stretch;
+  padding-right: 18px;
   border-top: 1px solid #142238;
   background: rgba(3, 7, 14, 0.94);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);

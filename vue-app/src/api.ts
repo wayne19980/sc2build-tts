@@ -5,6 +5,7 @@ import type {
   GameDetail,
   GameSummary,
   ImportJob,
+  PlayerStat,
   TechTiming,
   UnitLifecycle,
 } from './types-analysis'
@@ -47,6 +48,10 @@ export const api = {
   units: (gameId: number, playerId?: number) =>
     request<UnitLifecycle[]>(
       `/api/games/${gameId}/units${playerId ? `?player_id=${playerId}` : ''}`,
+    ),
+  stats: (gameId: number, playerId?: number) =>
+    request<PlayerStat[]>(
+      `/api/games/${gameId}/stats${playerId ? `?player_id=${playerId}` : ''}`,
     ),
   createImport: (path: string) =>
     request<ImportJob>('/api/imports', {

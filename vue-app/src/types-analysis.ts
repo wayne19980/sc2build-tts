@@ -53,6 +53,32 @@ export interface EventItem {
   payload: Record<string, unknown>
 }
 
+export interface SupplyInfo {
+  used: number
+  made: number
+  workers: number
+  army: number
+}
+
+export interface PlayerStat {
+  game_id: number
+  player_id: number
+  player_name: string
+  race: string
+  frame: number
+  t_sec: number
+  minerals: number | null
+  vespene: number | null
+  workers: number | null
+  supply_used: number | null
+  supply_made: number | null
+  army_value: number | null
+  minerals_collection_rate: number | null
+  vespene_collection_rate: number | null
+  resources_lost: number | null
+  resources_killed: number | null
+}
+
 export interface UnitMorph {
   t_sec: number
   from: string

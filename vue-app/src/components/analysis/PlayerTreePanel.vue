@@ -6,6 +6,7 @@
         <span class="name">{{ player.name }}</span>
         <span class="race">{{ raceLabel }}</span>
         <span v-if="player.is_winner" class="winner">★</span>
+        <SupplyBreakdown :supply="supply" />
       </div>
       <div class="panel-actions">
         <button
@@ -42,11 +43,13 @@ import type {
   EventItem,
   PlayerInfo,
   ProductionTaskView,
+  SupplyInfo,
   TechTiming,
   UnitLifecycle,
 } from '../../types-analysis'
 import { raceFromName } from '../../data/catalog'
 import ScaledTree from './ScaledTree.vue'
+import SupplyBreakdown from './SupplyBreakdown.vue'
 
 const viewMode = ref<'canvas' | 'flow'>('flow')
 
@@ -60,6 +63,7 @@ const props = defineProps<{
   orders?: EventItem[]
   production?: ProductionTaskView[]
   speed: number
+  supply?: SupplyInfo
 }>()
 
 const race = computed(() => raceFromName(props.player.race))

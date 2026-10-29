@@ -15,7 +15,9 @@
     "nameZh": "吸纳仓",
     "kind": "building",
     "race": "P",
-    "aliases": []
+    "aliases": [
+      "AssimilatorRich"
+    ]
   },
   "Pylon": {
     "key": "Pylon",
@@ -548,6 +550,15 @@
     "race": "T",
     "aliases": []
   },
+  "Nuke": {
+    "key": "Nuke",
+    "abbr": "Tvgn",
+    "name": "Nuke",
+    "nameZh": "核弹",
+    "kind": "unit",
+    "race": "T",
+    "aliases": []
+  },
   "Hellion": {
     "key": "Hellion",
     "abbr": "Tvfe",
@@ -1023,7 +1034,9 @@
     "nameZh": "坑道虫",
     "kind": "unit",
     "race": "Z",
-    "aliases": []
+    "aliases": [
+      "NydusCanal"
+    ]
   },
   "WarpGateResearch": {
     "key": "WarpGateResearch",
@@ -1095,7 +1108,9 @@
     "nameZh": "重力加速器",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [
+      "ObserverGraviticBooster"
+    ]
   },
   "ExtendedThermalLance": {
     "key": "ExtendedThermalLance",
@@ -1131,7 +1146,10 @@
     "nameZh": "构造失稳器",
     "kind": "upgrade",
     "race": "P",
-    "aliases": []
+    "aliases": [
+      "TempestGroundAttackUpgrade",
+      "TempestGroundAttackUpgrade (upgrade missing)"
+    ]
   },
   "Stimpack": {
     "key": "Stimpack",
@@ -1198,6 +1216,15 @@
     "race": "T",
     "aliases": []
   },
+  "MedivacIncreaseSpeedBoost": {
+    "key": "MedivacIncreaseSpeedBoost",
+    "abbr": "Tvca",
+    "name": "Medivac Speed Boost",
+    "nameZh": "医疗运输机加速",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
   "AdvancedBallistics": {
     "key": "AdvancedBallistics",
     "abbr": "Tvcn",
@@ -1205,13 +1232,24 @@
     "nameZh": "强化弹道",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [
+      "LiberatorAGRangeUpgrade"
+    ]
   },
   "YamatoCannon": {
     "key": "YamatoCannon",
     "abbr": "Tvcr",
     "name": "Yamato Cannon",
     "nameZh": "大和炮",
+    "kind": "upgrade",
+    "race": "T",
+    "aliases": []
+  },
+  "BattlecruiserEnableSpecializations": {
+    "key": "BattlecruiserEnableSpecializations",
+    "abbr": "Tvcr",
+    "name": "Battlecruiser Specializations",
+    "nameZh": "战列巡航舰专精",
     "kind": "upgrade",
     "race": "T",
     "aliases": []
@@ -1259,7 +1297,9 @@
     "nameZh": "高速旋翼",
     "kind": "upgrade",
     "race": "T",
-    "aliases": []
+    "aliases": [
+      "BansheeSpeed"
+    ]
   },
   "CloakingField": {
     "key": "CloakingField",
@@ -1370,6 +1410,26 @@
     "kind": "upgrade",
     "race": "Z",
     "aliases": []
+  },
+  "InfestorEnergyUpgrade": {
+    "key": "InfestorEnergyUpgrade",
+    "abbr": "Zvie",
+    "name": "Infestor Energy",
+    "nameZh": "感染者能量",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": []
+  },
+  "Frenzy": {
+    "key": "Frenzy",
+    "abbr": "Zbsa",
+    "name": "Frenzy",
+    "nameZh": "狂怒",
+    "kind": "upgrade",
+    "race": "Z",
+    "aliases": [
+      "Frenzy (upgrade missing)"
+    ]
   },
   "MicrobialShroud": {
     "key": "MicrobialShroud",

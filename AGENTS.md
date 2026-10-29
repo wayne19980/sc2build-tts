@@ -31,11 +31,15 @@ Run the API (migrations run automatically at startup):
 .venv/Scripts/python.exe -m sc2analyzer.api
 ```
 
-Run the Vue app against the local API:
+Run the Vue app plus the local API together:
 
 ```bash
 pnpm dev
 ```
+
+That runs `scripts/dev-all.mjs`: it starts the Python API from the repo `.venv`
+(reusing one already on `127.0.0.1:8765`) and then the Vite dev server on
+`127.0.0.1:5173`. Use `pnpm dev:frontend` for Vite only.
 
 The frontend reads `VITE_API_BASE` and defaults to `http://127.0.0.1:8765`.
 Run the backend from `services/analyzer` or set `PYTHONPATH=services/analyzer`.
@@ -53,14 +57,31 @@ Tauri desktop shell (starts the backend automatically):
 pnpm tauri:dev
 ```
 
-In debug mode Tauri spawns the API from the repo `.venv`. For a release build,
-package the sidecar first:
+In debug mode Tauri spawns the API from the repo `.venv`. A full release build
+(sidecar + Tauri installer) is one command at the repo root:
+
+```bash
+pnpm build
+```
+
+That runs `scripts/build-all.mjs`, which rebuilds the Python sidecar with the
+repo `.venv` and then runs `pnpm tauri:build`. Use `pnpm build:frontend` for a
+frontend-only build, or the two steps individually:
 
 ```bash
 .venv/Scripts/python.exe scripts/build_sidecar.py
 cd vue-app
 pnpm tauri:build
 ```
+
+Bump every version location (pnpm packages, `tauri.conf.json`, `Cargo.toml`,
+`Cargo.lock`) with:
+
+```bash
+pnpm version:bump 0.7.2
+```
+
+`patch`/`minor`/`major` are accepted instead of an explicit version.
 
 The release sidecar is built as a PyInstaller `--onedir` bundle into
 `src-tauri/sidecar/` and bundled as a Tauri resource (generated, not committed).
