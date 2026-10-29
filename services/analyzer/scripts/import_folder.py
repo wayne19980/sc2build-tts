@@ -17,12 +17,18 @@ def main() -> None:
     source.add_argument("--folder", type=Path, help="Import every .SC2Replay under this folder")
     source.add_argument("--replay", type=Path, help="Import one replay")
     parser.add_argument("--group-folder", type=Path, help="Folder bucket to store a single replay under")
+    parser.add_argument(
+        "--mode",
+        choices=("current", "group", "merge"),
+        default="group",
+        help="current: top level only, group: one folder per subfolder, merge: one flattened folder",
+    )
     args = parser.parse_args()
 
     session = SessionLocal()
     try:
         if args.folder:
-            result = import_folder(session, args.folder)
+            result = import_folder(session, args.folder, mode=args.mode)
         else:
             result = import_replay(session, args.replay, args.group_folder)
     finally:

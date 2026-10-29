@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -111,11 +111,16 @@ def _progress(job_id: str, payload: dict[str, Any]) -> None:
     _update_job(job_id, **changes)
 
 
-def _run_import(job_id: str, path: str) -> None:
+def _run_import(job_id: str, path: str, mode: str) -> None:
     _update_job(job_id, status="running", started_at=now_iso(), phase="scanning")
     session = SessionLocal()
     try:
-        result = import_folder(session, path, progress=lambda payload: _progress(job_id, payload))
+        result = import_folder(
+            session,
+            path,
+            progress=lambda payload: _progress(job_id, payload),
+            mode=mode,
+        )
         _update_job(
             job_id,
             status="done",
@@ -199,6 +204,7 @@ app.add_middleware(
 
 class ImportRequest(BaseModel):
     path: str
+    mode: Literal["current", "group", "merge"] = "group"
 
 
 class ImportFileRequest(BaseModel):
@@ -250,7 +256,7 @@ def create_import(request: ImportRequest) -> dict[str, Any]:
     job = ImportJob(id=uuid.uuid4().hex[:12], path=str(path))
     with _jobs_lock:
         _jobs[job.id] = job
-    _executor.submit(_run_import, job.id, str(path))
+    _executor.submit(_run_import, job.id, str(path), request.mode)
     return job.to_dict()
 
 

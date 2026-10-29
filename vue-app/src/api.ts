@@ -5,6 +5,7 @@ import type {
   GameDetail,
   GameSummary,
   ImportJob,
+  ImportMode,
   PlayerStat,
   TechTiming,
   UnitLifecycle,
@@ -53,10 +54,10 @@ export const api = {
     request<PlayerStat[]>(
       `/api/games/${gameId}/stats${playerId ? `?player_id=${playerId}` : ''}`,
     ),
-  createImport: (path: string) =>
+  createImport: (path: string, mode: ImportMode = 'group') =>
     request<ImportJob>('/api/imports', {
       method: 'POST',
-      body: JSON.stringify({ path }),
+      body: JSON.stringify({ path, mode }),
     }),
   importFile: (path: string) =>
     request<{ folder_id: number; game_id: number | null; imported: number; skipped: number }>(

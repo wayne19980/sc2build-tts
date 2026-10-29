@@ -119,6 +119,8 @@ export interface GameDetail {
   event_counts: { kind: string; count: number }[]
 }
 
+export type ImportMode = 'current' | 'group' | 'merge'
+
 export interface ImportJob {
   id: string
   path: string

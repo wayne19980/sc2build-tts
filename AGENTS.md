@@ -149,6 +149,8 @@ The release sidecar is built as a PyInstaller `--onedir` bundle into
 - Folder imports hash files first, skip existing games without parsing, then parse/insert new
   replays in parallel worker processes. `SC2_IMPORT_WORKERS` overrides the worker count
   (defaults to half the logical CPUs, capped at 8).
+- Import mode controls subfolders: `current` (top level only), `merge` (recursive into one
+  folder) or `group` (recursive, one folder per subfolder; default).
 - Agent analysis reads the `sc2build.v_*` views; AI is intentionally not embedded in the service.
 
 ## Tech tree assets

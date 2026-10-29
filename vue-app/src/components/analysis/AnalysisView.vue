@@ -65,6 +65,14 @@
               选择录像文件
             </button>
           </div>
+          <div class="import-mode-row">
+            <span>读取方式</span>
+            <select v-model="importMode">
+              <option value="group">子文件夹分别成组</option>
+              <option value="merge">全部合并到当前文件夹</option>
+              <option value="current">仅当前文件夹</option>
+            </select>
+          </div>
           <div class="import-hint">也可以把单个 .SC2Replay 直接拖进窗口</div>
           <div v-if="importJob" class="import-status">
             <div class="import-line">
@@ -400,6 +408,7 @@ import type {
   GameDetail,
   GameSummary,
   ImportJob,
+  ImportMode,
   OverlayAnchor,
   OverlayState,
   PlayerInfo,
@@ -472,8 +481,14 @@ const error = ref('')
 const backendStarting = ref(true)
 
 const importPath = ref('')
+const importMode = ref<ImportMode>(loadImportMode())
 const importJob = ref<ImportJob | null>(null)
 const importing = ref(false)
+
+function loadImportMode(): ImportMode {
+  const stored = localStorage.getItem('sc2-import-mode')
+  return stored === 'current' || stored === 'merge' ? stored : 'group'
+}
 let importTimer: ReturnType<typeof setTimeout> | null = null
 
 const isDesktop = isTauriRuntime()
@@ -1069,6 +1084,10 @@ watch(clockMode, (mode) => {
   localStorage.setItem('sc2-clock-mode', mode)
 })
 
+watch(importMode, (mode) => {
+  localStorage.setItem('sc2-import-mode', mode)
+})
+
 function handleViewport() {
   if (window.innerWidth < 1100) splitView.value = false
 }
@@ -1342,7 +1361,7 @@ async function startImport() {
   importing.value = true
   error.value = ''
   try {
-    importJob.value = await api.createImport(path)
+    importJob.value = await api.createImport(path, importMode.value)
     pollImport(importJob.value.id)
   } catch (exc) {
     importing.value = false
@@ -1611,6 +1630,26 @@ function pollImport(jobId: string) {
   color: #4f6b8c;
   font-size: 10px;
   line-height: 1.4;
+}
+
+.import-mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6f89ad;
+  font-size: 10px;
+}
+
+.import-mode-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid #1d3352;
+  border-radius: 6px;
+  background: #070d18;
+  color: #9fb8d8;
+  font-size: 11px;
+  outline: none;
 }
 
 .path-input {

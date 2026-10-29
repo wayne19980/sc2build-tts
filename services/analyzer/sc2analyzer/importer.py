@@ -38,9 +38,10 @@ class ImportResult:
     game_ids: list[int] = field(default_factory=list)
 
 
-def _replay_files(folder: Path) -> list[Path]:
+def _replay_files(folder: Path, recursive: bool = True) -> list[Path]:
+    iterator = folder.rglob("*") if recursive else folder.iterdir()
     return sorted(
-        (path for path in folder.rglob("*") if path.is_file() and path.suffix.lower() == ".sc2replay"),
+        (path for path in iterator if path.is_file() and path.suffix.lower() == ".sc2replay"),
         key=lambda path: str(path).lower(),
     )
 
@@ -209,22 +210,49 @@ def _existing_hashes(session: Session, hashes: list[str]) -> set[str]:
     return found
 
 
+IMPORT_MODES = ("current", "group", "merge")
+
+
+def _group_replays(folder: Path, mode: str) -> dict[Path, list[Path]]:
+    """Return replay files grouped by the folder they should be imported into."""
+    if mode == "current":
+        return {folder: _replay_files(folder, recursive=False)}
+    if mode == "merge":
+        return {folder: _replay_files(folder, recursive=True)}
+
+    groups: dict[Path, list[Path]] = {}
+    for path in _replay_files(folder, recursive=True):
+        groups.setdefault(path.parent.resolve(), []).append(path)
+    return groups
+
+
 def import_folder(
     session: Session,
     folder_path: str | Path,
     progress: ProgressCallback | None = None,
+    mode: str = "group",
 ) -> ImportResult:
     folder = Path(folder_path).resolve()
     if not folder.is_dir():
         raise NotADirectoryError(folder)
+    if mode not in IMPORT_MODES:
+        raise ValueError(f"unknown import mode: {mode}")
 
-    folder_row = get_or_create_folder(session, folder)
+    groups = _group_replays(folder, mode)
+    folder_ids: dict[Path, int] = {}
+    for directory in groups:
+        folder_ids[directory] = get_or_create_folder(session, directory).id
     session.commit()
 
-    files = _replay_files(folder)
-    result = ImportResult(folder_id=folder_row.id, folder_path=folder_row.path)
+    root_id = folder_ids.get(folder) or next(iter(folder_ids.values()), 0)
+    result = ImportResult(folder_id=root_id, folder_path=str(folder))
+    assignments = [
+        (replay, folder_ids[directory])
+        for directory, replays in groups.items()
+        for replay in replays
+    ]
     processed = 0
-    _emit(progress, phase="scan", total=len(files))
+    _emit(progress, phase="scan", total=len(assignments))
 
     def record(path: str, status: str, game_id: int | None, message: str | None) -> None:
         nonlocal processed
@@ -241,40 +269,40 @@ def import_folder(
             progress,
             phase=f"file_{status}",
             index=processed,
-            total=len(files),
+            total=len(assignments),
             file=path,
             message=message or "",
         )
 
-    hashed: list[tuple[Path, str]] = []
-    for replay_file in files:
+    hashed: list[tuple[Path, str, int]] = []
+    for replay_file, folder_id in assignments:
         try:
-            hashed.append((replay_file, sha256_file(replay_file)))
+            hashed.append((replay_file, sha256_file(replay_file), folder_id))
         except Exception as exc:  # noqa: BLE001 - report unreadable files and continue
             record(str(replay_file), "error", None, str(exc))
 
-    existing = _existing_hashes(session, [file_hash for _, file_hash in hashed])
-    pending: list[tuple[Path, str]] = []
+    existing = _existing_hashes(session, [file_hash for _, file_hash, _ in hashed])
+    pending: list[tuple[Path, str, int]] = []
     scheduled: set[str] = set()
-    for replay_file, file_hash in hashed:
+    for replay_file, file_hash, folder_id in hashed:
         if file_hash in existing or file_hash in scheduled:
             record(str(replay_file), "skipped", None, None)
             continue
         scheduled.add(file_hash)
-        pending.append((replay_file, file_hash))
+        pending.append((replay_file, file_hash, folder_id))
 
     workers = min(_worker_count(), len(pending)) if pending else 1
     if workers <= 1:
-        for replay_file, file_hash in pending:
+        for replay_file, file_hash, folder_id in pending:
             path, status, game_id, message = _import_worker(
-                str(replay_file), folder_row.id, file_hash
+                str(replay_file), folder_id, file_hash
             )
             record(path, status, game_id, message)
     else:
         with ProcessPoolExecutor(max_workers=workers) as pool:
             futures = {
-                pool.submit(_import_worker, str(replay_file), folder_row.id, file_hash): replay_file
-                for replay_file, file_hash in pending
+                pool.submit(_import_worker, str(replay_file), folder_id, file_hash): replay_file
+                for replay_file, file_hash, folder_id in pending
             }
             for future in as_completed(futures):
                 replay_file = futures[future]
@@ -287,7 +315,7 @@ def import_folder(
     _emit(
         progress,
         phase="done",
-        total=len(files),
+        total=len(assignments),
         imported=len(result.imported),
         skipped=len(result.skipped),
         errors=len(result.errors),
